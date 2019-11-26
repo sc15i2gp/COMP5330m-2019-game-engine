@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <Windows.h>
-
+#include "OpenGL.h"
 bool running = true;
 
 //Function is called for every event passed to the process by Windows
@@ -43,14 +43,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 {
 	HWND window = open_program_window(instance);
 	if (window)
-	{
+	{//If the window was successfully created
 		//Initialise opengl
+		if (!initialise_opengl(window))
+		{
+			//TODO: Error handling
+			OutputDebugString("Error: Unable to initialise OpenGL!\n");
+			return 1;
+		}
 
 		//Load shader
 		
 		//Load triangle data to GPU
 
 		//Main loop
+		HDC window_device_context = GetDC(window); //Used to swap buffers
 		while (running)
 		{
 			//Handle input events
@@ -63,13 +70,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				DispatchMessage(&message);
 
 				//Draw triangle
+				glClearColor(0.98f, 0.85f, 0.86f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				//Swap buffers
+				//Swap window buffers
+				SwapBuffers(window_device_context);
 			}
 		}
+		ReleaseDC(window, window_device_context);
 	}
 	else
-	{
+	{//If the window wasn't created
+		//TODO: Better error handling here (if possible)
 		OutputDebugString("Error: Window could not be created!\n");
 		return 1;
 	}
