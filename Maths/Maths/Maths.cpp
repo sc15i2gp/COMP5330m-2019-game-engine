@@ -2,19 +2,26 @@
 //
 
 #include <iostream>
+#include "Vector.h"
+#include "Matrix.h"
+
+using namespace std;
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	Vector vector1(2.0, 4.0, 5.0);
+	Vector vector2(8.0, -2.0, -3.0);
+	cout << vector1.getX() << " " << vector1.getY() << " " << vector1.getZ() << endl;
+	vector1.setX(5.0);
+	cout << vector1.length() << endl;
+	cout << vector1.normalize().getX() << " " << vector1.normalize().getY() << " " << vector1.normalize().getZ() << endl;
+	cout << vector1.normalize().length() << endl;
+	Vector sum(vector1 + vector2);
+	cout << sum.getX() << " " << sum.getY() << " " << sum.getZ() << endl;
+	Vector mult(vector1 * 2.0);
+	cout << mult.getX() << " " << mult.getY() << " " << mult.getZ() << endl;
+	cout << vector1 * vector2 << endl;
+	Vector cross(vector1.cross(vector2));
+	cout << cross.getX() << " " << cross.getY() << " " << cross.getZ() << endl;
+	return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file

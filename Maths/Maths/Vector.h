@@ -4,24 +4,25 @@ class Vector
 public:
 	Vector();
 	Vector(float x, float y, float z);
+	Vector(Vector *vector);
 
 	void setX(float value);
 	void setY(float value);
 	void setZ(float value);
 
-	double getX();
-	double getY();
-	double getZ();
+	float getX();
+	float getY();
+	float getZ();
 
-	Vector operator +(Vector* vector);
-	Vector operator -(Vector* vector);
+	Vector operator +(Vector vector);
+	Vector operator -(Vector vector);
 	Vector operator *(float value);
-	Vector operator *(Vector* vector);
-	Vector operator %(Vector* vector);
+	float operator *(Vector vector);
 	Vector operator /(float value);
 
 	float length();
 	Vector normalize();
+	Vector cross(Vector vector);
 	
 private:
 	float x;

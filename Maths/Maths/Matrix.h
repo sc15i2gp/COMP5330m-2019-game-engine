@@ -5,7 +5,7 @@ class Matrix
 {
 public:
 	Matrix();
-	Matrix(int value);
+	Matrix(float value);
 	Matrix(float aa, float ab, float ac, float ba, float bb, float bc, float ca, float cb, float cc);
 
 	void setaa(float value);
@@ -33,6 +33,9 @@ public:
 	Matrix operator *(float scalar);
 	Matrix operator *(Vector vector);
 	Matrix operator *(Matrix matrix);
+	Matrix operator /(float scalar);
+	Matrix operator /(Vector vector);
+	Matrix operator /(Matrix matrix);
 
 	void inverse();
 	void transpose();
