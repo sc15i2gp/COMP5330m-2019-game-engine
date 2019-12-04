@@ -23,5 +23,20 @@ int main()
 	cout << vector1 * vector2 << endl;
 	Vector cross(vector1.cross(vector2));
 	cout << cross.getX() << " " << cross.getY() << " " << cross.getZ() << endl;
+
+	cout << endl << endl;
+
+	Matrix matrix1(1.0, 3.0, 2.0, 5.0,
+		2.0, 4.0, 5.0, 2.0,
+		3.0, 3.0, 4.0, 4.0,
+		4.0, 1.0, 2.0, 1.0);
+	Matrix matrix2(-2.0, 3.0, -1.0, 3.0,
+		-2.0, -3.0, 1.0, 2.0,
+		3.0, 1.0, -4.0, -2.0,
+		-4.0, 3.0, 2.0, -1.0);
+	cout << matrix1.getaa() << " " << matrix1.getab() << " " << matrix1.getac() << " " << matrix1.getad() << endl
+		<< matrix1.getba() << " " << matrix1.getbb() << " " << matrix1.getbc() << " " << matrix1.getbd() << endl
+		<< matrix1.getca() << " " << matrix1.getcb() << " " << matrix1.getcc() << " " << matrix1.getcd() << endl
+		<< matrix1.getda() << " " << matrix1.getdb() << " " << matrix1.getdc() << " " << matrix1.getdd() << endl << endl;
 	return 0;
 }
