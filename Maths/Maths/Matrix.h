@@ -1,59 +1,68 @@
-#include "Vector.h"
+/*
+Group Project
+Game Engine Maths Library
+Matrix.h
+*/
 
 #pragma once
 class Matrix
 {
 public:
+	// Constructors
 	Matrix();
 	Matrix(float value);
-	Matrix(float aa, float ba, float ca, float da, float ab, float bb, float cb, float db, float ac, float bc, float cc, float dc, float ad, float bd, float cd, float dd);
+	Matrix(float aa, float ab, float ac, float ad, float ba, float bb, float bc, float bd, float ca, float cb, float cc, float cd, float da, float db, float dc, float dd);
+	Matrix(Matrix* matrix);
 
+	// Setters
 	void setaa(float value);
-	void setba(float value);
-	void setca(float value);
-	void setda(float value);
 	void setab(float value);
-	void setbb(float value);
-	void setcb(float value);
-	void setdb(float value);
 	void setac(float value);
-	void setbc(float value);
-	void setcc(float value);
-	void setdc(float value);
 	void setad(float value);
+	void setba(float value);
+	void setbb(float value);
+	void setbc(float value);
 	void setbd(float value);
+	void setca(float value);
+	void setcb(float value);
+	void setcc(float value);
 	void setcd(float value);
+	void setda(float value);
+	void setdb(float value);
+	void setdc(float value);
 	void setdd(float value);
 
+	// Getters
 	float getaa();
-	float getba();
-	float getca();
-	float getda();
 	float getab();
-	float getbb();
-	float getcb();
-	float getdb();
 	float getac();
-	float getbc();
-	float getcc();
-	float getdc();
 	float getad();
+	float getba();
+	float getbb();
+	float getbc();
 	float getbd();
+	float getca();
+	float getcb();
+	float getcc();
 	float getcd();
+	float getda();
+	float getdb();
+	float getdc();
 	float getdd();
 
+	// Overloading operators
 	Matrix operator +(Matrix matrix);
 	Matrix operator -(Matrix matrix);
 	Matrix operator *(float scalar);
-	//Matrix operator *(Vector vector);
 	Matrix operator *(Matrix matrix);
 	Matrix operator /(float scalar);
-	//Matrix operator /(Vector vector);
 
+	// Methods
 	Matrix negative();
 	Matrix transpose();
 
 private:
+	// Matrix values
 	float values[4][4];
 };
 
