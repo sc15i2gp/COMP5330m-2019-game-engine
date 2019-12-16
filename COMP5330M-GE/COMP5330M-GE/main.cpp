@@ -1,31 +1,14 @@
-#include <stdio.h>
-#include <Windows.h>
+#include "Platform.h"
 #include "OpenGL.h"
+#include "Maths.h"
 
-//TODO:
-//	- printf_debug to OutputDebugString but with formatted strings
+void set_uniform_mat4(GLuint shader, const char* uniform_name, GLfloat* matrix)
+{
+	GLint matrix_location = glGetUniformLocation(shader, uniform_name);
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
+}
 
 bool running = true;
-
-char* read_file(const char* path)
-{
-	FILE* f = fopen(path, "rb");
-	if (!f) return NULL;
-
-	fseek(f, 0, SEEK_END);
-	int size = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	char* contents = (char*)malloc(size+1);
-	if (contents)
-	{
-		fread(contents, 1, size, f);
-		contents[size] = 0;
-	}
-
-	fclose(f);
-	return contents;
-}
 
 //Function is called for every event passed to the process by Windows
 LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
@@ -62,6 +45,16 @@ HWND open_program_window(HINSTANCE instance)
 	else return NULL;
 }
 
+void print_mat(Matrix4x4 m)
+{
+	OutputDebugString("Matrix:\n");
+	for (int i = 0; i < 4; ++i)
+	{
+		Vector4 r = m.row(i);
+		OutputDebugStringf("%f %f %f %f\n", r.x, r.y, r.z, r.w);
+	}
+}
+
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
@@ -76,14 +69,17 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			return 1;
 		}
 
+		Vector4 v = { 0.0f, 0.0f, 0.0f, 1.0f };
+		Vector4 w = { 1.0f, 1.0f, 1.0f, 1.0f };
+		v += w;
+		OutputDebugStringf("Vector: %f %f %f %f\n", v[0], v[1], v[2], v[3]);
+
 		//Load shader
 		char* v_shader_src = read_file("vshader.glsl");
 		char* f_shader_src = read_file("fshader.glsl");
-		char shader_src[2048] = {};
-		sprintf_s(shader_src, "Vertex Shader:\n%s\n", v_shader_src);
-		OutputDebugString(shader_src);
-		sprintf_s(shader_src, "Fragment Shader:\n%s\n", f_shader_src);
-		OutputDebugString(shader_src);
+
+		OutputDebugStringf("Vertex Shader : \n%s\n", v_shader_src);
+		OutputDebugStringf("Fragment Shader:\n%s\n", f_shader_src);
 
 		GLuint shader = create_shader_program(v_shader_src, f_shader_src);
 		free(f_shader_src);
@@ -107,6 +103,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
 		glEnableVertexAttribArray(0);
 		glBindVertexArray(0);
+
+		Matrix4x4 model = identity();
+		translate(model, Vector3(0.0f, 0.2f, 0.0f));
+
+		Matrix4x4 view = look_at(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, 0.0f));
+		//Matrix4x4 view = identity();
+
+		OutputDebugStringf("Aspect ratio: %f\n", get_aspect_ratio(window));
+		Matrix4x4 projection = perspective(90.0f, get_aspect_ratio(window), 0.1f, 10.0f);
+		print_mat(projection);
+		print_mat(view);
+		glUseProgram(shader);
+		set_uniform_mat4(shader, "model", &model[0][0]);
+		set_uniform_mat4(shader, "view", &view[0][0]);
+		set_uniform_mat4(shader, "projection", &projection[0][0]);
 
 		//Main loop
 		HDC window_device_context = GetDC(window); //Used to swap buffers

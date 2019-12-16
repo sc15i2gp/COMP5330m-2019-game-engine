@@ -22,9 +22,7 @@ GLuint compile_shader_src(char* shader_src, GLenum shader_type)
 	if (!success)
 	{
 		glGetShaderInfoLog(shader, 512, NULL, info);
-		char debug_msg[1024] = {};
-		sprintf_s(debug_msg, "Error: Shader compilation failed: \n%s", info);
-		OutputDebugString(debug_msg);
+		OutputDebugStringf("Error: Shader compilation failed: \n%s", info);
 		return 0;
 	}
 	return shader;
