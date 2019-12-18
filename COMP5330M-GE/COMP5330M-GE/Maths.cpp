@@ -626,6 +626,7 @@ Quaternion operator/(Quaternion q, float d)
 Quaternion conjugate(Quaternion q)
 {
 	q.xyz = -q.xyz;
+	return q;
 }
 
 Quaternion inverse(Quaternion q)

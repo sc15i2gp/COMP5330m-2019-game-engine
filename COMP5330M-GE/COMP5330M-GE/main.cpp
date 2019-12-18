@@ -1,6 +1,7 @@
 #include "Platform.h"
 #include "OpenGL.h"
 #include "Maths.h"
+#include "RigidBody.h"
 
 void set_uniform_mat4(GLuint shader, const char* uniform_name, GLfloat* matrix)
 {
@@ -117,6 +118,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_uniform_mat4(shader, "model", &model[0][0]);
 		set_uniform_mat4(shader, "view", &view[0][0]);
 		set_uniform_mat4(shader, "projection", &projection[0][0]);
+
+		// Physics Testing goes here
+		/*RigidBody point({ 0.0,20.0,0.0 }, { 0.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0);
+		Vector3 gravity(0.0, -9.81 * point.mass, 0.0);
+		Vector3* forces = { &gravity };
+		for (int i = 0; i < 300; i++) {
+			point.updateDisplacement(forces, 0.01667);
+			OutputDebugStringf("%f %f %f\n", point.displacement.x, point.displacement.y, point.displacement.z);
+			i++;
+		}*/
 
 		//Main loop
 		HDC window_device_context = GetDC(window); //Used to swap buffers
