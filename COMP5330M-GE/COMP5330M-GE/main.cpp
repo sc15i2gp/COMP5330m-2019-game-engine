@@ -112,7 +112,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		OutputDebugStringf("Aspect ratio: %f\n", get_aspect_ratio(window));
 		Matrix4x4 projection = perspective(90.0f, get_aspect_ratio(window), 0.1f, 10.0f);
 		print_mat(projection);
-		print_mat(view);
+		print_mat(view); 
 		glUseProgram(shader);
 		set_uniform_mat4(shader, "model", &model[0][0]);
 		set_uniform_mat4(shader, "view", &view[0][0]);
