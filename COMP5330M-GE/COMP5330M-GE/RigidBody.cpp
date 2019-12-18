@@ -14,21 +14,21 @@ RigidBody::RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vecto
 	this->mass = mass;
 }
 
-bool RigidBody::checkForCollision() {
-	return displacement[1] <= 0.0;
+bool checkForCollision(RigidBody& r) {
+	return r.displacement[1] <= 0.0;
 }
 
-void RigidBody::updateDisplacement(Vector3* forces, float timeStep) {
-	displacement = displacement + (timeStep * velocity) + (0.5 * (timeStep * timeStep) * acceleration);
-	velocity = velocity + (0.5 * timeStep * acceleration);
+void updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float timeStep) {
+	r.displacement = r.displacement + (timeStep * r.velocity) + (0.5 * (timeStep * timeStep) * r.acceleration);
+	r.velocity = r.velocity + (0.5 * timeStep * r.acceleration);
 	Vector3 totalForce = { 0.0,0.0,0.0 };
-	for (Vector3* force = forces; &force; force++) {
-		totalForce += *force;
+	for (int i = 0; i < numOfForces; ++i) {
+		totalForce += forces[i];
 	}
-	acceleration = totalForce / mass;
-	velocity = velocity + (0.5 * timeStep * acceleration);
-	if (checkForCollision()) {
+	r.acceleration = totalForce / r.mass;
+	r.velocity = r.velocity + (0.5 * timeStep * r.acceleration);
+	if (checkForCollision(r)) {
 		float cor = 0.5;
-		velocity.y = velocity.y * -cor;
+		r.velocity.y = r.velocity.y * -cor;
 	}
 }
