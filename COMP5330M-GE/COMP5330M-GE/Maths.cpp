@@ -367,6 +367,7 @@ Matrix4x4 transpose(Matrix4x4 m)
 	{
 		t[i] = m.row(i); //i'th column of t = i'th row of m
 	}
+	return t;
 }
 
 //Applies scale of factor f to matrix m

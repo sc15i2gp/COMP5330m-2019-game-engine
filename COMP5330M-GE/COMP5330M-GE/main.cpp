@@ -103,7 +103,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (void*)0);
 		glEnableVertexAttribArray(0);
 		glBindVertexArray(0);
-
 		Matrix4x4 model = identity();
 		translate(model, Vector3(0.0f, 0.2f, 0.0f));
 
