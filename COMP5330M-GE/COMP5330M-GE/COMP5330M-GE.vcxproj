@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Maths.cpp" />
     <ClCompile Include="OpenGL.cpp" />
@@ -134,11 +135,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glext.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="khrplatform.h" />
+    <ClInclude Include="Landscape.h" />
     <ClInclude Include="Maths.h" />
     <ClInclude Include="OpenGL.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="wglext.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fshader.glsl" />
+    <None Include="vshader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
