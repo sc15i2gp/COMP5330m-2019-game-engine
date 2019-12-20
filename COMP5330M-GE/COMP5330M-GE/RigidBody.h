@@ -2,19 +2,26 @@
 
 #include "Maths.h"
 
-struct HitBoxes
+struct Sphere
 {
-	struct Sphere
-	{
-		float radius;
-	};
+	float radius;
+};
 
-	struct Box
+struct Square 
+{
+	float x;
+	float y;
+	Vector3 normal;
+};
+
+struct CollidableShape
+{
+	union
 	{
-		float width;
-		float height;
-		float depth;
+		Sphere sphere;
+		Square square;
 	};
+	CollidableShape();
 };
 
 struct RigidBody
@@ -23,10 +30,12 @@ struct RigidBody
 	Vector3 velocity;
 	Vector3 acceleration;
 	float mass;
-	HitBoxes* hitBoxes;
+	int shapeType;
+	CollidableShape shape;
 
 	RigidBody();
-	RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vector3 initialAcceleration, float mass);
+	RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vector3 initialAcceleration, float mass, float radius);
+	RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vector3 initialAcceleration, float mass, float x, float y, Vector3 normal);
 };
 
 // Check for collision
