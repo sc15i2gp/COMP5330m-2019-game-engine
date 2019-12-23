@@ -94,6 +94,8 @@ void operator/=(Vector3&, float);
 
 Vector3 operator-(Vector3); //Unary
 
+bool operator==(Vector3, Vector3);
+
 //Common vector operations
 float dot(Vector3, Vector3);
 float length(Vector3);
@@ -158,7 +160,8 @@ Vector4 operator-(Vector4); //Unary
 bool operator==(Vector4, Vector4);
 
 //Common vector operations
-float dot(Vector4, Vector4);
+float dot(Vector4, Vector4); //Does a 3d dot product using 4d vectors
+float dot_4(Vector4, Vector4); //Does a 4d dot product
 float length(Vector4);
 
 Vector4 cross(Vector4, Vector4);

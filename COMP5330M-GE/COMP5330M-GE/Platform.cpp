@@ -69,7 +69,7 @@ char* read_file(const char* path)
 	}
 
 	DWORD size = GetFileSize(file_handle, NULL);
-	CHAR* buffer = (CHAR*)malloc(size+1);
+	CHAR* buffer = (CHAR*)alloc_mem(size+1);
 	DWORD size_read = 0;
 	BOOL file_read = ReadFile(file_handle, buffer, size-1, &size_read, NULL);
 	if (!file_read)
@@ -84,15 +84,24 @@ char* read_file(const char* path)
 }
 
 //NOTE: alloc and free will almost definitely need changing as our memory needs change
-void* alloc(int size)
+void* __alloc_mem(Platform_Table* platform, int size)
 {
+	OutputDebugStringf("ALLOC\n");
 	HANDLE process_heap = GetProcessHeap();
-	void* buffer = HeapAlloc(process_heap, HEAP_ZERO_MEMORY, size);
-	if (!process_heap) OutputDebugStringf("Allocation failed\n");
-	return buffer;
+	try
+	{
+		void* buffer = HeapAlloc(process_heap, 0, size);
+		if (!buffer) OutputDebugStringf("Allocation failed\n");
+		return buffer;
+	}
+	catch(...)
+	{
+		OutputDebugStringf("Alloc threw exception\n");
+		return NULL;
+	}
 }
 
-void dealloc(void* ptr)
+void __dealloc_mem(Platform_Table* platform, void* ptr)
 {
 	HANDLE process_heap = GetProcessHeap();
 	BOOL freed = HeapFree(process_heap, 0, ptr);
