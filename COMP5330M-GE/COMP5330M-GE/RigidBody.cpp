@@ -1,43 +1,26 @@
 #include "RigidBody.h"
 
-CollidableShape::CollidableShape()
-{
-}
-
-
 RigidBody::RigidBody() {
 	displacement = { 0.0,0.0,0.0 };
 	velocity = { 0.0,0.0,0.0 };
 	acceleration = { 0.0,0.0,0.0 };
 	mass = 1.0;
-	shapeType = 1;
-	shape.sphere.radius = 1.0;
 }
 
-RigidBody::RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vector3 initialAcceleration, float mass, float radius) {
-	displacement = initialDisplacement;
+RigidBody::RigidBody(Mesh mesh, Vector3 initialVelocity, Vector3 initialAcceleration, float mass) {
+	Vector3 verticesSum = { 0.0,0.0,0.0 };
+	for (int i = 0; i < mesh.number_of_vertices; ++i) {
+		verticesSum += mesh.vertices->position;
+	}
+	verticesSum /= mesh.number_of_vertices;
+	displacement = verticesSum;
 	velocity = initialVelocity;
 	acceleration = initialAcceleration;
 	this->mass = mass;
-	shapeType = 1;
-	shape.sphere.radius = radius;
-}
-
-RigidBody::RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vector3 initialAcceleration, float mass, float x, float y, Vector3 normal) {
-	displacement = initialDisplacement;
-	velocity = initialVelocity;
-	acceleration = initialAcceleration;
-	this->mass = mass;
-	shapeType = 2;
-	shape.square.x = x;
-	shape.square.y = y;
-	shape.square.normal = normal;
 }
 
 bool checkForCollision(RigidBody& r) {
-	if (r.shapeType == 1) {
-		return true;
-	}
+	return true;
 }
 
 void updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float timeStep) {
