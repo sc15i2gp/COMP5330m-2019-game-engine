@@ -83,22 +83,23 @@ char* read_file(const char* path)
 	return buffer;
 }
 
+void copy_mem(void* src, void* dst, int length)
+{
+	CopyMemory(dst, src, length);
+}
+
 //NOTE: alloc and free will almost definitely need changing as our memory needs change
 void* __alloc_mem(Platform_Table* platform, int size)
 {
-	OutputDebugStringf("ALLOC\n");
 	HANDLE process_heap = GetProcessHeap();
-	try
+	void* buffer = HeapAlloc(process_heap, 0, size);
+	if (!buffer)
 	{
-		void* buffer = HeapAlloc(process_heap, 0, size);
-		if (!buffer) OutputDebugStringf("Allocation failed\n");
-		return buffer;
-	}
-	catch(...)
-	{
-		OutputDebugStringf("Alloc threw exception\n");
+		OutputDebugStringf("Allocation failed\n");
 		return NULL;
 	}
+	ZeroMemory(buffer, size);
+	return buffer;
 }
 
 void __dealloc_mem(Platform_Table* platform, void* ptr)

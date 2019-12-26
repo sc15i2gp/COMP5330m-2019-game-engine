@@ -1,24 +1,171 @@
 #include "Graphics.h"
 
-void set_uniform_mat4(GLuint shader, const char* uniform_name, GLfloat* matrix)
+Graphics_Table __graphics;
+
+//init_data = NULL means that the mem is allocated but no data is buffered
+GLuint alloc_gpu_mem(int size, GLenum target, GLenum usage, void* init_data = NULL)
 {
-	GLint matrix_location = glGetUniformLocation(shader, uniform_name);
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, matrix);
+	GLuint buffer;
+	glGenBuffers(1, &buffer);
+	glBindBuffer(target, buffer);
+	glBufferData(target, size, init_data, usage);
+	glBindBuffer(target, 0);
+	return buffer;
 }
 
-void set_model_matrix(GLuint shader, Matrix4x4 model_mat)
+void copy_to_gpu_mem(void* src_data, GLuint dst_gpu_buffer, GLuint offset, GLsizei range, GLenum target)
 {
-	set_uniform_mat4(shader, "model", &model_mat[0][0]);
+	glBindBuffer(target, dst_gpu_buffer);
+	void* buffer_ptr = glMapBufferRange(target, (GLintptr)offset, range, GL_MAP_WRITE_BIT);
+	copy_mem(src_data, buffer_ptr, range);
+	glUnmapBuffer(target);
+	glBindBuffer(target, 0);
 }
 
-void set_view_matrix(GLuint shader, Matrix4x4 view_mat)
+void __set_model_matrix(Graphics_Table* graphics, Matrix4x4 model_mat)
 {
-	set_uniform_mat4(shader, "view", &view_mat[0][0]);
+	//set_uniform_mat4(shader, "model", &model_mat[0][0]);
+	copy_to_gpu_mem(&model_mat, graphics->model_matrix_buffer, 0, sizeof(Matrix4x4), GL_UNIFORM_BUFFER);
 }
 
-void set_projection_matrix(GLuint shader, Matrix4x4 projection_mat)
+void __set_view_matrix(Graphics_Table* graphics, Matrix4x4 view_mat)
 {
-	set_uniform_mat4(shader, "projection", &projection_mat[0][0]);
+	//set_uniform_mat4(shader, "view", &view_mat[0][0]);
+	copy_to_gpu_mem(&view_mat, graphics->view_projection_matrix_buffer, 
+		offsetof(View_Projection_Block, view_matrix), sizeof(Matrix4x4), 
+		GL_UNIFORM_BUFFER);
+}
+
+void __set_projection_matrix(Graphics_Table* graphics, Matrix4x4 projection_mat)
+{
+	//set_uniform_mat4(shader, "projection", &projection_mat[0][0]);
+	copy_to_gpu_mem(&projection_mat, graphics->view_projection_matrix_buffer, 
+		offsetof(View_Projection_Block, projection_matrix), sizeof(Matrix4x4), 
+		GL_UNIFORM_BUFFER);
+}
+
+Shader_Material reformat_for_shader(Material m)
+{
+	Shader_Material s_m;
+	s_m.ambient.xyz = m.ambient;
+	s_m.diffuse.xyz = m.diffuse;
+	s_m.specular = m.specular;
+	s_m.shininess = m.shininess;
+	return s_m;
+}
+
+void __set_material(Graphics_Table* graphics, Material material)
+{
+	Shader_Material s_material = reformat_for_shader(material);
+
+	copy_to_gpu_mem(&s_material, graphics->material_buffer, 0, sizeof(Shader_Material), GL_UNIFORM_BUFFER);
+}
+
+void __set_view_origin(Graphics_Table* graphics, Vector3 view_origin)
+{
+	Vector4 view_origin_4(view_origin, 0.0);
+	copy_to_gpu_mem(&view_origin_4, graphics->view_projection_matrix_buffer, offsetof(View_Projection_Block, view_position), sizeof(Vector4), GL_UNIFORM_BUFFER);
+}
+
+void __set_direction_light_direction(Graphics_Table* graphics, GLuint light_number, Vector3 light_direction)
+{
+	GLintptr offset = offsetof(Lights_Block<Shader_Direction_Light>, lights[light_number].direction);
+	Vector4 light_direction_4(light_direction, 0.0);
+	copy_to_gpu_mem(&light_direction_4, graphics->direction_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
+}
+
+void __set_direction_light_blinn_phong_properties(Graphics_Table* graphics, GLuint light_number, Material light_properties)
+{
+	Shader_Material s_light_properties = reformat_for_shader(light_properties);
+	GLintptr offset = offsetof(Lights_Block<Shader_Direction_Light>, lights[light_number].ambient);
+	GLsizei range = 2 * sizeof(Vector4) + sizeof(Vector3);
+	copy_to_gpu_mem(&s_light_properties, graphics->direction_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+}
+
+void __switch_direction_light(Graphics_Table* graphics, GLuint light_number, GLboolean active)
+{
+	GLintptr offset = offsetof(Lights_Block<Shader_Direction_Light>, in_use[light_number]);
+	copy_to_gpu_mem(&active, graphics->direction_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
+}
+
+void __switch_point_light(Graphics_Table* graphics, GLuint light_number, GLboolean active)
+{
+	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, in_use[light_number]);
+	copy_to_gpu_mem(&active, graphics->point_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
+}
+
+void __set_point_light_position(Graphics_Table* graphics, GLuint light_number, Vector3 position)
+{
+	Vector4 position_4(position, 1.0);
+	OutputDebugStringf("V: %f %f %f %f\n", position_4.x, position_4.y, position_4.z, position_4.w);
+	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, lights[light_number].position);
+	copy_to_gpu_mem(&position_4, graphics->point_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
+}
+
+void __set_point_light_blinn_phong_properties(Graphics_Table* graphics, GLuint light_number, Material light_properties)
+{
+	Shader_Material s_light_properties = reformat_for_shader(light_properties);
+	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, lights[light_number].ambient);
+	GLsizei range = 2 * sizeof(Vector4) + sizeof(Vector3);
+	copy_to_gpu_mem(&s_light_properties, graphics->point_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+}
+
+void __set_point_light_attenuation_properties(Graphics_Table* graphics, GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic)
+{
+	Vector3 attenuation_properties(constant, linear, quadratic);
+	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, lights[light_number].constant);
+	copy_to_gpu_mem(&attenuation_properties, graphics->point_lights_buffer, offset, sizeof(Vector3), GL_UNIFORM_BUFFER);
+}
+
+void __switch_spot_light(Graphics_Table* graphics, GLuint light_number, GLboolean active)
+{
+	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, in_use[light_number]);
+	copy_to_gpu_mem(&active, graphics->spot_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
+}
+
+void __set_spot_light_position(Graphics_Table* graphics, GLuint light_number, Vector3 position)
+{
+	Vector4 position_4(position, 1.0);
+	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].position);
+	copy_to_gpu_mem(&position_4, graphics->spot_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
+}
+
+void __set_spot_light_direction(Graphics_Table* graphics, GLuint light_number, Vector3 direction)
+{
+	Vector4 direction_4(direction, 1.0);
+	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].direction);
+	GLsizei range = sizeof(Vector4);
+	copy_to_gpu_mem(&direction_4, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+}
+
+void __set_spot_light_blinn_phong_properties(Graphics_Table* graphics, GLuint light_number, Material light_properties)
+{
+	Shader_Material s_light_properties = reformat_for_shader(light_properties);
+	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].ambient);
+	GLsizei range = 2 * sizeof(Vector4) + sizeof(Vector3);
+	copy_to_gpu_mem(&s_light_properties, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+}
+
+void __set_spot_light_inner_cutoff(Graphics_Table* graphics, GLuint light_number, GLfloat angle)
+{
+	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].inner_cutoff);
+	GLsizei range = sizeof(GLfloat);
+	copy_to_gpu_mem(&angle, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+}
+
+void __set_spot_light_outer_cutoff(Graphics_Table* graphics, GLuint light_number, GLfloat angle)
+{
+	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].outer_cutoff);
+	GLsizei range = sizeof(GLfloat);
+	copy_to_gpu_mem(&angle, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+}
+
+void __set_spot_light_attenuation_properties(Graphics_Table* graphics, GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic)
+{
+	Vector3 attenuation_properties(constant, linear, quadratic);
+	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].constant);
+	GLsizei range = sizeof(Vector3);
+	copy_to_gpu_mem(&attenuation_properties, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
 bool initialise_graphics()
@@ -86,22 +233,81 @@ void begin_render()
 	glViewport(0, 0, get_window_width(), get_window_height());
 }
 
-void use_shader(GLuint shader)
+void __use_shader(Graphics_Table* graphics)
 {
-	glUseProgram(shader);
+	glUseProgram(graphics->shader);
 }
 
-GLuint load_shader_program(const char* v_shader_path, const char* f_shader_path)
+GLuint alloc_and_bind_ubo(GLsizei size, GLuint binding, GLenum target, GLenum usage)
+{
+	void* init_data = alloc_mem(size); //Zeroes the ubo data
+	GLuint ubo_buffer = alloc_gpu_mem(size, target, usage, init_data);
+	glBindBufferBase(target, binding, ubo_buffer);
+	return ubo_buffer;
+}
+
+GLuint compile_shader_src(char* shader_src, GLenum shader_type)
+{
+	GLuint shader = glCreateShader(shader_type);
+	glShaderSource(shader, 1, &shader_src, NULL);
+	glCompileShader(shader);
+	
+	char info[2048] = {};
+	GLint success;
+
+	//NOTE: OpenGL/AMD/whoever is really shit, this caused a crash when a specific compiler error occurred on my machine
+	//Error was referring to a uniform variable within a uniform block as "uniform_block.var_name" instead of just "var_name"
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+	
+	if (!success)
+	{
+		glGetShaderInfoLog(shader, 512, NULL, info);
+		OutputDebugStringf("Error: Shader compilation failed: \n%s", info);
+		return 0;
+	}
+	return shader;
+}
+
+GLuint create_shader_program(char* v_shader_src, char* f_shader_src)
+{
+	GLuint v_shader = compile_shader_src(v_shader_src, GL_VERTEX_SHADER);
+	GLuint f_shader = compile_shader_src(f_shader_src, GL_FRAGMENT_SHADER);
+
+	GLuint shader = glCreateProgram();
+	glAttachShader(shader, v_shader);
+	glAttachShader(shader, f_shader);
+	glLinkProgram(shader);
+
+	GLint success;
+	glGetProgramiv(shader, GL_LINK_STATUS, &success);
+	if (!success)
+	{//If the shader program wasn't linked
+		OutputDebugString("Failed to link shader program\n");
+		return 0;
+	}
+	glDeleteShader(v_shader);
+	glDeleteShader(f_shader);
+	return shader;
+}
+
+
+void __load_shader_program(Graphics_Table* graphics, const char* v_shader_path, const char* f_shader_path)
 {
 	char* v_shader_src = read_file(v_shader_path);
 	char* f_shader_src = read_file(f_shader_path);
-
-	GLuint shader = create_shader_program(v_shader_src, f_shader_src);
+	OutputDebugString("HERE\n");
+	graphics->shader = create_shader_program(v_shader_src, f_shader_src);
+	
+	//Create + bind uniform buffers
+	graphics->model_matrix_buffer = alloc_and_bind_ubo(sizeof(Matrix4x4), 0, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	graphics->view_projection_matrix_buffer = alloc_and_bind_ubo(sizeof(View_Projection_Block), 1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	graphics->material_buffer = alloc_and_bind_ubo(sizeof(Shader_Material), 2, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	graphics->direction_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Direction_Light>), 3, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	graphics->spot_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Spot_Light>), 4, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	graphics->point_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Point_Light>), 5, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 
 	dealloc_mem(v_shader_src);
 	dealloc_mem(f_shader_src);
-
-	return shader;
 }
 
 //Generates a sphere vertex

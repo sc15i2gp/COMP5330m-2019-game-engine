@@ -4,53 +4,6 @@
 GL_REQUIRED_FUNCTIONS_LIST
 #undef GL_FUNCTION
 
-/****************************/
-
-/*			Utility			*/
-
-/****************************/
-
-GLuint compile_shader_src(char* shader_src, GLenum shader_type)
-{
-	GLuint shader = glCreateShader(shader_type);
-	glShaderSource(shader, 1, &shader_src, NULL);
-	glCompileShader(shader);
-
-	char info[512] = {};
-	GLint success;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(shader, 512, NULL, info);
-		OutputDebugStringf("Error: Shader compilation failed: \n%s", info);
-		return 0;
-	}
-	return shader;
-}
-
-GLuint create_shader_program(char* v_shader_src, char* f_shader_src)
-{
-	GLuint v_shader = compile_shader_src(v_shader_src, GL_VERTEX_SHADER);
-	GLuint f_shader = compile_shader_src(f_shader_src, GL_FRAGMENT_SHADER);
-
-	GLuint shader = glCreateProgram();
-	glAttachShader(shader, v_shader);
-	glAttachShader(shader, f_shader);
-	glLinkProgram(shader);
-
-	GLint success;
-	glGetProgramiv(shader, GL_LINK_STATUS, &success);
-	if (!success)
-	{//If the shader program wasn't linked
-		OutputDebugString("Failed to link shader program\n");
-		return 0;
-	}
-	glDeleteShader(v_shader);
-	glDeleteShader(f_shader);
-	return shader;
-}
-
-
 /************************************/
 
 /*			Initialisation			*/

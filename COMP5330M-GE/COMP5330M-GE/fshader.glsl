@@ -6,10 +6,6 @@ float cos_deg(float f)
 	return cos(f * pi / 180.0);
 }
 
-in vec3 normal;
-in vec3 frag_pos;
-out vec4 colour;
-
 //Blinn-Phong material
 struct bp_material
 {
@@ -22,6 +18,7 @@ struct bp_material
 struct direction_light
 {
 	vec3 direction;
+
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
@@ -30,6 +27,7 @@ struct direction_light
 struct point_light
 {
 	vec3 position;
+
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
@@ -44,6 +42,7 @@ struct spot_light
 {
 	vec3 position;
 	vec3 direction;
+
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
@@ -56,11 +55,34 @@ struct spot_light
 	float quadratic;
 };
 
-uniform bp_material material;
+layout(std140, binding = 2) uniform material_block
+{
+	bp_material material;
+};
 
-uniform direction_light direction_lights[32];
-uniform spot_light spot_lights[32];
-uniform point_light point_lights[32];
+layout(std140, binding = 3) uniform direction_light_block
+{
+	bool d_is_on[32];
+	direction_light d_lights[32];
+};
+
+layout(std140, binding = 4) uniform spot_light_block
+{
+	bool s_is_on[32];
+	spot_light s_lights[32];
+};
+
+layout(std140, binding = 5) uniform point_light_block
+{
+	bool p_is_on[32];
+	point_light p_lights[32];
+};
+
+in vec3 normal;
+in vec3 fragment_position;
+in vec3 view_position;
+
+out vec4 colour;
 
 vec3 compute_direction_light_intensity(direction_light d_light, bp_material material, vec3 normal, vec3 view_direction)
 {
@@ -68,7 +90,8 @@ vec3 compute_direction_light_intensity(direction_light d_light, bp_material mate
 	vec3 halfway = normalize(light_direction+view_direction);
 
 	float diffuse_impact = max(dot(normal, light_direction), 0.0);
-	float specular_impact = pow(max(dot(normal, halfway), 0.0), material.shininess);
+	float c_t = dot(normal, halfway);
+	float specular_impact = pow(max(c_t, 0.0), material.shininess);
 
 	vec3 ambient = d_light.ambient * material.ambient;
 	vec3 diffuse = diffuse_impact * d_light.diffuse * material.diffuse;
@@ -119,22 +142,19 @@ vec3 compute_spot_light_intensity(spot_light s_light, bp_material material, vec3
 
 void main()
 {
-vec3 view_pos = vec3(0.0, 0.0, 1.0);
+	vec3 view_direction = normalize(view_position - fragment_position);
 
-direction_light d_light;
-d_light.direction = vec3(0.0, -1.0, 0.0);
-d_light.ambient = vec3(0.0, 0.3, 1.0);
-d_light.diffuse = vec3(0.0, 0.3, 1.0);
-d_light.specular = vec3(0.0, 0.3, 1.0);
-
-bp_material material;
-material.ambient = vec3(0.247, 0.199, 0.075);
-material.diffuse = vec3(0.752, 0.606, 0.226);
-material.specular = vec3(0.628, 0.556, 0.367);
-material.shininess = 51.2;
-
-vec3 view_direction = normalize(view_pos - frag_pos);
-vec3 light_intensity = compute_direction_light_intensity(d_light, material, normal, view_direction);
-
-colour = vec4(light_intensity, 1.0);
+	vec3 light_intensity = vec3(0.0);
+	for(int i = 0; i < 32; ++i)
+	{
+		if(d_is_on[i]) 
+		light_intensity += compute_direction_light_intensity(d_lights[i], material, normal, view_direction);
+		
+		if(s_is_on[i]) 
+		light_intensity += compute_spot_light_intensity(s_lights[i], material, normal, fragment_position, view_direction);
+		
+		if(p_is_on[i])
+		light_intensity += compute_point_light_intensity(p_lights[i], material, normal, fragment_position, view_direction);
+	}
+	colour = vec4(light_intensity, 1.0);
 }
