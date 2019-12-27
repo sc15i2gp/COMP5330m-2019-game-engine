@@ -19,7 +19,8 @@ struct RigidBody
 // Check for collision
 bool checkForCollision(RigidBody&);
 
-Mesh_vertex collisionMeshVertex();
+Mesh_vertex cylinderCollision(RigidBody&, Mesh mesh);
+// Mesh_vertex groundCollision();
 
 // Update position of centre of rigid body
 void updateDisplacement(RigidBody&, Vector3* forces, int numOfForces, float timeStep);
