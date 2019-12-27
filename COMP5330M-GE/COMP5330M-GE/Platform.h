@@ -18,7 +18,9 @@ struct Platform_Table
 extern Platform_Table __platform;
 
 void OutputDebugStringf(const char* debug_string_f, ...);
+
 char* read_file(const char* path);
+void copy_mem(void* src, void* dst, int length);
 void* __alloc_mem(Platform_Table*,int size);
 void __dealloc_mem(Platform_Table*,void* ptr);
 
