@@ -98,6 +98,7 @@ struct Lights_Block
 	T lights[32];
 };
 
+#define MAX_SHADER_COUNT 4
 struct Graphics_Table
 {
 	//Uniform buffer objects
@@ -107,9 +108,10 @@ struct Graphics_Table
 	GLuint direction_lights_buffer;
 	GLuint spot_lights_buffer;
 	GLuint point_lights_buffer;
+	GLuint max_height_buffer;
 
 	//Shaders
-	GLuint shader;
+	GLuint shaders[MAX_SHADER_COUNT];
 };
 
 extern Graphics_Table __graphics;
@@ -133,13 +135,11 @@ void __set_spot_light_blinn_phong_properties(Graphics_Table*, GLuint light_numbe
 void __set_spot_light_inner_cutoff(Graphics_Table*, GLuint light_number, GLfloat angle);
 void __set_spot_light_outer_cutoff(Graphics_Table*, GLuint light_number, GLfloat angle);
 void __set_spot_light_attenuation_properties(Graphics_Table*, GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
-void __use_shader(Graphics_Table*);
-void __load_shader_program(Graphics_Table*, const char* v_shader_path, const char* f_shader_path);
+void __set_max_height(Graphics_Table*, GLfloat max_height);
+void __use_shader(Graphics_Table*, int shader);
+int __load_shader_program(Graphics_Table*, const char* v_shader_path, const char* f_shader_path);
 
 void draw(Drawable);
-
-//Separate positions and normals
-Drawable buffer_mesh(Vector3* positions, Vector3* normals, int number_of_vertices, GLuint* indices, int number_of_indices);
 
 //Interleaved positions and normals
 Drawable buffer_mesh(Mesh_vertex*, int number_of_vertices, GLuint* indices, int number_of_indices);
@@ -177,5 +177,6 @@ bool initialise_graphics();
 #define set_spot_light_inner_cutoff(l, i) __set_spot_light_inner_cutoff(&__graphics, l, i)
 #define set_spot_light_outer_cutoff(l, o) __set_spot_light_outer_cutoff(&__graphics, l, o)
 #define set_spot_light_attenuation_properties(n, c, l, q) __set_spot_light_attenuation_properties(&__graphics, n, c, l, q)
-#define use_shader() __use_shader(&__graphics)
+#define set_max_height(h) __set_max_height(&__graphics, h)
+#define use_shader(s) __use_shader(&__graphics, s)
 #define load_shader_program(v, f) __load_shader_program(&__graphics, v, f)

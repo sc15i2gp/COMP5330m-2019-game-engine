@@ -38,9 +38,15 @@ struct Vector2
 			float y;
 		};
 	};
+
+	float& operator[](int index);
 };
 
+Vector2 operator-(Vector2, Vector2);
+Vector2 operator/(Vector2, float);
 float dot(Vector2, Vector2);
+float length(Vector2);
+Vector2 normalise(Vector2);
 
 /****************************/
 

@@ -271,12 +271,41 @@ Vector3 normalise(Vector3 v)
 
 /****************************/
 
+float& Vector2::operator[](int index)
+{
+	return this->xy[index];
+}
+
+Vector2 operator-(Vector2 v, Vector2 w)
+{
+	v.x -= w.x;
+	v.y -= w.y;
+	return v;
+}
+
+Vector2 operator/(Vector2 v, float f)
+{
+	v.x /= f;
+	v.y /= f;
+	return v;
+}
+
 float dot(Vector2 v, Vector2 w)
 {
 	float d = 0.0f;
 	d += v.x * w.x;
 	d += v.y * w.y;
 	return d;
+}
+
+float length(Vector2 v)
+{
+	return sqrt(dot(v, v));
+}
+
+Vector2 normalise(Vector2 v)
+{
+	return v / length(v);
 }
 
 /********************************/

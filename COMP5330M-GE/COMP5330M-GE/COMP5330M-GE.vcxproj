@@ -128,9 +128,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="Landscape.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Maths.cpp" />
     <ClCompile Include="OpenGL.cpp" />
+    <ClCompile Include="Perlin_Noise.cpp" />
     <ClCompile Include="Platform.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -140,11 +142,13 @@
     <ClInclude Include="Landscape.h" />
     <ClInclude Include="Maths.h" />
     <ClInclude Include="OpenGL.h" />
+    <ClInclude Include="Perlin_Noise.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="wglext.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
+    <None Include="terrain_fshader.glsl" />
     <None Include="vshader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

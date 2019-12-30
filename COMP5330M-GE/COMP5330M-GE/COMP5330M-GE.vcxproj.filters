@@ -30,6 +30,12 @@
     <ClCompile Include="Graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Perlin_Noise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Landscape.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glext.h">
@@ -56,12 +62,18 @@
     <ClInclude Include="Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Perlin_Noise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="vshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="terrain_fshader.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

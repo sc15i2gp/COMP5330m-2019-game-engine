@@ -168,6 +168,19 @@ void __set_spot_light_attenuation_properties(Graphics_Table* graphics, GLuint li
 	copy_to_gpu_mem(&attenuation_properties, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
+void __set_max_height(Graphics_Table* graphics, GLfloat max_height)
+{
+	copy_to_gpu_mem(&max_height, graphics->max_height_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
+}
+
+GLuint alloc_and_bind_ubo(GLsizei size, GLuint binding, GLenum target, GLenum usage)
+{
+	void* init_data = alloc_mem(size); //Zeroes the ubo data
+	GLuint ubo_buffer = alloc_gpu_mem(size, target, usage, init_data);
+	glBindBufferBase(target, binding, ubo_buffer);
+	return ubo_buffer;
+}
+
 bool initialise_graphics()
 {
 	//Initialise opengl
@@ -178,6 +191,17 @@ bool initialise_graphics()
 		return false;
 	}
 	glEnable(GL_DEPTH_TEST);
+
+	//Create + bind uniform buffers
+	__graphics = {};
+	__graphics.model_matrix_buffer = alloc_and_bind_ubo(sizeof(Matrix4x4), 0, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	__graphics.view_projection_matrix_buffer = alloc_and_bind_ubo(sizeof(View_Projection_Block), 1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	__graphics.material_buffer = alloc_and_bind_ubo(sizeof(Shader_Material), 2, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	__graphics.direction_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Direction_Light>), 3, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	__graphics.spot_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Spot_Light>), 4, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	__graphics.point_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Point_Light>), 5, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	__graphics.max_height_buffer = alloc_and_bind_ubo(sizeof(GLfloat), 6, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+
 	return true;
 }
 
@@ -233,17 +257,9 @@ void begin_render()
 	glViewport(0, 0, get_window_width(), get_window_height());
 }
 
-void __use_shader(Graphics_Table* graphics)
+void __use_shader(Graphics_Table* graphics, int shader)
 {
-	glUseProgram(graphics->shader);
-}
-
-GLuint alloc_and_bind_ubo(GLsizei size, GLuint binding, GLenum target, GLenum usage)
-{
-	void* init_data = alloc_mem(size); //Zeroes the ubo data
-	GLuint ubo_buffer = alloc_gpu_mem(size, target, usage, init_data);
-	glBindBufferBase(target, binding, ubo_buffer);
-	return ubo_buffer;
+	glUseProgram(graphics->shaders[shader]);
 }
 
 GLuint compile_shader_src(char* shader_src, GLenum shader_type)
@@ -291,23 +307,19 @@ GLuint create_shader_program(char* v_shader_src, char* f_shader_src)
 }
 
 
-void __load_shader_program(Graphics_Table* graphics, const char* v_shader_path, const char* f_shader_path)
+int __load_shader_program(Graphics_Table* graphics, const char* v_shader_path, const char* f_shader_path)
 {
 	char* v_shader_src = read_file(v_shader_path);
 	char* f_shader_src = read_file(f_shader_path);
 	OutputDebugString("HERE\n");
-	graphics->shader = create_shader_program(v_shader_src, f_shader_src);
-	
-	//Create + bind uniform buffers
-	graphics->model_matrix_buffer = alloc_and_bind_ubo(sizeof(Matrix4x4), 0, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
-	graphics->view_projection_matrix_buffer = alloc_and_bind_ubo(sizeof(View_Projection_Block), 1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	graphics->material_buffer = alloc_and_bind_ubo(sizeof(Shader_Material), 2, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
-	graphics->direction_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Direction_Light>), 3, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	graphics->spot_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Spot_Light>), 4, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	graphics->point_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Point_Light>), 5, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	int shader = -1;
+	for (int i = 0; i < 4; ++i) if (graphics->shaders[i] == 0) shader = i;
+	graphics->shaders[shader] = create_shader_program(v_shader_src, f_shader_src);
 
 	dealloc_mem(v_shader_src);
 	dealloc_mem(f_shader_src);
+
+	return shader;
 }
 
 //Generates a sphere vertex
