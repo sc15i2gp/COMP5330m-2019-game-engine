@@ -1,6 +1,5 @@
 #pragma once
 #include <math.h>
-#include "Platform.h"
 
 //Properties:
 //Matrix: Column major, since OpenGL uses column major matrices
@@ -297,5 +296,5 @@ Quaternion inverse(Quaternion);
 float norm(Quaternion);
 
 Quaternion compute_great_circle_point(Vector2);
-Matrix4x4 quaternion_to_matrix(Quaternion);
-Matrix4x4 compute_rotation_between_quaternions(Quaternion, Quaternion);
+Matrix3x3 quaternion_to_matrix(Quaternion);
+Matrix3x3 compute_rotation_between_quaternions(Quaternion, Quaternion);

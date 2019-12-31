@@ -1,5 +1,6 @@
 #pragma once
 #include "Maths.h"
+#include "Platform.h"
 
 class Perlin_Noise_Function
 {

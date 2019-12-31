@@ -2,6 +2,21 @@
 
 Platform_Table __platform;
 
+bool was_key_down_before_this_frame(LPARAM lparam)
+{
+	int key_state_mask = 1 << 30;
+	return lparam & key_state_mask;
+}
+
+Vector2 get_cursor_position(HWND window)
+{
+	POINT p;
+	GetCursorPos(&p);
+	ScreenToClient(window, &p);
+	Vector2 v = { p.x, p.y };
+	return v;
+}
+
 //Function is called for every event passed to the process by Windows
 LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
@@ -11,6 +26,22 @@ LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, 
 	case WM_CLOSE: //Case: Window 'X' has been pressed
 		__platform.running = false; //Set the program to stop running
 		OutputDebugString("Close pressed\n");
+		break;
+	case WM_LBUTTONDOWN:
+		__platform.was_mouse_button_pressed[BUTTON_LEFT] = true;
+		break;
+	case WM_LBUTTONUP:
+		__platform.was_mouse_button_pressed[BUTTON_LEFT] = false;
+		break;
+	case WM_KEYDOWN:
+		__platform.was_key_pressed[wparam] = true;
+		break;
+	case WM_KEYUP:
+		__platform.was_key_pressed[wparam] = false;
+		break;
+	case WM_MOUSEMOVE:
+		__platform.final_cursor_position = get_cursor_position(__platform.window);
+		__platform.was_mouse_moved = true;
 		break;
 	default: //Anything else
 		result = DefWindowProc(window, message, wparam, lparam); //Call the default window handling routine for the given message
@@ -34,6 +65,7 @@ bool __initialise_platform(Platform_Table* platform, HINSTANCE instance)
 			WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, 0, 0, instance, 0);
 
 		platform->running = true;
+		platform->initial_cursor_position = get_cursor_position(platform->window);
 		return true;
 	}
 	else return false;
@@ -135,6 +167,9 @@ float __get_window_aspect_ratio(Platform_Table* platform)
 
 void __handle_input(Platform_Table* platform)
 {
+	platform->initial_cursor_position = platform->final_cursor_position;
+	platform->was_mouse_moved = false;
+
 	//Handle input events
 	MSG message;
 	while (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
@@ -143,13 +178,37 @@ void __handle_input(Platform_Table* platform)
 		TranslateMessage(&message);
 		//Send the message to the window event handler function
 		DispatchMessage(&message);
-
 	}
+}
+
+bool __was_mouse_button_pressed(Platform_Table* platform, Mouse_Button button)
+{
+	return platform->was_mouse_button_pressed[button];
+}
+
+bool __was_key_pressed(Platform_Table* platform, Keyboard_Key key)
+{
+	return platform->was_key_pressed[key];
 }
 
 bool __should_close(Platform_Table* platform)
 {
 	return !platform->running;
+}
+
+Vector2 __get_initial_mouse_position(Platform_Table* platform)
+{
+	return platform->initial_cursor_position;
+}
+
+Vector2 __get_final_mouse_position(Platform_Table* platform)
+{
+	return platform->final_cursor_position;
+}
+
+bool __was_mouse_moved(Platform_Table* platform)
+{
+	return platform->was_mouse_moved;
 }
 
 void __swap_window_buffers(Platform_Table* platform)

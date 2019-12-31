@@ -211,7 +211,7 @@ void operator+=(Vector3& v, Vector3 w)
 
 void operator-=(Vector3& v, Vector3 w)
 {
-	v = w - w;
+	v = v - w;
 }
 
 void operator*=(Vector3& v, float d)
@@ -338,20 +338,6 @@ Vector4 operator*(Matrix4x4 m, Vector4 v)
 	}
 	return w;
 }
-void _print_mat(Matrix4x4 m)
-{
-	for (int i = 0; i < 4; ++i)
-	{
-		OutputDebugStringf("%f %f %f %f\n", m[0][i], m[1][i], m[2][i], m[3][i]);
-	}
-}
-
-
-void print_vec(Vector4 v)
-{
-	OutputDebugStringf("%f %f %f %f\n", v.x, v.y, v.z, v.w);
-}
-
 
 Matrix4x4 operator*(Matrix4x4 m, Matrix4x4 n)
 {
@@ -685,7 +671,7 @@ Quaternion operator*(Quaternion q, Quaternion r)
 
 bool operator!=(Quaternion q, Quaternion r)
 {
-	return q.xyzw == r.xyzw;
+	return !(q.xyzw == r.xyzw);
 }
 
 Quaternion operator/(Quaternion q, float d)
@@ -721,9 +707,9 @@ Quaternion compute_great_circle_point(Vector2 v)
 	return q;
 }
 
-Matrix4x4 quaternion_to_matrix(Quaternion q)
+Matrix3x3 quaternion_to_matrix(Quaternion q)
 {
-	Matrix4x4 m = {};
+	Matrix3x3 m = {};
 	m[0][0] = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
 	m[0][1] = 2.0f*(q.x*q.y + q.w*q.z);
 	m[0][2] = 2.0f*(q.x*q.z - q.w*q.y);
@@ -733,11 +719,10 @@ Matrix4x4 quaternion_to_matrix(Quaternion q)
 	m[2][0] = 2.0f*(q.x*q.z + q.w*q.y);
 	m[2][1] = 2.0f*(q.y*q.z - q.w*q.x);
 	m[2][2] = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
-	m[3][3] = 1.0f;
 	return m;
 }
 
-Matrix4x4 compute_rotation_between_quaternions(Quaternion q, Quaternion r)
+Matrix3x3 compute_rotation_between_quaternions(Quaternion q, Quaternion r)
 {
 	Quaternion s = r * inverse(q);
 	return quaternion_to_matrix(s);
