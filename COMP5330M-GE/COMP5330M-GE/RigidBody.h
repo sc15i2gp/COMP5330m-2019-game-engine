@@ -12,12 +12,20 @@ struct RigidBody
 	Vector3 acceleration;
 	float mass;
 
+	// Min and max dimensions of the body - for collisions
+	float minx;
+	float maxx;
+	float miny;
+	float maxy;
+	float minz;
+	float maxz;
+
 	RigidBody();
 	RigidBody(Mesh mesh, Vector3 initialVelocity, Vector3 initialAcceleration, float mass);
 };
 
 bool cylinderCollision(RigidBody&, Mesh mesh);
-// Mesh_vertex groundCollision();
 
 // Update position of centre of rigid body
 void updateDisplacement(RigidBody&, Vector3* forces, int numOfForces, float timeStep);
+void updateVectorPositions(RigidBody&, Vector3 difference);

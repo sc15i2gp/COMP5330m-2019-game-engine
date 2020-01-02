@@ -5,12 +5,26 @@ RigidBody::RigidBody() {
 	velocity = { 0.0,0.0,0.0 };
 	acceleration = { 0.0,0.0,0.0 };
 	mass = 1.0;
+	minx = -1.0;
+	maxx = 1.0;
+	miny = -1.0;
+	maxy = 1.0;
+	minz = -1.0;
+	maxz = 1.0;
 }
 
 RigidBody::RigidBody(Mesh mesh, Vector3 initialVelocity, Vector3 initialAcceleration, float mass) {
+	this->mesh = mesh;
 	Vector3 verticesSum = { 0.0,0.0,0.0 };
+	minx = maxy = miny = maxx = minz = maxz = 0.0;
 	for (int i = 0; i < mesh.number_of_vertices; ++i) {
 		verticesSum += mesh.vertices[i].position;
+		if (mesh.vertices[i].position.x > maxx) maxx = mesh.vertices[i].position.x;
+		if (mesh.vertices[i].position.y > maxy) maxy = mesh.vertices[i].position.y;
+		if (mesh.vertices[i].position.z > maxz) maxz = mesh.vertices[i].position.z;
+		if (mesh.vertices[i].position.x < minx) minx = mesh.vertices[i].position.x;
+		if (mesh.vertices[i].position.y < miny) miny = mesh.vertices[i].position.y;
+		if (mesh.vertices[i].position.z < minz) minz = mesh.vertices[i].position.z;
 	}
 	verticesSum /= mesh.number_of_vertices;
 	displacement = verticesSum;
@@ -19,36 +33,34 @@ RigidBody::RigidBody(Mesh mesh, Vector3 initialVelocity, Vector3 initialAccelera
 	this->mass = mass;
 }
 
-bool checkForCollision(RigidBody& r) {
-	return true;
-}
-
 bool cylinderCollision(RigidBody& r, Mesh mesh) {
-	float rminx = 0.0; float rminy = 0.0; float rminz = 0.0;
-	float rmaxx = 0.0; float rmaxy = 0.0; float rmaxz = 0.0;
-	for (int i = 0; i < r.mesh.number_of_vertices; ++i) {
-		if (r.mesh.vertices[i].position.x > rmaxx) rmaxx = r.mesh.vertices[i].position.x;
-		if (r.mesh.vertices[i].position.y > rmaxy) rmaxy = r.mesh.vertices[i].position.y;
-		if (r.mesh.vertices[i].position.z > rmaxz) rmaxz = r.mesh.vertices[i].position.z;
-		if (r.mesh.vertices[i].position.x < rminx) rminx = r.mesh.vertices[i].position.x;
-		if (r.mesh.vertices[i].position.y < rminy) rminy = r.mesh.vertices[i].position.y;
-		if (r.mesh.vertices[i].position.z < rminz) rminz = r.mesh.vertices[i].position.z;
-	}
-	for (int j = 0; j < mesh.number_of_vertices; ++j) {
-		if (float(mesh.vertices[j].position.x - rmaxx) <= 0.0 ||
-			float(mesh.vertices[j].position.y - rmaxy) <= 0.0 ||
-			float(mesh.vertices[j].position.z - rmaxz) <= 0.0 || 
-			float(rminx - mesh.vertices[j].position.x) <= 0.0 || 
-			float(rminy - mesh.vertices[j].position.y) <= 0.0 || 
-			float(rminy - mesh.vertices[j].position.z) <= 0.0) {
+	for (int i = 0; i < mesh.number_of_vertices; ++i) {
+		float x1 = mesh.vertices[i].position.x - r.maxx;
+		float y1 = mesh.vertices[i].position.y - r.maxy;
+		float z1 = mesh.vertices[i].position.z - r.maxz;
+		float x2 = r.minx - mesh.vertices[i].position.x;
+		float y2 = r.miny - mesh.vertices[i].position.y;
+		float z2 = r.minz - mesh.vertices[i].position.z;
+		if (x1 <= 0.0 || y1 <= 0.0 || z1 <= 0.0 || x2 <= 0.0 || y2 <= 0.0 || z2 <= 0.0) {
 			return true;
 		}
 	}
 	return false;
 }
 
+void updateVectorPositions(RigidBody& r, Vector3 difference)
+{
+	for (int i = 0; i < r.mesh.number_of_vertices; ++i) {
+		r.mesh.vertices[i].position += difference;
+	}
+}
+
 void updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float timeStep) {
-	r.displacement = r.displacement + (timeStep * r.velocity) + (0.5 * (float(timeStep * timeStep)) * r.acceleration);
+	Vector3 initialDis = r.displacement;
+	r.displacement = r.displacement + (timeStep * r.velocity) + ((0.5 * timeStep * timeStep) * r.acceleration);
+	Vector3 finalDis = r.displacement;
+	Vector3 disDiff = finalDis - initialDis;
+	updateVectorPositions(r, disDiff);
 	r.velocity = r.velocity + (0.5 * timeStep * r.acceleration);
 	Vector3 totalForce = { 0.0,0.0,0.0 };
 	for (int i = 0; i < numOfForces; ++i) {
@@ -56,12 +68,4 @@ void updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float ti
 	}
 	r.acceleration = totalForce / r.mass;
 	r.velocity = r.velocity + (0.5 * timeStep * r.acceleration);
-	/*if (checkForCollision(r)) {
-		float cor = 0.5;
-		Vector3 v = { 0.0,1.0,0.0 };
-		normalise(v);
-		r.velocity.x = r.velocity.x * v.x * cor;
-		r.velocity.y = r.velocity.y * v.y * cor;
-		r.velocity.z = r.velocity.z * v.z * cor;
-	}*/
 }
