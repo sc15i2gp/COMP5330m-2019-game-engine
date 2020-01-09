@@ -22,24 +22,24 @@ void copy_to_gpu_mem(void* src_data, GLuint dst_gpu_buffer, GLuint offset, GLsiz
 	glBindBuffer(target, 0);
 }
 
-void __set_model_matrix(Graphics_Table* graphics, Matrix4x4 model_mat)
+void Graphics_Table::__set_model_matrix(Matrix4x4 model_mat)
 {
 	//set_uniform_mat4(shader, "model", &model_mat[0][0]);
-	copy_to_gpu_mem(&model_mat, graphics->model_matrix_buffer, 0, sizeof(Matrix4x4), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&model_mat, this->model_matrix_buffer, 0, sizeof(Matrix4x4), GL_UNIFORM_BUFFER);
 }
 
-void __set_view_matrix(Graphics_Table* graphics, Matrix4x4 view_mat)
+void Graphics_Table::__set_view_matrix(Matrix4x4 view_mat)
 {
 	//set_uniform_mat4(shader, "view", &view_mat[0][0]);
-	copy_to_gpu_mem(&view_mat, graphics->view_projection_matrix_buffer, 
+	copy_to_gpu_mem(&view_mat, this->view_projection_matrix_buffer, 
 		offsetof(View_Projection_Block, view_matrix), sizeof(Matrix4x4), 
 		GL_UNIFORM_BUFFER);
 }
 
-void __set_projection_matrix(Graphics_Table* graphics, Matrix4x4 projection_mat)
+void Graphics_Table::__set_projection_matrix(Matrix4x4 projection_mat)
 {
 	//set_uniform_mat4(shader, "projection", &projection_mat[0][0]);
-	copy_to_gpu_mem(&projection_mat, graphics->view_projection_matrix_buffer, 
+	copy_to_gpu_mem(&projection_mat, this->view_projection_matrix_buffer, 
 		offsetof(View_Projection_Block, projection_matrix), sizeof(Matrix4x4), 
 		GL_UNIFORM_BUFFER);
 }
@@ -54,123 +54,122 @@ Shader_Material reformat_for_shader(Material m)
 	return s_m;
 }
 
-void __set_material(Graphics_Table* graphics, Material material)
+void Graphics_Table::__set_material(Material material)
 {
 	Shader_Material s_material = reformat_for_shader(material);
 
-	copy_to_gpu_mem(&s_material, graphics->material_buffer, 0, sizeof(Shader_Material), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&s_material, this->material_buffer, 0, sizeof(Shader_Material), GL_UNIFORM_BUFFER);
 }
 
-void __set_view_origin(Graphics_Table* graphics, Vector3 view_origin)
+void Graphics_Table::__set_view_origin(Vector3 view_origin)
 {
 	Vector4 view_origin_4(view_origin, 0.0);
-	copy_to_gpu_mem(&view_origin_4, graphics->view_projection_matrix_buffer, offsetof(View_Projection_Block, view_position), sizeof(Vector4), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&view_origin_4, this->view_projection_matrix_buffer, offsetof(View_Projection_Block, view_position), sizeof(Vector4), GL_UNIFORM_BUFFER);
 }
 
-void __set_direction_light_direction(Graphics_Table* graphics, GLuint light_number, Vector3 light_direction)
+void Graphics_Table::__set_direction_light_direction(GLuint light_number, Vector3 light_direction)
 {
 	GLintptr offset = offsetof(Lights_Block<Shader_Direction_Light>, lights[light_number].direction);
 	Vector4 light_direction_4(light_direction, 0.0);
-	copy_to_gpu_mem(&light_direction_4, graphics->direction_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&light_direction_4, this->direction_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
 }
 
-void __set_direction_light_blinn_phong_properties(Graphics_Table* graphics, GLuint light_number, Material light_properties)
+void Graphics_Table::__set_direction_light_blinn_phong_properties(GLuint light_number, Material light_properties)
 {
 	Shader_Material s_light_properties = reformat_for_shader(light_properties);
 	GLintptr offset = offsetof(Lights_Block<Shader_Direction_Light>, lights[light_number].ambient);
 	GLsizei range = 2 * sizeof(Vector4) + sizeof(Vector3);
-	copy_to_gpu_mem(&s_light_properties, graphics->direction_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&s_light_properties, this->direction_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
-void __switch_direction_light(Graphics_Table* graphics, GLuint light_number, GLboolean active)
+void Graphics_Table::__switch_direction_light(GLuint light_number, GLboolean active)
 {
 	GLintptr offset = offsetof(Lights_Block<Shader_Direction_Light>, in_use[light_number]);
-	copy_to_gpu_mem(&active, graphics->direction_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&active, this->direction_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
 }
 
-void __switch_point_light(Graphics_Table* graphics, GLuint light_number, GLboolean active)
+void Graphics_Table::__switch_point_light(GLuint light_number, GLboolean active)
 {
 	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, in_use[light_number]);
-	copy_to_gpu_mem(&active, graphics->point_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&active, this->point_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
 }
 
-void __set_point_light_position(Graphics_Table* graphics, GLuint light_number, Vector3 position)
+void Graphics_Table::__set_point_light_position(GLuint light_number, Vector3 position)
 {
 	Vector4 position_4(position, 1.0);
-	OutputDebugStringf("V: %f %f %f %f\n", position_4.x, position_4.y, position_4.z, position_4.w);
 	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, lights[light_number].position);
-	copy_to_gpu_mem(&position_4, graphics->point_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&position_4, this->point_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
 }
 
-void __set_point_light_blinn_phong_properties(Graphics_Table* graphics, GLuint light_number, Material light_properties)
+void Graphics_Table::__set_point_light_blinn_phong_properties(GLuint light_number, Material light_properties)
 {
 	Shader_Material s_light_properties = reformat_for_shader(light_properties);
 	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, lights[light_number].ambient);
 	GLsizei range = 2 * sizeof(Vector4) + sizeof(Vector3);
-	copy_to_gpu_mem(&s_light_properties, graphics->point_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&s_light_properties, this->point_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
-void __set_point_light_attenuation_properties(Graphics_Table* graphics, GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic)
+void Graphics_Table::__set_point_light_attenuation_properties(GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic)
 {
 	Vector3 attenuation_properties(constant, linear, quadratic);
 	GLintptr offset = offsetof(Lights_Block<Shader_Point_Light>, lights[light_number].constant);
-	copy_to_gpu_mem(&attenuation_properties, graphics->point_lights_buffer, offset, sizeof(Vector3), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&attenuation_properties, this->point_lights_buffer, offset, sizeof(Vector3), GL_UNIFORM_BUFFER);
 }
 
-void __switch_spot_light(Graphics_Table* graphics, GLuint light_number, GLboolean active)
+void Graphics_Table::__switch_spot_light(GLuint light_number, GLboolean active)
 {
 	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, in_use[light_number]);
-	copy_to_gpu_mem(&active, graphics->spot_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&active, this->spot_lights_buffer, offset, sizeof(GLuint), GL_UNIFORM_BUFFER);
 }
 
-void __set_spot_light_position(Graphics_Table* graphics, GLuint light_number, Vector3 position)
+void Graphics_Table::__set_spot_light_position(GLuint light_number, Vector3 position)
 {
 	Vector4 position_4(position, 1.0);
 	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].position);
-	copy_to_gpu_mem(&position_4, graphics->spot_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&position_4, this->spot_lights_buffer, offset, sizeof(Vector4), GL_UNIFORM_BUFFER);
 }
 
-void __set_spot_light_direction(Graphics_Table* graphics, GLuint light_number, Vector3 direction)
+void Graphics_Table::__set_spot_light_direction(GLuint light_number, Vector3 direction)
 {
 	Vector4 direction_4(direction, 1.0);
 	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].direction);
 	GLsizei range = sizeof(Vector4);
-	copy_to_gpu_mem(&direction_4, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&direction_4, this->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
-void __set_spot_light_blinn_phong_properties(Graphics_Table* graphics, GLuint light_number, Material light_properties)
+void Graphics_Table::__set_spot_light_blinn_phong_properties(GLuint light_number, Material light_properties)
 {
 	Shader_Material s_light_properties = reformat_for_shader(light_properties);
 	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].ambient);
 	GLsizei range = 2 * sizeof(Vector4) + sizeof(Vector3);
-	copy_to_gpu_mem(&s_light_properties, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&s_light_properties, this->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
-void __set_spot_light_inner_cutoff(Graphics_Table* graphics, GLuint light_number, GLfloat angle)
+void Graphics_Table::__set_spot_light_inner_cutoff(GLuint light_number, GLfloat angle)
 {
 	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].inner_cutoff);
 	GLsizei range = sizeof(GLfloat);
-	copy_to_gpu_mem(&angle, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&angle, this->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
-void __set_spot_light_outer_cutoff(Graphics_Table* graphics, GLuint light_number, GLfloat angle)
+void Graphics_Table::__set_spot_light_outer_cutoff(GLuint light_number, GLfloat angle)
 {
 	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].outer_cutoff);
 	GLsizei range = sizeof(GLfloat);
-	copy_to_gpu_mem(&angle, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&angle, this->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
-void __set_spot_light_attenuation_properties(Graphics_Table* graphics, GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic)
+void Graphics_Table::__set_spot_light_attenuation_properties(GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic)
 {
 	Vector3 attenuation_properties(constant, linear, quadratic);
 	GLintptr offset = offsetof(Lights_Block<Shader_Spot_Light>, lights[light_number].constant);
 	GLsizei range = sizeof(Vector3);
-	copy_to_gpu_mem(&attenuation_properties, graphics->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&attenuation_properties, this->spot_lights_buffer, offset, range, GL_UNIFORM_BUFFER);
 }
 
-void __set_max_height(Graphics_Table* graphics, GLfloat max_height)
+void Graphics_Table::__set_max_height(GLfloat max_height)
 {
-	copy_to_gpu_mem(&max_height, graphics->max_height_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&max_height, this->max_height_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
 }
 
 GLuint alloc_and_bind_ubo(GLsizei size, GLuint binding, GLenum target, GLenum usage)
@@ -181,7 +180,7 @@ GLuint alloc_and_bind_ubo(GLsizei size, GLuint binding, GLenum target, GLenum us
 	return ubo_buffer;
 }
 
-bool initialise_graphics()
+bool Graphics_Table::__initialise_graphics()
 {
 	//Initialise opengl
 	if (!initialise_opengl(get_window()))
@@ -193,14 +192,14 @@ bool initialise_graphics()
 	glEnable(GL_DEPTH_TEST);
 
 	//Create + bind uniform buffers
-	__graphics = {};
-	__graphics.model_matrix_buffer = alloc_and_bind_ubo(sizeof(Matrix4x4), 0, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
-	__graphics.view_projection_matrix_buffer = alloc_and_bind_ubo(sizeof(View_Projection_Block), 1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	__graphics.material_buffer = alloc_and_bind_ubo(sizeof(Shader_Material), 2, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
-	__graphics.direction_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Direction_Light>), 3, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	__graphics.spot_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Spot_Light>), 4, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	__graphics.point_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Point_Light>), 5, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	__graphics.max_height_buffer = alloc_and_bind_ubo(sizeof(GLfloat), 6, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	*this = {};
+	this->model_matrix_buffer = alloc_and_bind_ubo(sizeof(Matrix4x4), 0, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	this->view_projection_matrix_buffer = alloc_and_bind_ubo(sizeof(View_Projection_Block), 1, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	this->material_buffer = alloc_and_bind_ubo(sizeof(Shader_Material), 2, GL_UNIFORM_BUFFER, GL_DYNAMIC_DRAW);
+	this->direction_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Direction_Light>), 3, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	this->spot_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Spot_Light>), 4, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	this->point_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Point_Light>), 5, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	this->max_height_buffer = alloc_and_bind_ubo(sizeof(GLfloat), 6, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 
 	return true;
 }
@@ -257,9 +256,9 @@ void begin_render()
 	glViewport(0, 0, get_window_width(), get_window_height());
 }
 
-void __use_shader(Graphics_Table* graphics, int shader)
+void Graphics_Table::__use_shader(int shader)
 {
-	glUseProgram(graphics->shaders[shader]);
+	glUseProgram(this->shaders[shader]);
 }
 
 GLuint compile_shader_src(char* shader_src, GLenum shader_type)
@@ -307,14 +306,14 @@ GLuint create_shader_program(char* v_shader_src, char* f_shader_src)
 }
 
 
-int __load_shader_program(Graphics_Table* graphics, const char* v_shader_path, const char* f_shader_path)
+int Graphics_Table::__load_shader_program(const char* v_shader_path, const char* f_shader_path)
 {
 	char* v_shader_src = read_file(v_shader_path);
 	char* f_shader_src = read_file(f_shader_path);
 	OutputDebugString("HERE\n");
 	int shader = -1;
-	for (int i = 0; i < 4; ++i) if (graphics->shaders[i] == 0) shader = i;
-	graphics->shaders[shader] = create_shader_program(v_shader_src, f_shader_src);
+	for (int i = 0; i < 4; ++i) if (this->shaders[i] == 0) shader = i;
+	this->shaders[shader] = create_shader_program(v_shader_src, f_shader_src);
 
 	dealloc_mem(v_shader_src);
 	dealloc_mem(f_shader_src);

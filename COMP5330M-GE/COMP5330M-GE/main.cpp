@@ -160,9 +160,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_point_light_blinn_phong_properties(0, light_properties);
 		set_point_light_attenuation_properties(0, 1.0, 0.0014, 0.0007);
 
-		set_max_height(10.0f);
-
-		Drawable terrain = buffer_terrain_mesh(100.0f, 100.0f);
+		Terrain terrain = create_terrain(100.0f, 100.0f);
+		set_max_height(terrain.max_height);
 		/*
 		int number_of_trees = 0;
 		Drawable* trees = buffer_tree_meshes(&number_of_trees);
@@ -193,7 +192,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			set_material(emerald);
 			set_model_matrix(identity());
-			draw(terrain);
+			draw(terrain.graphical_data);
 
 			/*
 			for (int i = 0; i < number_of_trees; ++i)

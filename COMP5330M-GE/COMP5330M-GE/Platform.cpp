@@ -50,7 +50,7 @@ LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, 
 	return result;
 }
 
-bool __initialise_platform(Platform_Table* platform, HINSTANCE instance)
+bool Platform_Table::__initialise_platform(HINSTANCE instance)
 {
 	//Create window class
 	WNDCLASS window_class = {};
@@ -61,23 +61,23 @@ bool __initialise_platform(Platform_Table* platform, HINSTANCE instance)
 	//Attempt to register the window class
 	if (RegisterClass(&window_class))
 	{//If the class registation was successful
-		platform->window = CreateWindow(window_class.lpszClassName, "Game Engine Test",
+		this->window = CreateWindow(window_class.lpszClassName, "Game Engine Test",
 			WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, 0, 0, instance, 0);
 
-		platform->running = true;
-		platform->initial_cursor_position = get_cursor_position(platform->window);
+		this->running = true;
+		this->initial_cursor_position = get_cursor_position(this->window);
 		return true;
 	}
 	else return false;
 }
 
-void __shutdown_platform(Platform_Table* platform)
+void Platform_Table::__shutdown_platform()
 {
 }
 
-HWND __get_window(Platform_Table* platform)
+HWND Platform_Table::__get_window()
 {
-	return platform->window;
+	return this->window;
 }
 
 void OutputDebugStringf(const char* format, ...)
@@ -91,7 +91,7 @@ void OutputDebugStringf(const char* format, ...)
 	OutputDebugString(str_buff);
 }
 
-char* read_file(const char* path)
+char* Platform_Table::__read_file(const char* path)
 {
 	HANDLE file_handle = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (file_handle == INVALID_HANDLE_VALUE)
@@ -115,13 +115,13 @@ char* read_file(const char* path)
 	return buffer;
 }
 
-void copy_mem(void* src, void* dst, int length)
+void Platform_Table::__copy_mem(void* src, void* dst, int length)
 {
 	CopyMemory(dst, src, length);
 }
 
 //NOTE: alloc and free will almost definitely need changing as our memory needs change
-void* __alloc_mem(Platform_Table* platform, int size)
+void* Platform_Table::__alloc_mem(int size)
 {
 	HANDLE process_heap = GetProcessHeap();
 	void* buffer = HeapAlloc(process_heap, 0, size);
@@ -134,7 +134,7 @@ void* __alloc_mem(Platform_Table* platform, int size)
 	return buffer;
 }
 
-void __dealloc_mem(Platform_Table* platform, void* ptr)
+void Platform_Table::__dealloc_mem(void* ptr)
 {
 	HANDLE process_heap = GetProcessHeap();
 	BOOL freed = HeapFree(process_heap, 0, ptr);
@@ -148,27 +148,27 @@ RECT get_window_rect(HWND window)
 	return window_rect;
 }
 
-float __get_window_height(Platform_Table* platform)
+float Platform_Table::__get_window_height()
 {
-	RECT window_rect = get_window_rect(platform->window);
+	RECT window_rect = get_window_rect(this->window);
 	return (float)(window_rect.bottom - window_rect.top);
 }
 
-float __get_window_width(Platform_Table* platform)
+float Platform_Table::__get_window_width()
 {
-	RECT window_rect = get_window_rect(platform->window);
+	RECT window_rect = get_window_rect(this->window);
 	return (float)(window_rect.right - window_rect.left);
 }
 
-float __get_window_aspect_ratio(Platform_Table* platform)
+float Platform_Table::__get_window_aspect_ratio()
 {
-	return get_window_width(platform) / get_window_height(platform);
+	return get_window_width() / get_window_height();
 }
 
-void __handle_input(Platform_Table* platform)
+void Platform_Table::__handle_input()
 {
-	platform->initial_cursor_position = platform->final_cursor_position;
-	platform->was_mouse_moved = false;
+	this->initial_cursor_position = this->final_cursor_position;
+	this->was_mouse_moved = false;
 
 	//Handle input events
 	MSG message;
@@ -181,38 +181,38 @@ void __handle_input(Platform_Table* platform)
 	}
 }
 
-bool __was_mouse_button_pressed(Platform_Table* platform, Mouse_Button button)
+bool Platform_Table::__was_mouse_button_pressed(Mouse_Button button)
 {
-	return platform->was_mouse_button_pressed[button];
+	return this->was_mouse_button_pressed[button];
 }
 
-bool __was_key_pressed(Platform_Table* platform, Keyboard_Key key)
+bool Platform_Table::__was_key_pressed(Keyboard_Key key)
 {
-	return platform->was_key_pressed[key];
+	return this->was_key_pressed[key];
 }
 
-bool __should_close(Platform_Table* platform)
+bool Platform_Table::__should_close()
 {
-	return !platform->running;
+	return !this->running;
 }
 
-Vector2 __get_initial_mouse_position(Platform_Table* platform)
+Vector2 Platform_Table::__get_initial_mouse_position()
 {
-	return platform->initial_cursor_position;
+	return this->initial_cursor_position;
 }
 
-Vector2 __get_final_mouse_position(Platform_Table* platform)
+Vector2 Platform_Table::__get_final_mouse_position()
 {
-	return platform->final_cursor_position;
+	return this->final_cursor_position;
 }
 
-bool __was_mouse_moved(Platform_Table* platform)
+bool Platform_Table::__was_mouse_moved()
 {
-	return platform->was_mouse_moved;
+	return this->was_mouse_moved;
 }
 
-void __swap_window_buffers(Platform_Table* platform)
+void Platform_Table::__swap_window_buffers()
 {
-	HDC device_context = GetDC(platform->window);
+	HDC device_context = GetDC(this->window);
 	SwapBuffers(device_context);
 }

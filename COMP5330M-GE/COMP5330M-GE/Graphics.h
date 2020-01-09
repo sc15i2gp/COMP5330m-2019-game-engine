@@ -98,9 +98,36 @@ struct Lights_Block
 	T lights[32];
 };
 
+//This class contains mostly shader data which needs to persist throughout the game's running
 #define MAX_SHADER_COUNT 4
-struct Graphics_Table
+class Graphics_Table
 {
+public:
+	bool __initialise_graphics();
+	void __set_model_matrix(Matrix4x4);
+	void __set_view_matrix(Matrix4x4);
+	void __set_projection_matrix(Matrix4x4);
+	void __set_material(Material);
+	void __set_view_origin(Vector3);
+	void __set_direction_light_direction(GLuint light_number, Vector3 light_direction); //0 <= light_number < 32
+	void __set_direction_light_blinn_phong_properties(GLuint light_number, Material light_properties);
+	void __switch_direction_light(GLuint light_number, GLboolean active);
+	void __switch_point_light(GLuint light_number, GLboolean active);
+	void __set_point_light_position(GLuint light_number, Vector3 position);
+	void __set_point_light_blinn_phong_properties(GLuint light_number, Material light_properties);
+	void __set_point_light_attenuation_properties(GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
+	void __switch_spot_light(GLuint light_number, GLboolean active);
+	void __set_spot_light_position(GLuint light_number, Vector3 position);
+	void __set_spot_light_direction(GLuint light_number, Vector3 direction);
+	void __set_spot_light_blinn_phong_properties(GLuint light_number, Material light_properties);
+	void __set_spot_light_inner_cutoff(GLuint light_number, GLfloat angle);
+	void __set_spot_light_outer_cutoff(GLuint light_number, GLfloat angle);
+	void __set_spot_light_attenuation_properties(GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
+	void __set_max_height(GLfloat max_height);
+	void __use_shader(int shader);
+	int __load_shader_program(const char* v_shader_path, const char* f_shader_path);
+
+private:
 	//Uniform buffer objects
 	GLuint material_buffer;
 	GLuint model_matrix_buffer;
@@ -116,28 +143,6 @@ struct Graphics_Table
 
 extern Graphics_Table __graphics;
 
-void __set_model_matrix(Graphics_Table*, Matrix4x4);
-void __set_view_matrix(Graphics_Table*, Matrix4x4);
-void __set_projection_matrix(Graphics_Table*, Matrix4x4);
-void __set_material(Graphics_Table*, Material);
-void __set_view_origin(Graphics_Table*, Vector3);
-void __set_direction_light_direction(Graphics_Table*, GLuint light_number, Vector3 light_direction); //0 <= light_number < 32
-void __set_direction_light_blinn_phong_properties(Graphics_Table*, GLuint light_number, Material light_properties);
-void __switch_direction_light(Graphics_Table*, GLuint light_number, GLboolean active);
-void __switch_point_light(Graphics_Table*, GLuint light_number, GLboolean active);
-void __set_point_light_position(Graphics_Table*, GLuint light_number, Vector3 position);
-void __set_point_light_blinn_phong_properties(Graphics_Table*, GLuint light_number, Material light_properties);
-void __set_point_light_attenuation_properties(Graphics_Table*, GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
-void __switch_spot_light(Graphics_Table*, GLuint light_number, GLboolean active);
-void __set_spot_light_position(Graphics_Table*, GLuint light_number, Vector3 position);
-void __set_spot_light_direction(Graphics_Table*, GLuint light_number, Vector3 direction);
-void __set_spot_light_blinn_phong_properties(Graphics_Table*, GLuint light_number, Material light_properties);
-void __set_spot_light_inner_cutoff(Graphics_Table*, GLuint light_number, GLfloat angle);
-void __set_spot_light_outer_cutoff(Graphics_Table*, GLuint light_number, GLfloat angle);
-void __set_spot_light_attenuation_properties(Graphics_Table*, GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
-void __set_max_height(Graphics_Table*, GLfloat max_height);
-void __use_shader(Graphics_Table*, int shader);
-int __load_shader_program(Graphics_Table*, const char* v_shader_path, const char* f_shader_path);
 
 void draw(Drawable);
 
@@ -153,30 +158,29 @@ Drawable buffer_cylinder_mesh(float radius, float height, int slice_count = 16);
 void set_window_clear_colour(Vector3 colour);
 void begin_render();
 
-bool initialise_graphics();
-
-#define set_model_matrix(m) __set_model_matrix(&__graphics, m)
-#define set_view_matrix(m) __set_view_matrix(&__graphics, m)
-#define set_projection_matrix(m) __set_projection_matrix(&__graphics, m)
-#define set_material(m) __set_material(&__graphics, m)
-#define set_view_origin(v) __set_view_origin(&__graphics, v)
-#define activate_direction_light(l) __switch_direction_light(&__graphics, l, true)
-#define deactivate_direction_light(l) __switch_direction_light(&__graphics, l, false)
-#define set_direction_light_direction(l, d) __set_direction_light_direction(&__graphics, l, d)
-#define set_direction_light_blinn_phong_properties(l, m) __set_direction_light_blinn_phong_properties(&__graphics, l, m)
-#define activate_point_light(l) __switch_point_light(&__graphics, l, true)
-#define deactivate_point_light(l) __switch_point_light(&__graphics, l, false)
-#define set_point_light_position(l, p) __set_point_light_position(&__graphics, l, p)
-#define set_point_light_blinn_phong_properties(l, m) __set_point_light_blinn_phong_properties(&__graphics, l, m)
-#define set_point_light_attenuation_properties(l, c, s, q) __set_point_light_attenuation_properties(&__graphics, l, c, s, q)
-#define activate_spot_light(l) __switch_spot_light(&__graphics, l, true)
-#define deactivate_spot_light(l) __switch_spot_light(&__graphics, l, false)
-#define set_spot_light_position(l, p) __set_spot_light_position(&__graphics, l, p)
-#define set_spot_light_direction(l, d) __set_spot_light_direction(&__graphics, l, d)
-#define set_spot_light_blinn_phong_properties(l, m) __set_spot_light_blinn_phong_properties(&__graphics, l, m)
-#define set_spot_light_inner_cutoff(l, i) __set_spot_light_inner_cutoff(&__graphics, l, i)
-#define set_spot_light_outer_cutoff(l, o) __set_spot_light_outer_cutoff(&__graphics, l, o)
-#define set_spot_light_attenuation_properties(n, c, l, q) __set_spot_light_attenuation_properties(&__graphics, n, c, l, q)
-#define set_max_height(h) __set_max_height(&__graphics, h)
-#define use_shader(s) __use_shader(&__graphics, s)
-#define load_shader_program(v, f) __load_shader_program(&__graphics, v, f)
+#define set_model_matrix(m)									__graphics.__set_model_matrix(m)
+#define set_view_matrix(m)									__graphics.__set_view_matrix(m)
+#define set_projection_matrix(m)							__graphics.__set_projection_matrix(m)
+#define set_material(m)										__graphics.__set_material(m)
+#define set_view_origin(v)									__graphics.__set_view_origin(v)
+#define activate_direction_light(l)							__graphics.__switch_direction_light(l, true)
+#define deactivate_direction_light(l)						__graphics.__switch_direction_light(l, false)
+#define set_direction_light_direction(l, d)					__graphics.__set_direction_light_direction(l, d)
+#define set_direction_light_blinn_phong_properties(l, m)	__graphics.__set_direction_light_blinn_phong_properties(l, m)
+#define activate_point_light(l)								__graphics.__switch_point_light(l, true)
+#define deactivate_point_light(l)							__graphics.__switch_point_light(l, false)
+#define set_point_light_position(l, p)						__graphics.__set_point_light_position(l, p)
+#define set_point_light_blinn_phong_properties(l, m)		__graphics.__set_point_light_blinn_phong_properties(l, m)
+#define set_point_light_attenuation_properties(l, c, s, q)	__graphics.__set_point_light_attenuation_properties(l, c, s, q)
+#define activate_spot_light(l)								__graphics.__switch_spot_light(l, true)
+#define deactivate_spot_light(l)							__graphics.__switch_spot_light(l, false)
+#define set_spot_light_position(l, p)						__graphics.__set_spot_light_position(l, p)
+#define set_spot_light_direction(l, d)						__graphics.__set_spot_light_direction(l, d)
+#define set_spot_light_blinn_phong_properties(l, m)			__graphics.__set_spot_light_blinn_phong_properties(l, m)
+#define set_spot_light_inner_cutoff(l, i)					__graphics.__set_spot_light_inner_cutoff(l, i)
+#define set_spot_light_outer_cutoff(l, o)					__graphics.__set_spot_light_outer_cutoff(l, o)
+#define set_spot_light_attenuation_properties(n, c, l, q)	__graphics.__set_spot_light_attenuation_properties(n, c, l, q)
+#define set_max_height(h)									__graphics.__set_max_height(h)
+#define use_shader(s)										__graphics.__use_shader(s)
+#define load_shader_program(v, f)							__graphics.__load_shader_program(v, f)
+#define initialise_graphics()								__graphics.__initialise_graphics()

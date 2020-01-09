@@ -1,10 +1,12 @@
 #include "Landscape.h"
 
 //Buffer a regularly spaced grid of vertices, centered around (0, 0, z)
-Drawable buffer_terrain_mesh(float terrain_width, float terrain_length, float cell_length)
+Terrain create_terrain(float terrain_width, float terrain_length, float cell_length)
 {
+	Terrain terrain = {};
+	terrain.width = terrain_width;
+	terrain.length = terrain_length;
 	OutputDebugStringf("Terrain Width: %f\nTerrain Length: %f\n", terrain_width, terrain_length);
-
 
 	Perlin_Noise_Function perlin_noise = generate_noise_function(terrain_width, terrain_length, cell_length, cell_length);
 
@@ -26,8 +28,10 @@ Drawable buffer_terrain_mesh(float terrain_width, float terrain_length, float ce
 			float v_x = (float)j * cell_length;
 			float v_z = (float)i * cell_length;
 			vertices[i*vertex_width + j].position = O + Vector3(v_x, 0.0f, -v_z);
-			vertices[i*vertex_width + j].position.y = perlin_noise(v_x, v_z);
 			vertices[i*vertex_width + j].normal = Vector3(0.f, 1.0f, 0.0f);
+			float v_y = perlin_noise(v_x, v_z);
+			if (v_y > terrain.max_height) terrain.max_height = v_y;
+			vertices[i*vertex_width + j].position.y = v_y;
 		}
 	}
 
@@ -59,7 +63,7 @@ Drawable buffer_terrain_mesh(float terrain_width, float terrain_length, float ce
 
 	//for(int i = 0; i < number_of_vertices; ++i)
 	OutputDebugStringf("V: %f\n", perlin_noise(40, 40));
-	Drawable terrain = buffer_mesh(vertices, number_of_vertices, indices, number_of_indices);
+	terrain.graphical_data = buffer_mesh(vertices, number_of_vertices, indices, number_of_indices);
 
 	destroy_noise_function(perlin_noise);
 
