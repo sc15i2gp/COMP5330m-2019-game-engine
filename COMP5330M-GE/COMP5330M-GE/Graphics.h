@@ -1,21 +1,9 @@
 #pragma once
 #include <stdlib.h>
 #include "OpenGL.h"
+#include "Platform.h"
 #include "Maths.h"
-
-struct Mesh_vertex
-{
-	Vector3 position;
-	Vector3 normal;
-};
-
-struct Mesh
-{
-	int number_of_vertices;
-	int number_of_indices;
-	Mesh_vertex* vertices;
-	GLuint* face_indices;
-};
+#include "Mesh.h"
 
 struct Drawable
 {
@@ -99,7 +87,7 @@ struct Lights_Block
 };
 
 //This class contains mostly shader data which needs to persist throughout the game's running
-#define MAX_SHADER_COUNT 4
+#define MAX_SHADER_COUNT 8
 class Graphics_Table
 {
 public:
@@ -126,6 +114,8 @@ public:
 	void __set_max_height(GLfloat max_height);
 	void __use_shader(int shader);
 	int __load_shader_program(const char* v_shader_path, const char* f_shader_path);
+	GLuint __buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format = GL_RGB);
+	void __use_texture(GLuint texture);
 
 private:
 	//Uniform buffer objects
@@ -143,16 +133,17 @@ private:
 
 extern Graphics_Table __graphics;
 
-
+void draw_as_polygons();
+void draw_as_wireframes();
 void draw(Drawable);
 
 //Interleaved positions and normals
 Drawable buffer_mesh(Mesh_vertex*, int number_of_vertices, GLuint* indices, int number_of_indices);
+Drawable buffer_mesh(Mesh);
 
 Drawable buffer_sphere_mesh(float radius, int slice_count = 16, int stack_count = 16);
 Drawable buffer_cube_mesh(float width, float height, float depth);
 Drawable buffer_cylinder_mesh(float radius, float height, int slice_count = 16);
-
 
 
 void set_window_clear_colour(Vector3 colour);
@@ -184,3 +175,5 @@ void begin_render();
 #define use_shader(s)										__graphics.__use_shader(s)
 #define load_shader_program(v, f)							__graphics.__load_shader_program(v, f)
 #define initialise_graphics()								__graphics.__initialise_graphics()
+#define buffer_texture(w, h, d, f)							__graphics.__buffer_texture(w, h, d, f)
+#define use_texture(t)										__graphics.__use_texture(t)

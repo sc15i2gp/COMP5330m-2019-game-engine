@@ -276,6 +276,13 @@ float& Vector2::operator[](int index)
 	return this->xy[index];
 }
 
+Vector2 operator+(Vector2 v, Vector2 w)
+{
+	v.x += w.x;
+	v.y += w.y;
+	return v;
+}
+
 Vector2 operator-(Vector2 v, Vector2 w)
 {
 	v.x -= w.x;
@@ -287,6 +294,20 @@ Vector2 operator/(Vector2 v, float f)
 {
 	v.x /= f;
 	v.y /= f;
+	return v;
+}
+
+Vector2 operator/(Vector2 v, Vector2 w)
+{
+	v.x /= w.x;
+	v.y /= w.y;
+	return v;
+}
+
+Vector2 operator*(float f, Vector2 v)
+{
+	v.x *= f;
+	v.y *= f;
 	return v;
 }
 
@@ -484,6 +505,28 @@ Matrix4x4 perspective(float fov, float aspect_ratio, float n, float f)
 	return p;
 }
 
+Matrix4x4 look_at(Vector4 eye_position, Vector4 forward_vector, Vector4 right_vector, Vector4 upward_vector)
+{
+	/*
+	OutputDebugStringf("LA: Position: %f %f %f\n", eye_position.x, eye_position.y, eye_position.z);
+	OutputDebugStringf("LA: Forward: %f %f %f\n", forward_vector.x, forward_vector.y, forward_vector.z);
+	OutputDebugStringf("LA: Upward: %f %f %f\n", upward_vector.x, upward_vector.y, upward_vector.z);
+	OutputDebugStringf("LA: Rightward: %f %f %f\n", right_vector.x, right_vector.y, right_vector.z);
+	*/
+	Vector4 column_0(right_vector.x, upward_vector.x, forward_vector.x, 0.0f);
+	Vector4 column_1(right_vector.y, upward_vector.y, forward_vector.y, 0.0f);
+	Vector4 column_2(right_vector.z, upward_vector.z, forward_vector.z, 0.0f);
+	Vector4 column_3(dot(right_vector, eye_position), dot(upward_vector, eye_position), dot(forward_vector, eye_position), 1.0f);
+
+	Matrix4x4 camera;
+	camera[0] = column_0;
+	camera[1] = column_1;
+	camera[2] = column_2;
+	camera[3] = -column_3;
+	return camera;
+}
+
+
 Matrix4x4 look_at(Vector4 eye_position, Vector4 target_position)
 {
 	//Constant used to compute look_at's right vector
@@ -500,23 +543,17 @@ Matrix4x4 look_at(Vector4 eye_position, Vector4 target_position)
 	Vector4 right_dir = normalise(cross(constant, target_dir));
 	Vector4 up_dir = normalise(cross(target_dir, right_dir));
 
-	Vector4 column_0(right_dir.x, up_dir.x, target_dir.x, 0.0f);
-	Vector4 column_1(right_dir.y, up_dir.y, target_dir.y, 0.0f);
-	Vector4 column_2(right_dir.z, up_dir.z, target_dir.z, 0.0f);
-	Vector4 column_3(dot(right_dir, eye_position), dot(up_dir, eye_position),
-		dot(target_dir, eye_position), 1.0f);
-
-	Matrix4x4 camera;
-	camera[0] = column_0;
-	camera[1] = column_1;
-	camera[2] = column_2;
-	camera[3] = -column_3;
-	return camera;
+	return look_at(eye_position, target_dir, right_dir, up_dir);
 }
 
 Matrix4x4 look_at(Vector3 eye_position, Vector3 target_position)
 {
 	return look_at(Vector4(eye_position, 0.0f), Vector4(target_position, 0.0f));
+}
+
+Matrix4x4 look_at(Vector3 eye_position, Vector3 forward_vector, Vector3 rightward_vector, Vector3 upward_vector)
+{
+	return look_at(Vector4(eye_position, 0.0f), Vector4(forward_vector, 0.0f), Vector4(rightward_vector, 0.0f), Vector4(upward_vector, 0.0f));
 }
 
 /********************************/
@@ -657,8 +694,8 @@ Quaternion::Quaternion()
 
 Quaternion::Quaternion(Vector3 axis, float angle)
 {
-	this->xyz = axis;
-	this->w = angle;
+	this->xyz = sin_deg(angle) * axis;
+	this->w = cos_deg(angle);
 }
 
 Quaternion operator*(Quaternion q, Quaternion r)
@@ -722,8 +759,12 @@ Matrix3x3 quaternion_to_matrix(Quaternion q)
 	return m;
 }
 
-Matrix3x3 compute_rotation_between_quaternions(Quaternion q, Quaternion r)
+Quaternion compute_rotation_between_quaternions(Quaternion q, Quaternion r)
 {
-	Quaternion s = r * inverse(q);
-	return quaternion_to_matrix(s);
+	return r * inverse(q);
+}
+
+Matrix3x3 compute_rotation_matrix_between_quaternions(Quaternion q, Quaternion r)
+{
+	return quaternion_to_matrix(compute_rotation_between_quaternions(q, r));
 }

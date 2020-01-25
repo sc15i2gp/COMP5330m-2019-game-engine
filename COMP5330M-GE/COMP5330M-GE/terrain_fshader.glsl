@@ -14,6 +14,10 @@ layout(binding = 6) uniform max_height_block
 //Set colour based on terrain height
 void main()
 {
+
 	float height = fragment_position.y / max_height;
-	colour = vec4(height, height, height, 1.0);
+			if(height < 0.0f)	colour = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	else	if(height < 0.3f)	colour = vec4(0.0f, 0.412f, 0.58f, 1.0f);
+	else	if(height < 0.8f)	colour = vec4(0.486f, 0.988f, 0.0f, 1.0f);
+	else						colour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }

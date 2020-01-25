@@ -3,24 +3,23 @@
 #include "Maths.h"
 #include "Landscape.h"
 
-//DOING: UI + Camera
-//	- It works, I just now need to make it easier to use, such as only being able to move forward relative to the camera
-//		but move left, right, up and down relative to the whole world
-//	- Fix terrain gen. For some reason, some of the vertices have 0 height and will sometimes stretch downwards a great length.
-//		My guess is that some vertex data isn't being initialised properly, or the perlin noise function is being sampled beyond its grid bounds
+//DOING: 
+//	- UI + Camera
+//		- It works, I just now need to make it easier to use, such as only being able to move forward relative to the camera
+//			but move left, right, up and down relative to the whole world
+//	- Render heightmap to texture
+//	- UI to change terrain
+//	- Change perlin noise such that each node is a random number, which is used to look up a gradient vector
 
 //TODO: Platform
-//	- REMOVE try-catch from alloc mem
-//	- Input events
-//	- API
 //	- Internal error handling
 //	- Timing
 //	- Better memory management(?)
 
 //TODO: Terrain
 //	- Parameterise (with UI)
-//	- Terrain specific shader
 //	- Multiple noise levels
+//	- Render noise function to height map
 
 //TODO: Trees
 //	- L-system code
@@ -51,8 +50,8 @@ Material gold =
 Material light_properties =
 {
 	Vector3(0.2, 0.2, 0.2),
-	Vector3(0.9, 0.9, 0.9),
-	Vector3(1.0, 1.0, 1.0),
+	Vector3(0.5, 0.5, 0.5),
+	Vector3(0.6, 0.6, 0.6),
 	0.0f
 };
 
@@ -65,12 +64,28 @@ Drawable* buffer_trees(int* number_of_trees)
 	//Place trees according to distribution
 }
 
+Vector3 world_up = { 0.0f, 1.0f, 0.0f };
 struct Camera
 {
 	Vector3 position;
 	Vector3 forward;
 	Vector3 upward;
 	Vector3 rightward;
+	Quaternion arcball_rotation;
+
+	void update_rightward_and_upward_vectors()
+	{
+		this->rightward = normalise(cross(world_up, this->position));
+		this->upward = normalise(cross(this->rightward, this->forward));
+	}
+
+	void set_position_and_target(Vector3 position, Vector3 target)
+	{
+		this->position = position;
+		this->forward = normalise(target - position);
+		this->arcball_rotation = Quaternion(Vector3(0.0f, 1.0f, 0.0f), 0.0f);
+		update_rightward_and_upward_vectors();
+	}
 
 	void rotate_by_arcball(Vector2 initial_mouse_position, Vector2 final_mouse_position)
 	{
@@ -86,48 +101,63 @@ struct Camera
 
 		if (q_0 != q_1)
 		{
-			Matrix3x3 drag_rotation = compute_rotation_between_quaternions(q_0, q_1);
+			/*
+			Quaternion drag = compute_rotation_between_quaternions(q_0, q_1);
+			drag = compute_rotation_between_quaternions(drag, this->arcball_rotation);
+			Matrix3x3 drag_rotation = quaternion_to_matrix(drag);
+			*/
+			Matrix3x3 drag_rotation = compute_rotation_matrix_between_quaternions(q_0, q_1);
+			Matrix3x3 m = drag_rotation;
+			
+			OutputDebugStringf("M: %f %f %f\n", m[0].x, m[1].x, m[2].x);
+			OutputDebugStringf("M: %f %f %f\n", m[0].y, m[1].y, m[2].y);
+			OutputDebugStringf("M: %f %f %f\n", m[0].z, m[1].z, m[2].z);
+			OutputDebugStringf("%f %f %f %f\n", this->arcball_rotation.w, this->arcball_rotation.x, this->arcball_rotation.y, this->arcball_rotation.z);
+			
 			this->forward *= drag_rotation;
 			this->upward *= drag_rotation;
 			this->rightward *= drag_rotation;
+
 		}
 	}
 
 	void move_forward()
 	{
-		this->position += forward;
+		this->position += 0.1f * forward;
 	}
 
 	void move_backward()
 	{
-		this->position -= forward;
+		this->position -= 0.1f * forward;
 	}
 	
 	void move_left()
 	{
-		this->position -= rightward;
+		this->position -= 0.1f * rightward;
 	}
 
 	void move_right()
 	{
-		this->position += rightward;
+		this->position += 0.1f * rightward;
 	}
 
 	void move_up()
 	{
-		this->position += upward;
+		this->position += 0.1f * world_up;
 	}
 
 	void move_down()
 	{
-		this->position -= upward;
+		this->position -= 0.1f * world_up;
 	}
 };
 
 void buffer_camera_data_to_gpu(Camera c)
 {
 	//Compute lookat matrix
-	Matrix4x4 view = look_at(c.position, c.position + c.forward);
+
+	//Matrix4x4 view = look_at(c.position, c.position + c.forward);
+	Matrix4x4 view = look_at(c.position, -c.forward, c.rightward, c.upward);
 
 	//Buffer lookat matrix to shader
 	set_view_matrix(view);
@@ -136,6 +166,61 @@ void buffer_camera_data_to_gpu(Camera c)
 	set_view_origin(c.position);
 }
 
+Drawable buffer_heightmap_to_textured_quad(Terrain& terrain, GLuint heightmap_data_width, GLuint heightmap_data_height, GLuint* heightmap_texture)
+{
+	//Buffer texture data
+	GLfloat* heightmap_data = (GLfloat*)alloc_mem(heightmap_data_width*heightmap_data_height * sizeof(GLfloat));
+	//Render heightmap over range of terrain
+	float x_step = terrain.width / (float)heightmap_data_width;
+	float y_step = terrain.length / (float)heightmap_data_height;
+	for (int y = 0; y < heightmap_data_height; ++y)
+	{
+		for (int x = 0; x < heightmap_data_width; ++x)
+		{
+			float f_x = (float)x * x_step;
+			float f_y = (float)y * y_step;
+			heightmap_data[y * heightmap_data_width + x] = terrain.perlin_noise(f_x, f_y);
+		}
+	}
+	*heightmap_texture = buffer_texture(heightmap_data_width, heightmap_data_height, heightmap_data, GL_RED);
+
+	//Create quad mesh
+	Mesh_vertex quad_vertices[4] = {};
+	//Top left
+	quad_vertices[0] = 
+	{
+		{-1.0f, 1.0f, 0.0f}, //Position
+		{}, //Normal
+		{0.0f, 0.0f}  //Texture coords
+	};
+	//Bottom left
+	quad_vertices[1] = 
+	{
+		{-1.0f, -1.0f, 0.0f}, //Position
+		{}, //Normal
+		{0.0f, 1.0f}  //Texture coords
+	};
+	//Bottom right
+	quad_vertices[2] =
+	{
+		{1.0f, -1.0f, 0.0f}, //Position
+		{}, //Normal
+		{1.0f, 1.0f}  //Texture coords
+	};
+	//Top right
+	quad_vertices[3] =
+	{
+		{1.0f, 1.0f, 0.0f}, //Position
+		{}, //Normal
+		{1.0f, 0.0f}  //Texture coords
+	};
+	GLuint quad_indices[] = { 0, 1, 2, 2, 3, 0 };
+	Drawable quad = buffer_mesh(quad_vertices, 4, quad_indices, 6);
+	dealloc_mem(heightmap_data);
+	return quad;
+}
+
+bool show_heightmap = true;
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
@@ -146,32 +231,46 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 	{
 		int bp_shader = load_shader_program("vshader.glsl", "fshader.glsl");
 		int terrain_shader = load_shader_program("vshader.glsl", "terrain_fshader.glsl");
+		int terrain_lighting_shader = load_shader_program("vshader.glsl", "fshader.glsl");
+		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 
 		Camera main_view_camera = {};
-		main_view_camera.position = { 0.0f, 20.0f, 50.0f };
-		main_view_camera.forward = normalise(-main_view_camera.position); //Set initial camera target to O
-		main_view_camera.rightward = normalise(cross(Vector3(0.0f, 1.0f, 0.0f), main_view_camera.position));
-		main_view_camera.upward = normalise(cross(main_view_camera.rightward, main_view_camera.forward));
+		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, -50.0f }, Vector3{});
 
 		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
 
-		activate_point_light(0);
-		set_point_light_position(0, Vector3(0.0f, 0.0f, 2.0f));
-		set_point_light_blinn_phong_properties(0, light_properties);
-		set_point_light_attenuation_properties(0, 1.0, 0.0014, 0.0007);
+		activate_direction_light(0);
+		set_direction_light_direction(0, Vector3(0.0f, -1.0f, -1.0f));
+		set_direction_light_blinn_phong_properties(0, light_properties);
 
-		Terrain terrain = create_terrain(100.0f, 100.0f);
+		Terrain terrain = create_terrain(20.0f, 20.0f, 0.1f, 5.0f);
 		set_max_height(terrain.max_height);
-		/*
-		int number_of_trees = 0;
-		Drawable* trees = buffer_tree_meshes(&number_of_trees);
-		*/
+		OutputDebugStringf("Max height = %f\n", terrain.max_height);
+		bool drawing_as_wireframes = false;
+
+		
+		GLuint heightmap_texture;
+		Drawable heightmap = buffer_heightmap_to_textured_quad(terrain, 512, 512, &heightmap_texture);
+		OutputDebugStringf("Texture: %d\n", heightmap_texture);
 		
 		//Main loop
 		while (!should_window_close()) 
 		{
 			handle_input();
 
+			if (was_key_pressed(KEY_RETURN))
+			{
+				if (drawing_as_wireframes)
+				{
+					draw_as_polygons();
+					drawing_as_wireframes = false;
+				}
+				else
+				{
+					draw_as_wireframes();
+					drawing_as_wireframes = true;
+				}
+			}
 			
 			if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved()) main_view_camera.rotate_by_arcball(get_initial_mouse_position(), get_final_mouse_position());
 
@@ -181,25 +280,32 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_D)) main_view_camera.move_right();
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
-
+			if (was_key_pressed(KEY_SHIFT)) show_heightmap = !show_heightmap;
 			begin_render();
 
-			use_shader(terrain_shader);
-
-			set_projection_matrix(perspective(90.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
-			
-			buffer_camera_data_to_gpu(main_view_camera);
-
-			set_material(emerald);
-			set_model_matrix(identity());
-			draw(terrain.graphical_data);
-
-			/*
-			for (int i = 0; i < number_of_trees; ++i)
+			if (show_heightmap)
 			{
-				draw(trees[i]);
+				use_shader(heightmap_shader);
+				use_texture(heightmap_texture);
+
+				opengl_check_for_errors();
+				draw(heightmap);
+				
 			}
-			*/
+			else
+			{
+				//use_shader(terrain_shader);
+				use_shader(terrain_lighting_shader);
+				
+				set_projection_matrix(perspective(90.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
+
+				buffer_camera_data_to_gpu(main_view_camera);
+
+				set_material(emerald);
+				set_model_matrix(identity());
+				draw(terrain.graphical_data);
+			}
+
 			swap_window_buffers();
 		}
 		//release_drawable();

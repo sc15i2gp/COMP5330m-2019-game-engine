@@ -1,55 +1,50 @@
 #include "Perlin_Noise.h"
 
-Vector2 rand_vector2(int n = 500)
+float random(float min = -1.0f, float max = 1.0f)
+{
+	float n = (float)rand() / (float)RAND_MAX;
+	float range = max - min;
+	return min + n * range;
+}
+
+Vector2 rand_vector2(float min = -1.0f, float max = 1.0f)
 {
 	Vector2 v = {};
-	v.x = (rand() % n) - 2*n;
-	v.y = (rand() % n) - 2 * n;
-	v = normalise(v);
+	while (true)
+	{
+		v.x = random();
+		v.y = random();
+		if (length(v) <= 1.0 && length(v) >= 0.1) break;
+	}
 	return v;
 }
 
-Perlin_Noise_Function Perlin_Noise_Function::__generate(float grid_width, float grid_height, float cell_width, float cell_height)
+
+Perlin_Noise_Function Perlin_Noise_Function::__generate()
 {
-	int grid_width_in_cells = (int)ceil(grid_width / cell_width);
-	int grid_height_in_cells = (int)ceil(grid_height / cell_height);
-
-	int number_of_cells = grid_width_in_cells * grid_height_in_cells;
-	int number_of_nodes = (grid_width_in_cells + 1) * (grid_height_in_cells + 1);
-
 	Perlin_Noise_Function func = {};
-	func.nodes = (Vector2*)alloc_mem(number_of_nodes * sizeof(Vector2));
-	func.grid_dimensions.x = grid_width;
-	func.grid_dimensions.y = grid_height;
-	func.cell_dimensions.x = cell_width;
-	func.cell_dimensions.y = cell_height;
-
 	srand(NULL);
-	for (int i = 0; i < number_of_nodes; ++i)
+	for (int i = 0; i < NUMBER_OF_NODES; ++i)
 	{
-		func.nodes[i] = rand_vector2();
+		func.nodes[i] = normalise(rand_vector2());
 	}
 
 	return func;
 }
 
-void Perlin_Noise_Function::__destroy()
+/*
+//Cantor pairing function
+int pairing(int a, int b)
 {
-	dealloc_mem(this->nodes);
+	return ((a + b)*(a + b + 1) / 2) + b;
 }
+*/
 
 Vector2 Perlin_Noise_Function::gradient_at_node(int x, int y)
 {
-	int grid_width_in_nodes = (int)ceil(this->grid_dimensions.x / this->cell_dimensions.x) + 1;
-	return this->nodes[y * grid_width_in_nodes + x];
-}
-
-Vector2 Perlin_Noise_Function::node_coords(int x, int y)
-{
-	Vector2 coords = {};
-	coords.x = (float)x * this->cell_dimensions.x;
-	coords.y = (float)y * this->cell_dimensions.y;
-	return coords;
+	//Hash x and y
+	//Return gradient in that index
+	return this->nodes[pairing(x, y) % NUMBER_OF_NODES];
 }
 
 float linear_interpolation(float n, float m, float w)
@@ -66,11 +61,11 @@ float Perlin_Noise_Function::interpolate(float values[4], Vector2 weight)
 }
 
 //x,y will be given between 0 and terrain_width/length
+//Returns value approximately between -1 and 1
 float Perlin_Noise_Function::operator()(float x, float y)
 {
-	//Compute grid cell within which (x, y) falls
-	int cell_x = x / this->cell_dimensions.x;
-	int cell_y = y / this->cell_dimensions.y;
+	int cell_x = floor(x);
+	int cell_y = floor(y);
 
 	//Find the 4 distances between (x, y) and the grid nodes within which it falls
 	int cell_nodes[4][2] =
@@ -84,7 +79,7 @@ float Perlin_Noise_Function::operator()(float x, float y)
 	Vector2 distances[4] = {};
 
 	for (int i = 0; i < 4; ++i) gradients[i] = this->gradient_at_node(cell_nodes[i][0], cell_nodes[i][1]);
-	for (int i = 0; i < 4; ++i) distances[i] = Vector2{ x, y } -node_coords(cell_nodes[i][0], cell_nodes[i][1]);
+	for (int i = 0; i < 4; ++i) distances[i] = Vector2{ x, y } -Vector2{ (float)cell_nodes[i][0], (float)cell_nodes[i][1] };
 
 	gradients[0] = this->gradient_at_node(cell_x, cell_y);
 	gradients[1] = this->gradient_at_node(cell_x + 1, cell_y);
@@ -100,8 +95,8 @@ float Perlin_Noise_Function::operator()(float x, float y)
 
 	//Return value linearly interpolated between dot products
 	Vector2 weight = {};
-	weight[0] = (x - ((float)(cell_x)*this->cell_dimensions.x)) / this->cell_dimensions.x;
-	weight[1] = (y - ((float)(cell_y)*this->cell_dimensions.y)) / this->cell_dimensions.y;
+	weight[0] = x - (float)cell_x;
+	weight[1] = y - (float)cell_y;
 
 	return interpolate(dot_products, weight);
 }

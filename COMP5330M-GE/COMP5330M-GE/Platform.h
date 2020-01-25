@@ -8,6 +8,7 @@ enum Keyboard_Key
 	KEY_START = 0,
 	KEY_SHIFT = 0x10,
 	KEY_ESC = 0x1b,
+	KEY_RETURN = 0x0D,
 	KEY_LEFT = 0x25,
 	KEY_UP,
 	KEY_RIGHT,

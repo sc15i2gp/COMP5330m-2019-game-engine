@@ -204,6 +204,41 @@ bool Graphics_Table::__initialise_graphics()
 	return true;
 }
 
+GLuint Graphics_Table::__buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format)
+{
+	//Generate texture
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	//Set texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, format, texture_width, texture_height, 0, format, GL_FLOAT, texture_data);
+	//glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return texture;
+}
+
+void Graphics_Table::__use_texture(GLuint texture)
+{
+	glBindTexture(GL_TEXTURE_2D, texture);
+}
+
+void draw_as_polygons()
+{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+void draw_as_wireframes()
+{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+}
+
 void draw(Drawable d)
 {
 	glBindVertexArray(d.vertex_array);
@@ -232,6 +267,8 @@ Drawable buffer_mesh(Mesh_vertex* vertices, int number_of_vertices, GLuint* indi
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Mesh_vertex), (void*)sizeof(Vector3));
 	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Mesh_vertex), (void*)(2 * sizeof(Vector3)));
+	glEnableVertexAttribArray(2);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_drawable.index_buffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, number_of_indices * sizeof(GLuint), indices, GL_STATIC_DRAW);
@@ -243,6 +280,11 @@ Drawable buffer_mesh(Mesh_vertex* vertices, int number_of_vertices, GLuint* indi
 	mesh_drawable.number_of_indices = number_of_indices;
 
 	return mesh_drawable;
+}
+
+Drawable buffer_mesh(Mesh m)
+{
+	return buffer_mesh(m.vertices, m.number_of_vertices, m.face_indices, m.number_of_indices);
 }
 
 void set_window_clear_colour(Vector3 c)
@@ -310,7 +352,7 @@ int Graphics_Table::__load_shader_program(const char* v_shader_path, const char*
 {
 	char* v_shader_src = read_file(v_shader_path);
 	char* f_shader_src = read_file(f_shader_path);
-	OutputDebugString("HERE\n");
+
 	int shader = -1;
 	for (int i = 0; i < 4; ++i) if (this->shaders[i] == 0) shader = i;
 	this->shaders[shader] = create_shader_program(v_shader_src, f_shader_src);

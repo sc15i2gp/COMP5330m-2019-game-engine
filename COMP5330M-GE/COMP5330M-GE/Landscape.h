@@ -1,6 +1,7 @@
 #pragma once
 #include "Perlin_Noise.h"
 #include "Graphics.h"
+#include "Maths.h"
 
 //Goal: Render a procedurally generated landscape
 //Landscape:
@@ -13,10 +14,12 @@
 
 struct Terrain
 {
+	Perlin_Noise_Function perlin_noise;
 	Drawable graphical_data;
+	Mesh mesh;
 	float max_height;
 	float width;
 	float length;
 };
 
-Terrain create_terrain(float width, float length, float cell_length = 10.0f);
+Terrain create_terrain(float width, float length, float terrain_cell_length, float frequency = 1.0f);

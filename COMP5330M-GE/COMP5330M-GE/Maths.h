@@ -41,8 +41,11 @@ struct Vector2
 	float& operator[](int index);
 };
 
+Vector2 operator+(Vector2, Vector2);
 Vector2 operator-(Vector2, Vector2);
 Vector2 operator/(Vector2, float);
+Vector2 operator/(Vector2, Vector2); //Pairwise division
+Vector2 operator*(float, Vector2);
 float dot(Vector2, Vector2);
 float length(Vector2);
 Vector2 normalise(Vector2);
@@ -209,7 +212,9 @@ void translate(Matrix4x4&, Vector3 translation);
 
 Matrix4x4 perspective(float fov, float aspect_ratio, float n, float f);
 Matrix4x4 look_at(Vector4 eye_position, Vector4 target_position);
+Matrix4x4 look_at(Vector4 eye_position, Vector4 forward_vector, Vector4 right_vector, Vector4 upward_vector);
 Matrix4x4 look_at(Vector3 eye_position, Vector3 target_position);
+Matrix4x4 look_at(Vector3 eye_position, Vector3 forward_vector, Vector3 right_vector, Vector3 upward_vector);
 
 /********************************/
 
@@ -297,4 +302,5 @@ float norm(Quaternion);
 
 Quaternion compute_great_circle_point(Vector2);
 Matrix3x3 quaternion_to_matrix(Quaternion);
-Matrix3x3 compute_rotation_between_quaternions(Quaternion, Quaternion);
+Quaternion compute_rotation_between_quaternions(Quaternion, Quaternion);
+Matrix3x3 compute_rotation_matrix_between_quaternions(Quaternion, Quaternion);

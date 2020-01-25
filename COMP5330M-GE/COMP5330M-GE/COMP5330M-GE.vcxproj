@@ -131,6 +131,7 @@
     <ClCompile Include="Landscape.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Maths.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="OpenGL.cpp" />
     <ClCompile Include="Perlin_Noise.cpp" />
     <ClCompile Include="Platform.cpp" />
@@ -141,6 +142,7 @@
     <ClInclude Include="khrplatform.h" />
     <ClInclude Include="Landscape.h" />
     <ClInclude Include="Maths.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="OpenGL.h" />
     <ClInclude Include="Perlin_Noise.h" />
     <ClInclude Include="Platform.h" />
@@ -148,6 +150,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
+    <None Include="heightmap_fshader.glsl" />
+    <None Include="heightmap_vshader.glsl" />
     <None Include="terrain_fshader.glsl" />
     <None Include="vshader.glsl" />
   </ItemGroup>

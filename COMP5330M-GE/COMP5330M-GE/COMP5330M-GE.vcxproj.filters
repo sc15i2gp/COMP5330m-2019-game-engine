@@ -36,6 +36,9 @@
     <ClCompile Include="Landscape.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glext.h">
@@ -65,6 +68,9 @@
     <ClInclude Include="Perlin_Noise.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl">
@@ -74,6 +80,12 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="terrain_fshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="heightmap_vshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="heightmap_fshader.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
