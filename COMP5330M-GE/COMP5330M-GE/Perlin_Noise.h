@@ -3,6 +3,7 @@
 #include "Platform.h"
 
 #define NUMBER_OF_NODES 256
+#define GRID_LENGTH 16
 
 class Perlin_Noise_Function
 {

@@ -166,20 +166,26 @@ void buffer_camera_data_to_gpu(Camera c)
 	set_view_origin(c.position);
 }
 
-Drawable buffer_heightmap_to_textured_quad(Terrain& terrain, GLuint heightmap_data_width, GLuint heightmap_data_height, GLuint* heightmap_texture)
+//Render 4*4 perlin noise grid on 64*64 texture
+Drawable buffer_heightmap_to_textured_quad(GLuint* heightmap_texture)
 {
+	Perlin_Noise_Function perlin_noise = generate_noise_function();
+	GLuint heightmap_data_width = 64;
+	GLuint heightmap_data_height = 64;
 	//Buffer texture data
 	GLfloat* heightmap_data = (GLfloat*)alloc_mem(heightmap_data_width*heightmap_data_height * sizeof(GLfloat));
+	float length = 4.0f;
+	float x_step = length / (float)heightmap_data_width;
+	float y_step = length / (float)heightmap_data_height;
 	//Render heightmap over range of terrain
-	float x_step = terrain.width / (float)heightmap_data_width;
-	float y_step = terrain.length / (float)heightmap_data_height;
 	for (int y = 0; y < heightmap_data_height; ++y)
 	{
 		for (int x = 0; x < heightmap_data_width; ++x)
 		{
 			float f_x = (float)x * x_step;
 			float f_y = (float)y * y_step;
-			heightmap_data[y * heightmap_data_width + x] = terrain.perlin_noise(f_x, f_y);
+			float noise_val = (perlin_noise(f_x, f_y) + 1.0f) / 2.0f;
+			heightmap_data[y * heightmap_data_width + x] = noise_val;
 		}
 	}
 	*heightmap_texture = buffer_texture(heightmap_data_width, heightmap_data_height, heightmap_data, GL_RED);
@@ -243,14 +249,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_direction_light_direction(0, Vector3(0.0f, -1.0f, -1.0f));
 		set_direction_light_blinn_phong_properties(0, light_properties);
 
-		Terrain terrain = create_terrain(20.0f, 20.0f, 0.1f, 5.0f);
-		set_max_height(terrain.max_height);
-		OutputDebugStringf("Max height = %f\n", terrain.max_height);
+		Terrain terrain;// = create_terrain(20.0f, 20.0f, 0.1f, 5.0f);
+		//set_max_height(terrain.max_height);
+		//OutputDebugStringf("Max height = %f\n", terrain.max_height);
 		bool drawing_as_wireframes = false;
 
-		
 		GLuint heightmap_texture;
-		Drawable heightmap = buffer_heightmap_to_textured_quad(terrain, 512, 512, &heightmap_texture);
+		Drawable heightmap = buffer_heightmap_to_textured_quad(&heightmap_texture);
 		OutputDebugStringf("Texture: %d\n", heightmap_texture);
 		
 		//Main loop
@@ -303,7 +308,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 				set_material(emerald);
 				set_model_matrix(identity());
-				draw(terrain.graphical_data);
+//				draw(terrain.graphical_data);
 			}
 
 			swap_window_buffers();
