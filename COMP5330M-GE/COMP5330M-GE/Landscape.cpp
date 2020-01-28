@@ -36,11 +36,12 @@ Terrain create_terrain(float terrain_width, float terrain_length, float terrain_
 			terrain.mesh.vertices[i*vertex_width + j].position = O + Vector3(v_x, 0.0f, -v_z);
 			terrain.mesh.vertices[i*vertex_width + j].normal = Vector3(0.f, 1.0f, 0.0f);
 
-			float y_0 = 1.0f * normalise_range(terrain.perlin_noise(1.0f * v_x, 1.0f * v_z));
-			float y_1 = 0.5f * normalise_range(terrain.perlin_noise(2.0f * v_x, 2.0f * v_z));
-			float y_2 = 0.25f * normalise_range(terrain.perlin_noise(4.0f * v_x, 4.0f * v_z));
-			float v_y = pow(y_0 + y_1 + y_2, 10.0f);
+			float y_0 = 1.0f * terrain.perlin_noise(0.5f * v_x, 0.5f * v_z);
+			float y_1 = 0.5f * terrain.perlin_noise(2.0f * v_x, 2.0f * v_z);
+			float y_2 = 0.25f * terrain.perlin_noise(4.0f * v_x, 4.0f * v_z);
+			float y = normalise_range(y_0 + y_1 + y_2);
 
+			float v_y = (y >= 0.0f) ? pow(y, 3.0f) : 0.0f;
 			if (v_y > terrain.max_height) terrain.max_height = v_y;
 			terrain.mesh.vertices[i*vertex_width + j].position.y = v_y;
 		}

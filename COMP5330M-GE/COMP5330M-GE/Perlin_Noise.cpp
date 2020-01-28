@@ -32,11 +32,16 @@ Perlin_Noise_Function Perlin_Noise_Function::__generate()
 	return func;
 }
 
+int pairing(int a, int b)
+{
+	return (a + b)*(a + b + 1) / 2 + b;
+}
+
 Vector2 Perlin_Noise_Function::gradient_at_node(int x, int y)
 {
 	//Hash x and y
 	//Return gradient in that index
-	return this->nodes[GRID_LENGTH*y + x];
+	return this->nodes[pairing(x, y) % NUMBER_OF_NODES];
 }
 
 float linear_interpolation(float n, float m, float w)

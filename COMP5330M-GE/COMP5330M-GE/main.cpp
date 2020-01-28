@@ -2,14 +2,11 @@
 #include "Graphics.h"
 #include "Maths.h"
 #include "Landscape.h"
+#include "l_system.h"
 
 //DOING: 
-//	- UI + Camera
-//		- It works, I just now need to make it easier to use, such as only being able to move forward relative to the camera
-//			but move left, right, up and down relative to the whole world
-//	- Render heightmap to texture
 //	- UI to change terrain
-//	- Change perlin noise such that each node is a random number, which is used to look up a gradient vector
+//	- Add trees
 
 //TODO: Platform
 //	- Internal error handling
@@ -18,8 +15,9 @@
 
 //TODO: Terrain
 //	- Parameterise (with UI)
-//	- Multiple noise levels
-//	- Render noise function to height map
+//	- Texture
+//	- Retrieve/highlight triangles
+//	- Only render certain range of terrain
 
 //TODO: Trees
 //	- L-system code
@@ -28,6 +26,7 @@
 
 //TODO: Camera/UI
 //	- UI elements to affect terrain generation
+//	- Fix arcball camera rotation
 
 //TODO: Limit FPS
 
@@ -54,15 +53,6 @@ Material light_properties =
 	Vector3(0.6, 0.6, 0.6),
 	0.0f
 };
-
-Drawable* buffer_trees(int* number_of_trees)
-{
-	//Generate limited number of models
-
-	//Decide distribution of trees
-	
-	//Place trees according to distribution
-}
 
 Vector3 world_up = { 0.0f, 1.0f, 0.0f };
 struct Camera
@@ -109,11 +99,12 @@ struct Camera
 			Matrix3x3 drag_rotation = compute_rotation_matrix_between_quaternions(q_0, q_1);
 			Matrix3x3 m = drag_rotation;
 			
+			/*
 			OutputDebugStringf("M: %f %f %f\n", m[0].x, m[1].x, m[2].x);
 			OutputDebugStringf("M: %f %f %f\n", m[0].y, m[1].y, m[2].y);
 			OutputDebugStringf("M: %f %f %f\n", m[0].z, m[1].z, m[2].z);
 			OutputDebugStringf("%f %f %f %f\n", this->arcball_rotation.w, this->arcball_rotation.x, this->arcball_rotation.y, this->arcball_rotation.z);
-			
+			*/
 			this->forward *= drag_rotation;
 			this->upward *= drag_rotation;
 			this->rightward *= drag_rotation;
@@ -170,11 +161,12 @@ void buffer_camera_data_to_gpu(Camera c)
 Drawable buffer_heightmap_to_textured_quad(GLuint* heightmap_texture)
 {
 	Perlin_Noise_Function perlin_noise = generate_noise_function();
-	GLuint heightmap_data_width = 64;
-	GLuint heightmap_data_height = 64;
+	GLuint heightmap_data_width = 1024;
+	GLuint heightmap_data_height = 1024;
+
 	//Buffer texture data
 	GLfloat* heightmap_data = (GLfloat*)alloc_mem(heightmap_data_width*heightmap_data_height * sizeof(GLfloat));
-	float length = 4.0f;
+	float length = 128.0f;
 	float x_step = length / (float)heightmap_data_width;
 	float y_step = length / (float)heightmap_data_height;
 	//Render heightmap over range of terrain
@@ -241,7 +233,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 
 		Camera main_view_camera = {};
-		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, -50.0f }, Vector3{});
+		main_view_camera.set_position_and_target(Vector3{ 0.0f, 3.0f, -1.0f }, Vector3{});
 
 		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
 
@@ -249,14 +241,26 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_direction_light_direction(0, Vector3(0.0f, -1.0f, -1.0f));
 		set_direction_light_blinn_phong_properties(0, light_properties);
 
-		Terrain terrain;// = create_terrain(20.0f, 20.0f, 0.1f, 5.0f);
+		Terrain terrain = create_terrain(10.0f, 10.0f, 0.01f, 0.1f);
 		//set_max_height(terrain.max_height);
-		//OutputDebugStringf("Max height = %f\n", terrain.max_height);
+		OutputDebugStringf("Max height = %f\n", terrain.max_height);
 		bool drawing_as_wireframes = false;
 
 		GLuint heightmap_texture;
 		Drawable heightmap = buffer_heightmap_to_textured_quad(&heightmap_texture);
 		OutputDebugStringf("Texture: %d\n", heightmap_texture);
+
+		l_system example_l_system = {};
+		add_production(&example_l_system, "<A>", "BC");
+		add_production(&example_l_system, "<C>", "DA");
+
+		char str[2048] = {};
+		strcpy(str, "A");
+		
+		OutputDebugStringf("Initial String: %s\n", str);
+		derive_str(&example_l_system, str);
+		derive_str(&example_l_system, str);
+		OutputDebugStringf("Final String: %s\n", str);
 		
 		//Main loop
 		while (!should_window_close()) 
@@ -299,7 +303,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			}
 			else
 			{
-				//use_shader(terrain_shader);
 				use_shader(terrain_lighting_shader);
 				
 				set_projection_matrix(perspective(90.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
@@ -308,7 +311,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 				set_material(emerald);
 				set_model_matrix(identity());
-//				draw(terrain.graphical_data);
+				draw(terrain.graphical_data);
 			}
 
 			swap_window_buffers();
