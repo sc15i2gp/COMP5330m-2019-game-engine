@@ -17,7 +17,11 @@ struct Emitter {
 	Vector3 normalReleaseVector;
 	float rateOfParticleRelease;
 	float maxAngle;
+	int minLife;
+	int maxLife;
 
 	Emitter();
-	Emitter(Vector3 position, float radius, Vector3 normalReleaseVector, float rate, float maxAngle);
+	Emitter(Vector3 position, float radius, Vector3 normalReleaseVector, float rate, float maxAngle, int minLife, int maxLife);
 };
+
+Particle releaseOneParticle(Emitter&);

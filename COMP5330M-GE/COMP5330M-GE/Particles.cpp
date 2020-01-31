@@ -18,12 +18,20 @@ Emitter::Emitter() {
 	normalReleaseVector = { 0.0, 1.0, 0.0 };
 	rateOfParticleRelease = 10;
 	maxAngle = 90;
+	minLife = 60;
+	maxLife = 500;
 }
 
-Emitter::Emitter(Vector3 position, float radius, Vector3 normalReleaseVector, float rate, float maxAngle) {
+Emitter::Emitter(Vector3 position, float radius, Vector3 normalReleaseVector, float rate, float maxAngle, int minLife, int maxLife) {
 	this->position = position;
 	this->radius = radius;
 	this->normalReleaseVector = normalReleaseVector;
 	rateOfParticleRelease = rate;
 	this->maxAngle = maxAngle;
+	this->minLife = minLife;
+	this->maxLife = maxLife;
+}
+
+Particle releaseOneParticle(Emitter& e) {
+
 }
