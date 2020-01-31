@@ -26,3 +26,7 @@ Vector3 updateDisplacement(RigidBody&, Vector3* forces, int numOfForces, float t
 // Position (x,z) defines the position of the cylinder
 // miny and maxy define the height of the cylinder
 bool checkSphereCylinderCollision(RigidBody&, float x, float z, float miny, float maxy, float radius);
+
+// Continuous version - ensures sphere does not pass through cylinder
+// Might not be needed
+float checkSphereCylinderCollisionInPath(RigidBody&, Vector3 pathTaken, float x, float z, float miny, float maxy, float radius);

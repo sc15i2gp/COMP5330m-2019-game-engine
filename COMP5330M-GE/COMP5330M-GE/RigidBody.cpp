@@ -63,3 +63,15 @@ bool checkSphereCylinderCollision(RigidBody& r, float x, float z, float miny, fl
 		return r.displacement.y + r.radius >= miny && length(distanceBetween) <= radius;
 	}
 }
+
+float checkSphereCylinderCollisionInPath(RigidBody& r, Vector3 pathTaken, float x, float z, float miny, float maxy, float radius)
+{
+	int numOfTimeSteps = length(pathTaken);
+	for (float i = 0.0; i <= 1.0; i += 1.0 / numOfTimeSteps) {
+		Vector3 position = r.displacement + (i * pathTaken);
+		if (checkSphereCylinderCollision(r, x, z, miny, maxy, radius)) {
+			return i;
+		}
+	}
+	return NULL;
+}
