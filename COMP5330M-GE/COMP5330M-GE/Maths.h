@@ -210,6 +210,8 @@ void translate(Matrix4x4&, Vector4 translation);
 void rotate(Matrix4x4&, Vector3 axis, float angle);
 void translate(Matrix4x4&, Vector3 translation);
 
+Vector3 rotate_point_about_axis(Vector3 point, Vector3 axis, float angle);
+
 Matrix4x4 perspective(float fov, float aspect_ratio, float n, float f);
 Matrix4x4 look_at(Vector4 eye_position, Vector4 target_position);
 Matrix4x4 look_at(Vector4 eye_position, Vector4 forward_vector, Vector4 right_vector, Vector4 upward_vector);

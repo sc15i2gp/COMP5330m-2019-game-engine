@@ -24,6 +24,10 @@ struct Mesh
 	void compute_normal_vectors();
 };
 
+void define_sphere_mesh(Mesh*, float radius, int slice_count, int stack_count, Vector3 origin = {});
+void define_cylinder_mesh(Mesh*, float radius, float height, int slice_count, Vector3 origin = {}, Vector3 main_axis = { 0.0f, 1.0f, 0.0f }, Vector3 right_axis = { 1.0f, 0.0f, 0.0f });
+void attach_mesh_to_mesh(Mesh* dst_mesh, Mesh* src_mesh);
+
 //Edge structures used to compute directed edge lists
 
 struct Edge

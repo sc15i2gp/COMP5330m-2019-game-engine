@@ -140,6 +140,7 @@
     <ClCompile Include="Perlin_Noise.cpp" />
     <ClCompile Include="Platform.cpp" />
     <ClCompile Include="string_functions.cpp" />
+    <ClCompile Include="turtle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arithmetic_tokeniser.h" />
@@ -158,7 +159,10 @@
     <ClInclude Include="OpenGL.h" />
     <ClInclude Include="Perlin_Noise.h" />
     <ClInclude Include="Platform.h" />
+    <ClInclude Include="polygon_stack.h" />
     <ClInclude Include="string_functions.h" />
+    <ClInclude Include="turtle.h" />
+    <ClInclude Include="turtle_stack.h" />
     <ClInclude Include="wglext.h" />
   </ItemGroup>
   <ItemGroup>

@@ -444,6 +444,13 @@ void rotate(Matrix4x4& m, Vector4 axis, float angle)
 	rotate(m, axis_3, angle);
 }
 
+Vector3 rotate_point_about_axis(Vector3 point, Vector3 axis, float angle)
+{
+	Matrix4x4 rotation = identity();
+	rotate(rotation, axis, angle);
+	return Vector3((rotation * Vector4(point, 1.0f)).xyz);
+}
+
 //Applies translation v to matrix m
 void translate(Matrix4x4& m, Vector4 v)
 {

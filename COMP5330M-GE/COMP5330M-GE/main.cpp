@@ -3,6 +3,7 @@
 #include "Maths.h"
 #include "Landscape.h"
 #include "l_system.h"
+#include "turtle.h"
 
 //DOING: 
 //	- UI to change terrain
@@ -44,6 +45,14 @@ Material gold =
 	Vector3(0.752, 0.606, 0.226),
 	Vector3(0.628, 0.556, 0.367),
 	25.f
+};
+
+Material wood =
+{
+	Vector3(0.76, 0.6, 0.42),
+	Vector3(0.76, 0.6, 0.42),
+	Vector3(0.76, 0.6, 0.42),
+	12.0
 };
 
 Material light_properties =
@@ -218,7 +227,7 @@ Drawable buffer_heightmap_to_textured_quad(GLuint* heightmap_texture)
 	return quad;
 }
 
-bool show_heightmap = true;
+bool show_tree = true;
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
@@ -233,7 +242,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 
 		Camera main_view_camera = {};
-		main_view_camera.set_position_and_target(Vector3{ 0.0f, 3.0f, -1.0f }, Vector3{});
+		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, -1.0f }, Vector3{});
 
 		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
 
@@ -256,12 +265,19 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		char str[2048] = {};
 		strcpy(str, "A");
+
+		tree_mesh_group tree = {};
+		tree.branch_mesh.face_indices = (GLuint*)alloc_mem(2048 * sizeof(GLuint));
+		tree.branch_mesh.vertices = (Mesh_vertex*)alloc_mem(512 * sizeof(Mesh_vertex));
+		tree.leaf_mesh.face_indices = (GLuint*)alloc_mem(2048 * sizeof(GLuint));
+		tree.leaf_mesh.vertices = (Mesh_vertex*)alloc_mem(512 * sizeof(Mesh_vertex));
 		
-		OutputDebugStringf("Initial String: %s\n", str);
-		derive_str(&example_l_system, str);
-		derive_str(&example_l_system, str);
-		OutputDebugStringf("Final String: %s\n", str);
-		
+		run_turtle("F(0.5, 0.2)[+(45.0)F(0.5, 0.1)@(0.3)][-(45.0)F(0.5, 0.1)@(0.3)]", &tree);
+		//run_turtle("F(0.5)@(0.5)", &tree);
+		OutputDebugStringf("Tree mesh: %d %d\n", tree.leaf_mesh.number_of_vertices, tree.leaf_mesh.number_of_indices);
+		Drawable tree_branches = buffer_mesh(tree.branch_mesh);
+		Drawable tree_leaves = buffer_mesh(tree.leaf_mesh);
+
 		//Main loop
 		while (!should_window_close()) 
 		{
@@ -289,28 +305,32 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_D)) main_view_camera.move_right();
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
-			if (was_key_pressed(KEY_SHIFT)) show_heightmap = !show_heightmap;
+			if (was_key_pressed(KEY_SHIFT)) show_tree = !show_tree;
+
 			begin_render();
+			set_projection_matrix(perspective(90.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
+			set_model_matrix(identity());
 
-			if (show_heightmap)
+			if (show_tree)
 			{
-				use_shader(heightmap_shader);
-				use_texture(heightmap_texture);
+				use_shader(terrain_lighting_shader);
 
-				opengl_check_for_errors();
-				draw(heightmap);
-				
+				set_view_matrix(identity());
+
+				buffer_camera_data_to_gpu(main_view_camera);
+
+				set_material(wood);
+				draw(tree_branches);
+				set_material(emerald);
+				draw(tree_leaves);
 			}
 			else
 			{
 				use_shader(terrain_lighting_shader);
 				
-				set_projection_matrix(perspective(90.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
-
 				buffer_camera_data_to_gpu(main_view_camera);
 
 				set_material(emerald);
-				set_model_matrix(identity());
 				draw(terrain.graphical_data);
 			}
 
