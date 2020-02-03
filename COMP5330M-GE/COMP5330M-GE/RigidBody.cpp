@@ -1,7 +1,8 @@
 #include "RigidBody.h"
 
 // Default constructor
-RigidBody::RigidBody() {
+RigidBody::RigidBody() 
+{
 	displacement = { 0.0,0.0,0.0 };
 	velocity = { 0.0,0.0,0.0 };
 	acceleration = { 0.0,0.0,0.0 };
@@ -10,7 +11,8 @@ RigidBody::RigidBody() {
 }
 
 // Parameterised constructor
-RigidBody::RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vector3 initialAcceleration, float mass, float radius) {
+RigidBody::RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vector3 initialAcceleration, float mass, float radius) 
+{
 	displacement = initialDisplacement;
 	velocity = initialVelocity;
 	acceleration = initialAcceleration;
@@ -20,7 +22,8 @@ RigidBody::RigidBody(Vector3 initialDisplacement, Vector3 initialVelocity, Vecto
 
 // Update the displacement, velocity, and acceleration using Velocity Verlet
 // We return the difference in displacement made to translate the mesh
-Vector3 updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float timeStep) {
+Vector3 updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float timeStep) 
+{
 	Vector3 initialDis = r.displacement;
 	r.displacement = r.displacement + (timeStep * r.velocity) + ((0.5 * timeStep * timeStep) * r.acceleration);
 	Vector3 finalDis = r.displacement;
@@ -35,7 +38,8 @@ Vector3 updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float
 	return disDiff;
 }
 
-bool checkSphereCylinderCollision(RigidBody& r, float x, float z, float miny, float maxy, float radius) {
+bool checkSphereCylinderCollision(RigidBody& r, float x, float z, float miny, float maxy, float radius) 
+{
 	// Check for collision with the side of the cylinder
 	if (miny <= r.displacement.y <= maxy) {
 		Vector3 m = { x, r.displacement.y, z };
@@ -74,4 +78,26 @@ float checkSphereCylinderCollisionInPath(RigidBody& r, Vector3 pathTaken, float 
 		}
 	}
 	return NULL;
+}
+
+bool checkSphereTriangleCollision(RigidBody& r, Vector3 v1, Vector3 v2, Vector3 v3)
+{
+	// First, check if vectors are inside sphere
+	Vector3 c1 = v1 - r.displacement;
+	Vector3 c2 = v2 - r.displacement;
+	Vector3 c3 = v3 - r.displacement;
+	if (length(c1) <= r.radius) return true;
+	else if (length(c2) <= r.radius) return true;
+	else if (length(c3) <= r.radius) return true;
+	// Then check the distance from sphere to plane
+	Vector3 edge1 = v2 - v1;
+	Vector3 edge2 = v3 - v1;
+	Vector3 normal = cross(edge1, edge2);
+	// Equation of a plane: Ax + By + Cz + D = 0
+	float d = -dot(normal, v1);
+	// Distance from point to plane = abs(Ax0 + By0 + Cz0 + D) / sqrt(A^2 + B^2 + C^2)
+	float num = dot(normal, r.displacement) + d;
+	if (num < 0) num *= -1.0;
+	float den = length(normal);
+	return (num / den) <= r.radius;
 }

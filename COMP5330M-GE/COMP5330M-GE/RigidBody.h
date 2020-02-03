@@ -22,7 +22,7 @@ struct RigidBody
 // Velocity verlet is being used here
 Vector3 updateDisplacement(RigidBody&, Vector3* forces, int numOfForces, float timeStep);
 
-// Collision detection
+// Collision detection - Cylinder
 // Position (x,z) defines the position of the cylinder
 // miny and maxy define the height of the cylinder
 bool checkSphereCylinderCollision(RigidBody&, float x, float z, float miny, float maxy, float radius);
@@ -30,3 +30,7 @@ bool checkSphereCylinderCollision(RigidBody&, float x, float z, float miny, floa
 // Continuous version - ensures sphere does not pass through cylinder
 // Might not be needed
 float checkSphereCylinderCollisionInPath(RigidBody&, Vector3 pathTaken, float x, float z, float miny, float maxy, float radius);
+
+// Collision detection - Ground mesh
+// A triangle defined by three points
+bool checkSphereTriangleCollision(RigidBody&, Vector3 v1, Vector3 v2, Vector3 v3);
