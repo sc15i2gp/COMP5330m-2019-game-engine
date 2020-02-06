@@ -16,14 +16,14 @@ struct Emitter {
 	float radius;
 	Vector3 normalSpeedVector;
 	float rateOfParticleRelease;
-	float speedXDifference;
-	float speedYDifference;
-	float speedZDifference;
+	float maxAngleAroundX;
+	float maxAngleAroundY;
+	float maxAngleAroundZ;
 	int minLife;
 	int maxLife;
 
 	Emitter();
-	Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float rate, float speedXDifference, float speedYDifference, float speedZDifference, int minLife, int maxLife);
+	Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float rate, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, int minLife, int maxLife);
 };
 
 Particle releaseOneParticle(Emitter&);
