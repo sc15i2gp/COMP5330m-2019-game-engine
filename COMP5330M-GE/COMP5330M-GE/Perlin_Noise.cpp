@@ -1,12 +1,5 @@
 #include "Perlin_Noise.h"
 
-float random(float min = -1.0f, float max = 1.0f)
-{
-	float n = (float)rand() / (float)RAND_MAX;
-	float range = max - min;
-	return min + n * range;
-}
-
 Vector2 rand_vector2(float min = -1.0f, float max = 1.0f)
 {
 	Vector2 v = {};

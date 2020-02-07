@@ -268,6 +268,22 @@ int prev_edge_index(int index)
 	return (index % 3 > 0) ? index - 1 : index + 2;
 }
 
+void Mesh::allocate(int number_of_vertices, int number_of_indices)
+{
+	this->vertices = (Mesh_vertex*)alloc_mem(number_of_vertices * sizeof(Mesh_vertex));
+	this->face_indices = (GLuint*)alloc_mem(number_of_indices * sizeof(GLuint));
+	this->first_edges = (int*)alloc_mem(number_of_vertices * sizeof(int));
+	this->other_edges = (int*)alloc_mem(number_of_indices * sizeof(int));
+}
+
+void Mesh::deallocate()
+{
+	dealloc_mem(this->vertices);
+	dealloc_mem(this->face_indices);
+	dealloc_mem(this->first_edges);
+	dealloc_mem(this->other_edges);
+}
+
 void Mesh::compute_normal_vectors()
 {
 	for (int i = 0; i < this->number_of_vertices; ++i)

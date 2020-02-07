@@ -22,6 +22,9 @@ struct Mesh
 	void compute_first_edge_list();
 	void compute_other_edge_list();
 	void compute_normal_vectors();
+
+	void allocate(int number_of_vertices, int number_of_indices);
+	void deallocate();
 };
 
 void define_sphere_mesh(Mesh*, float radius, int slice_count, int stack_count, Vector3 origin = {});

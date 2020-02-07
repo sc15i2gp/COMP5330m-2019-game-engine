@@ -1,5 +1,6 @@
 #pragma once
 #include <math.h>
+#include <stdlib.h>
 
 //Properties:
 //Matrix: Column major, since OpenGL uses column major matrices
@@ -8,6 +9,8 @@
 //Matrix.row(i) returns a copy of the i'th row as a column vector
 
 #define PI 3.141592653f
+
+float random(float min = -1.0f, float max = 1.0f);
 
 /****************************/
 

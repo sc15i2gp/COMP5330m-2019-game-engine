@@ -7,7 +7,6 @@
 
 //DOING: 
 //	- UI to change terrain
-//	- Add trees
 
 //TODO: Platform
 //	- Internal error handling
@@ -21,7 +20,6 @@
 //	- Only render certain range of terrain
 
 //TODO: Trees
-//	- L-system code
 //	- Find tree L-systems
 //	- Render whole landscape
 
@@ -31,28 +29,12 @@
 
 //TODO: Limit FPS
 
-Material emerald =
-{
-	Vector3(0.0215f, 0.1745f, 0.0215f),
-	Vector3(0.07568f, 0.61424f, 0.07568f),
-	Vector3(0.633f, 0.727811f, 0.633f),
-	256.f
-};
-
 Material gold =
 {
 	Vector3(0.247, 0.199, 0.075),
 	Vector3(0.752, 0.606, 0.226),
 	Vector3(0.628, 0.556, 0.367),
 	25.f
-};
-
-Material wood =
-{
-	Vector3(0.76, 0.6, 0.42),
-	Vector3(0.76, 0.6, 0.42),
-	Vector3(0.76, 0.6, 0.42),
-	12.0
 };
 
 Material light_properties =
@@ -227,7 +209,6 @@ Drawable buffer_heightmap_to_textured_quad(GLuint* heightmap_texture)
 	return quad;
 }
 
-bool show_tree = true;
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
@@ -242,7 +223,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 
 		Camera main_view_camera = {};
-		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, -1.0f }, Vector3{});
+		main_view_camera.set_position_and_target(Vector3{ 0.0f, 3.0f, -1.0f }, Vector3{});
 
 		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
 
@@ -250,33 +231,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_direction_light_direction(0, Vector3(0.0f, -1.0f, -1.0f));
 		set_direction_light_blinn_phong_properties(0, light_properties);
 
-		Terrain terrain = create_terrain(10.0f, 10.0f, 0.01f, 0.1f);
-		//set_max_height(terrain.max_height);
-		OutputDebugStringf("Max height = %f\n", terrain.max_height);
+		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
+
 		bool drawing_as_wireframes = false;
-
-		GLuint heightmap_texture;
-		Drawable heightmap = buffer_heightmap_to_textured_quad(&heightmap_texture);
-		OutputDebugStringf("Texture: %d\n", heightmap_texture);
-
-		l_system example_l_system = {};
-		add_production(&example_l_system, "<A>", "BC");
-		add_production(&example_l_system, "<C>", "DA");
-
-		char str[2048] = {};
-		strcpy(str, "A");
-
-		tree_mesh_group tree = {};
-		tree.branch_mesh.face_indices = (GLuint*)alloc_mem(2048 * sizeof(GLuint));
-		tree.branch_mesh.vertices = (Mesh_vertex*)alloc_mem(512 * sizeof(Mesh_vertex));
-		tree.leaf_mesh.face_indices = (GLuint*)alloc_mem(2048 * sizeof(GLuint));
-		tree.leaf_mesh.vertices = (Mesh_vertex*)alloc_mem(512 * sizeof(Mesh_vertex));
-		
-		run_turtle("F(0.5, 0.2)[+(45.0)F(0.5, 0.1)@(0.3)][-(45.0)F(0.5, 0.1)@(0.3)]", &tree);
-		//run_turtle("F(0.5)@(0.5)", &tree);
-		OutputDebugStringf("Tree mesh: %d %d\n", tree.leaf_mesh.number_of_vertices, tree.leaf_mesh.number_of_indices);
-		Drawable tree_branches = buffer_mesh(tree.branch_mesh);
-		Drawable tree_leaves = buffer_mesh(tree.leaf_mesh);
 
 		//Main loop
 		while (!should_window_close()) 
@@ -305,34 +262,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_D)) main_view_camera.move_right();
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
-			if (was_key_pressed(KEY_SHIFT)) show_tree = !show_tree;
 
 			begin_render();
-			set_projection_matrix(perspective(90.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
+			set_projection_matrix(perspective(50.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
 			set_model_matrix(identity());
+			use_shader(terrain_lighting_shader);
 
-			if (show_tree)
-			{
-				use_shader(terrain_lighting_shader);
+			buffer_camera_data_to_gpu(main_view_camera);
 
-				set_view_matrix(identity());
-
-				buffer_camera_data_to_gpu(main_view_camera);
-
-				set_material(wood);
-				draw(tree_branches);
-				set_material(emerald);
-				draw(tree_leaves);
-			}
-			else
-			{
-				use_shader(terrain_lighting_shader);
-				
-				buffer_camera_data_to_gpu(main_view_camera);
-
-				set_material(emerald);
-				draw(terrain.graphical_data);
-			}
+			//Draw landscape
+			landscape.draw();
 
 			swap_window_buffers();
 		}

@@ -1,5 +1,12 @@
 #include "Maths.h"
 
+float random(float min, float max)
+{
+	float n = (float)rand() / (float)RAND_MAX;
+	float range = max - min;
+	return min + n * range;
+}
+
 /****************************/
 
 /*			Trig			*/
@@ -491,7 +498,7 @@ void rotate(Matrix4x4& m, Vector3 axis, float angle)
 
 void translate(Matrix4x4& m, Vector3 v)
 {
-	Vector4 v_4(v, 1.0f);
+	Vector4 v_4(v, 0.0f);
 	translate(m, v_4);
 }
 
