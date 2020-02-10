@@ -9,11 +9,20 @@
 #include "imgui_impl_win32.h"
 
 //DOING: 
-//	- Draw xyz axes
+//	- Fix arcball camera rotation
+//	- FPS governing
+//		- Timing
+//		- Limit frame time
+//	- Rendering
+//		- Checkboxes for rendering rowans and pines
+//		- Checkbox for rendering terrain
+//		- Checkbox for rendering as wireframes/polygons
+//	- UI module
+//		- Program parameters as a struct which UI edits
+//		- Keep in consideration that the UI will need to be turned off for release/gameplay mode
 
 //TODO: Platform/Graphics
 //	- Internal error handling
-//	- Timing
 //	- Better memory management(?)
 //	- glDelete functions
 
@@ -25,14 +34,22 @@
 //	- Find tree L-systems
 
 //TODO: Volume rendering
-//	- Render uniform density grid as cloud
-//	- Add wind vector field
-//	- Simulate smoke particles
+//	- Render still uniform density grid
+//	- Move densities
+//		- Diffusion
+//		- Constant wind vector field
+//	- Convection of smoke particles
+//	- Boundaries in flow caused by trees and hills
 
 //TODO: Camera/UI
 //	- UI elements to affect terrain generation
-//	- Fix arcball camera rotation
-//	- Limit FPS
+//	- Draw xyz axes
+
+//TODO: Maintenance
+//	- Edit interfaces to Platform and Graphics to be:
+//		- More consistent
+//		- More descriptive (eg. change parameter names in function macros)
+//	- Make using OS input easier
 
 Material gold =
 {
