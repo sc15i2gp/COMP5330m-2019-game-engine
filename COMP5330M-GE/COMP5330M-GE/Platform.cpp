@@ -13,13 +13,15 @@ Vector2 get_cursor_position(HWND window)
 	POINT p;
 	GetCursorPos(&p);
 	ScreenToClient(window, &p);
-	Vector2 v = { p.x, p.y };
+	Vector2 v(p.x, p.y );
 	return v;
 }
-
+//This is here so that imgui inputs work
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);
 //Function is called for every event passed to the process by Windows
 LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(window, message, wparam, lparam)) return true;
 	LRESULT result = 0;
 	switch (message)
 	{

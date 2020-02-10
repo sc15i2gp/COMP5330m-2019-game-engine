@@ -57,7 +57,7 @@ void push_sphere_to_mesh(turtle* t, Mesh* dst_mesh, Mesh* sphere_mesh, float rad
 //In this function, the origin of the cylinder is the base of the cylinder
 void push_cylinder_to_mesh(turtle* t, Mesh* dst_mesh, Mesh* cylinder_mesh, float radius, float height)
 {
-	Vector3 origin = t->position;
+	Vector3 origin = t->position + (height/2.0)*t->orientation.heading;
 	define_cylinder_mesh(cylinder_mesh, radius, height, 8, origin, t->orientation.heading, -t->orientation.left);
 	attach_mesh_to_mesh(dst_mesh, cylinder_mesh);
 	cylinder_mesh->number_of_indices = 0;

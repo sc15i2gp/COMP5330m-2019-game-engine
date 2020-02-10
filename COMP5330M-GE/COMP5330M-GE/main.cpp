@@ -4,30 +4,35 @@
 #include "Landscape.h"
 #include "l_system.h"
 #include "turtle.h"
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_win32.h"
 
 //DOING: 
-//	- UI to change terrain
+//	- Draw xyz axes
 
-//TODO: Platform
+//TODO: Platform/Graphics
 //	- Internal error handling
 //	- Timing
 //	- Better memory management(?)
+//	- glDelete functions
 
-//TODO: Terrain
+//TODO: Landscape
 //	- Parameterise (with UI)
 //	- Texture
 //	- Retrieve/highlight triangles
-//	- Only render certain range of terrain
-
-//TODO: Trees
+//	- Spatial partitioning
 //	- Find tree L-systems
-//	- Render whole landscape
+
+//TODO: Volume rendering
+//	- Render uniform density grid as cloud
+//	- Add wind vector field
+//	- Simulate smoke particles
 
 //TODO: Camera/UI
 //	- UI elements to affect terrain generation
 //	- Fix arcball camera rotation
-
-//TODO: Limit FPS
+//	- Limit FPS
 
 Material gold =
 {
@@ -53,10 +58,11 @@ struct Camera
 	Vector3 upward;
 	Vector3 rightward;
 	Quaternion arcball_rotation;
+	float movement_sensitivity;
 
 	void update_rightward_and_upward_vectors()
 	{
-		this->rightward = normalise(cross(world_up, this->position));
+		this->rightward = normalise(cross(world_up, -this->forward));
 		this->upward = normalise(cross(this->rightward, this->forward));
 	}
 
@@ -72,30 +78,19 @@ struct Camera
 	{
 		Vector2 screen_dimensions = { get_window_width(window), get_window_height(window) };
 
-		initial_mouse_position.x = 1.0f - (initial_mouse_position.x / (0.5f * screen_dimensions.x));
-		initial_mouse_position.y = 1.0f - (initial_mouse_position.y / (0.5f * screen_dimensions.y));
-		final_mouse_position.x = 1.0f - (final_mouse_position.x / (0.5f * screen_dimensions.x));
-		final_mouse_position.y = 1.0f - (final_mouse_position.y / (0.5f * screen_dimensions.y));
+		initial_mouse_position = Vector2(1.0f, 1.0f) - (initial_mouse_position / (0.5f * screen_dimensions));
+		final_mouse_position = Vector2(1.0f, 1.0f) - (final_mouse_position / (0.5f * screen_dimensions));
 
+		if (length(initial_mouse_position) > 1.0f) initial_mouse_position = normalise(initial_mouse_position);
+		if (length(final_mouse_position) > 1.0f) final_mouse_position = normalise(final_mouse_position);
 		Quaternion q_0 = compute_great_circle_point(initial_mouse_position);
 		Quaternion q_1 = compute_great_circle_point(final_mouse_position);
 
 		if (q_0 != q_1)
 		{
-			/*
-			Quaternion drag = compute_rotation_between_quaternions(q_0, q_1);
-			drag = compute_rotation_between_quaternions(drag, this->arcball_rotation);
-			Matrix3x3 drag_rotation = quaternion_to_matrix(drag);
-			*/
 			Matrix3x3 drag_rotation = compute_rotation_matrix_between_quaternions(q_0, q_1);
 			Matrix3x3 m = drag_rotation;
 			
-			/*
-			OutputDebugStringf("M: %f %f %f\n", m[0].x, m[1].x, m[2].x);
-			OutputDebugStringf("M: %f %f %f\n", m[0].y, m[1].y, m[2].y);
-			OutputDebugStringf("M: %f %f %f\n", m[0].z, m[1].z, m[2].z);
-			OutputDebugStringf("%f %f %f %f\n", this->arcball_rotation.w, this->arcball_rotation.x, this->arcball_rotation.y, this->arcball_rotation.z);
-			*/
 			this->forward *= drag_rotation;
 			this->upward *= drag_rotation;
 			this->rightward *= drag_rotation;
@@ -105,32 +100,32 @@ struct Camera
 
 	void move_forward()
 	{
-		this->position += 0.1f * forward;
+		this->position += movement_sensitivity * forward;
 	}
 
 	void move_backward()
 	{
-		this->position -= 0.1f * forward;
+		this->position -= movement_sensitivity * forward;
 	}
 	
 	void move_left()
 	{
-		this->position -= 0.1f * rightward;
+		this->position -= movement_sensitivity * rightward;
 	}
 
 	void move_right()
 	{
-		this->position += 0.1f * rightward;
+		this->position += movement_sensitivity * rightward;
 	}
 
 	void move_up()
 	{
-		this->position += 0.1f * world_up;
+		this->position += movement_sensitivity * world_up;
 	}
 
 	void move_down()
 	{
-		this->position -= 0.1f * world_up;
+		this->position -= movement_sensitivity * world_up;
 	}
 };
 
@@ -215,6 +210,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 	bool platform_ready = initialise_platform(instance);
 	bool graphics_ready = initialise_graphics();
 
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(get_window());
+	ImGui_ImplOpenGL3_Init("#version 460");
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	if (platform_ready && graphics_ready)
 	{
 		int bp_shader = load_shader_program("vshader.glsl", "fshader.glsl");
@@ -223,8 +224,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 
 		Camera main_view_camera = {};
-		main_view_camera.set_position_and_target(Vector3{ 0.0f, 3.0f, -1.0f }, Vector3{});
-
+		main_view_camera.set_position_and_target(Vector3{ 5.0f, 5.0f, 10.0f }, Vector3{5.0f, 0.0f, 5.0f});
+		main_view_camera.movement_sensitivity = 0.1f;
 		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
 
 		activate_direction_light(0);
@@ -238,6 +239,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		//Main loop
 		while (!should_window_close()) 
 		{
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
 			handle_input();
 
 			if (was_key_pressed(KEY_RETURN))
@@ -263,6 +267,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
 
+			ImGui::Begin("Camera");
+			ImGui::Text("Position");
+			ImGui::NewLine();
+			ImGui::InputFloat3("##P",&main_view_camera.position[0]);
+			ImGui::NewLine();
+			ImGui::Text("Forward direction");
+			ImGui::NewLine();
+			ImGui::InputFloat3("##Q", &main_view_camera.forward[0]);
+			ImGui::NewLine();
+			ImGui::Text("Movement Sensitivity");
+			ImGui::SliderFloat("", &main_view_camera.movement_sensitivity, 0.001f, 1.0f);
+			ImGui::End();
 			begin_render();
 			set_projection_matrix(perspective(50.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
 			set_model_matrix(identity());
@@ -272,11 +288,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			//Draw landscape
 			landscape.draw();
-
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			swap_window_buffers();
 		}
 		//release_drawable();
 		//ReleaseDC(window, window_device_context);
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplWin32_Shutdown();
 		shutdown_platform();
 		return 0;
 	}

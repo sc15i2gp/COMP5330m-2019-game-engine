@@ -22,6 +22,8 @@ struct Terrain_Data
 	float max_height;
 	float width;
 	float length;
+
+	float height_at_point(Vector2);
 };
 
 enum Tree_Type

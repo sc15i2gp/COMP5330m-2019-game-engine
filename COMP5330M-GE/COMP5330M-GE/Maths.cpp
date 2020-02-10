@@ -278,6 +278,18 @@ Vector3 normalise(Vector3 v)
 
 /****************************/
 
+Vector2::Vector2()
+{
+	this->x = 0.0;
+	this->y = 0.0;
+}
+
+Vector2::Vector2(float x, float y)
+{
+	this->x = x;
+	this->y = y;
+}
+
 float& Vector2::operator[](int index)
 {
 	return this->xy[index];
@@ -751,7 +763,7 @@ Quaternion compute_great_circle_point(Vector2 v)
 {
 	Quaternion q = {};
 
-	float z = sqrt(1.0f - dot(v, v));
+	float z = (dot(v,v) < 1.0f) ? sqrt(1.0f - dot(v, v)) : 0.0f;
 	q.xyz = Vector3(v, z);
 	q.w = 0.0f;
 

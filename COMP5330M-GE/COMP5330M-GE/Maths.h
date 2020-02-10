@@ -41,6 +41,9 @@ struct Vector2
 		};
 	};
 
+	Vector2();
+	Vector2(float,float);
+
 	float& operator[](int index);
 };
 

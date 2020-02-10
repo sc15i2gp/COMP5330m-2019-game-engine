@@ -135,6 +135,12 @@
     <ClCompile Include="char_queue.cpp" />
     <ClCompile Include="expression_evaluator.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="imgui_demo.cpp" />
+    <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="imgui_impl_opengl3.cpp" />
+    <ClCompile Include="imgui_impl_win32.cpp" />
+    <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="Landscape.cpp" />
     <ClCompile Include="l_system.cpp" />
     <ClCompile Include="main.cpp" />
@@ -155,6 +161,14 @@
     <ClInclude Include="float_stack.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="Graphics.h" />
+    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="imgui_impl_opengl3.h" />
+    <ClInclude Include="imgui_impl_win32.h" />
+    <ClInclude Include="imgui_internal.h" />
+    <ClInclude Include="imstb_rectpack.h" />
+    <ClInclude Include="imstb_textedit.h" />
+    <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="khrplatform.h" />
     <ClInclude Include="Landscape.h" />
     <ClInclude Include="l_system.h" />
