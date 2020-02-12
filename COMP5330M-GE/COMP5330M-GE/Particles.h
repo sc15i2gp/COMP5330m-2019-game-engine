@@ -23,7 +23,6 @@ struct Emitter {
 	Vector3 position;
 	float radius;
 	Vector3 normalSpeedVector;
-	float rateOfParticleRelease;
 	float maxAngleAroundX;
 	float maxAngleAroundY;
 	float maxAngleAroundZ;
@@ -33,12 +32,18 @@ struct Emitter {
 	int maxLife;
 
 	Emitter();
-	Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float rate, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife);
+	Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife);
 };
 
 Particle releaseOneParticle(Emitter&);
 
 Particle simpleReleaseOneParticle(Emitter&);
+
+Particle* releaseManyParticlesAtOnce(Emitter&, int numOfParticles);
+
+Particle* releaseManyParticlesInASequence(Emitter&, int numOfParticles, float rate);
+
+Particle* releaseBurstsOfParticlesInASequence(Emitter&, int numOfGroups, int minNumOfParticlesPerGroup, int maxNumOfParticlesPerGroup, float rate);
 
 ParticleBody makeParticleRigidBody(Particle&, Vector3 acceleration, float mass);
 

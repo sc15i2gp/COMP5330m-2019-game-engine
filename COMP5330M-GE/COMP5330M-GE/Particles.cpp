@@ -26,19 +26,17 @@ Emitter::Emitter()
 	position = { 0.0, 0.0, 0.0 };
 	radius = 0.0;
 	normalSpeedVector = { 0.0, 1.0, 0.0 };
-	rateOfParticleRelease = 10;
 	maxAngleAroundX = maxAngleAroundY = maxAngleAroundZ = 30.0;
 	minSpeedRatio = 0.5;
 	minLife = 60;
 	maxLife = 500;
 }
 
-Emitter::Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float rate, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife)
+Emitter::Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife)
 {
 	this->position = position;
 	this->radius = radius;
 	this->normalSpeedVector = normalSpeedVector;
-	rateOfParticleRelease = rate;
 	this->maxAngleAroundX = maxAngleAroundX;
 	this->maxAngleAroundY = maxAngleAroundY;
 	this->maxAngleAroundZ = maxAngleAroundZ;
@@ -81,6 +79,37 @@ Particle releaseOneParticle(Emitter& e)
 Particle simpleReleaseOneParticle(Emitter& e)
 {
 	return Particle(e.position, e.normalSpeedVector, e.maxLife);
+}
+
+Particle* releaseManyParticlesAtOnce(Emitter& e, int numOfParticles)
+{
+	Particle* particles;
+	for (int i = 0; i < numOfParticles; i++) {
+		particles[i] = releaseOneParticle(e);
+	}
+	return particles;
+}
+
+// Should be run in a thread so Sleep() does not affect the whole program
+Particle* releaseManyParticlesInASequence(Emitter& e, int numOfParticles, float rate)
+{
+	Particle* particles;
+	float time = 1000.0 / rate;
+	for (int i = 0; i < numOfParticles; i++) {
+		particles[i] = releaseOneParticle(e);
+		Sleep(time);
+	}
+	return particles;
+}
+
+Particle* releaseBurstsOfParticlesInASequence(Emitter&, int numOfGroups, int minNumOfParticlesPerGroup, int maxNumOfParticlesPerGroup, float rate)
+{
+	Particle* particles;
+	float time = 1000.0 / rate;
+	for (int i = 0; i < numOfGroups; i++) {
+		int nop = minNumOfParticlesPerGroup + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxNumOfParticlesPerGroup - minNumOfParticlesPerGroup))));
+	}
+	return particles;
 }
 
 ParticleBody makeParticleRigidBody(Particle& p, Vector3 acceleration, float mass)
