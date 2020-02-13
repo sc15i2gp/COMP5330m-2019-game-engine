@@ -72,13 +72,25 @@ Particle releaseOneParticle(Emitter& e)
 	float ratio = e.minSpeedRatio + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1 - e.minSpeedRatio))));
 	vel = ratio * vel;
 	// Generate a lifespan
-	float life = e.minLife + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (e.maxLife - e.minLife))));
+	int life = e.minLife + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (e.maxLife - e.minLife))));
 	return Particle(pos,vel,life);
 }
 
 Particle simpleReleaseOneParticle(Emitter& e)
 {
 	return Particle(e.position, e.normalSpeedVector, e.maxLife);
+}
+
+ParticleBody releaseOneRigidParticle(Emitter& e, Vector3 acceleration, float mass)
+{
+	Particle p = releaseOneParticle(e);
+	return ParticleBody(p, acceleration, mass);
+}
+
+ParticleBody simpleReleaseOneRigidParticle(Emitter& e, Vector3 acceleration, float mass)
+{
+	Particle p = simpleReleaseOneParticle(e);
+	return ParticleBody(p, acceleration, mass);
 }
 
 Particle* releaseManyParticlesAtOnce(Emitter& e, int numOfParticles)
@@ -102,12 +114,48 @@ Particle* releaseManyParticlesInASequence(Emitter& e, int numOfParticles, float 
 	return particles;
 }
 
-Particle* releaseBurstsOfParticlesInASequence(Emitter&, int numOfGroups, int minNumOfParticlesPerGroup, int maxNumOfParticlesPerGroup, float rate)
+Particle* releaseBurstsOfParticlesInASequence(Emitter& e, int numOfBursts, int minNumOfParticlesPerGroup, int maxNumOfParticlesPerGroup, float rate)
 {
 	Particle* particles;
 	float time = 1000.0 / rate;
-	for (int i = 0; i < numOfGroups; i++) {
+	for (int i = 0; i < numOfBursts; i++) {
 		int nop = minNumOfParticlesPerGroup + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxNumOfParticlesPerGroup - minNumOfParticlesPerGroup))));
+		particles = releaseManyParticlesAtOnce(e, nop);
+		particles += nop;
+		Sleep(time);
+	}
+	return particles;
+}
+
+ParticleBody* releaseManyRigidParticlesAtOnce(Emitter& e, int numOfParticles, Vector3 acceleration, float mass)
+{
+	ParticleBody* particles;
+	for (int i = 0; i < numOfParticles; i++) {
+		particles[i] = releaseOneRigidParticle(e, acceleration, mass);
+	}
+	return particles;
+}
+
+ParticleBody* releaseManyRigidParticlesInASequence(Emitter& e, int numOfParticles, float rate, Vector3 acceleration, float mass)
+{
+	ParticleBody* particles;
+	float time = 1000.0 / rate;
+	for (int i = 0; i < numOfParticles; i++) {
+		particles[i] = releaseOneRigidParticle(e, acceleration, mass);
+		Sleep(time);
+	}
+	return particles;
+}
+
+ParticleBody* releaseBurstsOfRigidParticlesInASequence(Emitter& e, int numOfBursts, int minNumOfParticlesPerGroup, int maxNumOfParticlesPerGroup, float rate, Vector3 acceleration, float mass)
+{
+	ParticleBody* particles;
+	float time = 1000.0 / rate;
+	for (int i = 0; i < numOfBursts; i++) {
+		int nop = minNumOfParticlesPerGroup + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (maxNumOfParticlesPerGroup - minNumOfParticlesPerGroup))));
+		particles = releaseManyRigidParticlesAtOnce(e, nop, acceleration, mass);
+		particles += nop;
+		Sleep(time);
 	}
 	return particles;
 }
@@ -123,6 +171,7 @@ Vector3 updateParticlePosition(Particle& p, float timeStep)
 	p.displacement += timeStep * p.velocity;
 	Vector3 finalDis = p.displacement;
 	Vector3 diffDis = finalDis - initialDis;
+	p.life -= 1;
 	return diffDis;
 }
 
@@ -139,5 +188,6 @@ Vector3 updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int 
 	}
 	p.acceleration = totalForce / p.mass;
 	p.particle.velocity = p.particle.velocity + (0.5 * timeStep * p.acceleration);
+	p.particle.life -= 1;
 	return disDiff;
 }
