@@ -17,6 +17,11 @@
 // Figure out howto add two textures simultaniously 
 // Make instances of this water quad
 
+//DEBUGGING FOR SHADERS
+
+//Triangle not rendering, fix the issues
+// Translate code as how Isaac has done it (?)
+
 void print_mat(Matrix4x4 m)
 {
 	for (int i = 0; i < 4; ++i)
@@ -62,6 +67,50 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		std::cout << debugMessage << std::endl;
 	}
 
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	const char* fragmentShaderSource = read_file("testFragShader.glsl");
+
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compilationStatus);
+
+	if (!compilationStatus)
+	{
+		glGetShaderInfoLog(fragmentShader, 1024, NULL, debugMessage);
+		std::cout << debugMessage << std::endl;
+	}
+
+	unsigned int programObject;
+	programObject = glCreateProgram();
+
+	glAttachShader(programObject, vertexShader);
+	glAttachShader(programObject, fragmentShader);
+
+	glLinkProgram(programObject);
+
+	int linked;
+	glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
+
+	if (!linked)
+	{
+		glGetProgramInfoLog(programObject, 1024, NULL, debugMessage);
+		std::cout << debugMessage << std::endl;
+	}
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	unsigned int vao;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glUseProgram(programObject);
+
 	if (platform_ready && graphics_ready)
 	{
 
@@ -72,6 +121,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			glClearColor(131.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			glUseProgram(programObject);
+			glBindVertexArray(0);
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+
 
 			swap_window_buffers();
 		}
