@@ -132,6 +132,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="arithmetic_tokeniser.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="char_queue.cpp" />
     <ClCompile Include="expression_evaluator.cpp" />
     <ClCompile Include="Graphics.cpp" />
@@ -155,6 +156,7 @@
   <ItemGroup>
     <ClInclude Include="arithmetic_tokeniser.h" />
     <ClInclude Include="arithmetic_token_stack.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="char_queue.h" />
     <ClInclude Include="char_queue_stack.h" />
     <ClInclude Include="expression_evaluator.h" />
