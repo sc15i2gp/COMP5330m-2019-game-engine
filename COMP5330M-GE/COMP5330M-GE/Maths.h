@@ -83,6 +83,11 @@ struct Vector3
 		{
 			Vector2 xy;
 		};
+		struct
+		{
+			float _f;
+			Vector2 yz;
+		};
 	};
 
 	Vector3();
@@ -145,6 +150,11 @@ struct Vector4
 		struct
 		{
 			Vector3 xyz;
+		};
+		struct
+		{
+			float _f;
+			Vector3 yzw;
 		};
 	};
 
@@ -224,6 +234,9 @@ Matrix4x4 look_at(Vector4 eye_position, Vector4 forward_vector, Vector4 right_ve
 Matrix4x4 look_at(Vector3 eye_position, Vector3 target_position);
 Matrix4x4 look_at(Vector3 eye_position, Vector3 forward_vector, Vector3 right_vector, Vector3 upward_vector);
 
+float determinant(Matrix4x4);
+Matrix4x4 inverse(Matrix4x4);
+
 /********************************/
 
 /*			Matrix3x3			*/
@@ -263,6 +276,31 @@ void operator/=(Matrix3x3&, float);
 
 Matrix3x3 transpose(Matrix3x3);
 
+Matrix3x3 matrix_4x4_to_3x3(Matrix4x4);
+
+float determinant(Matrix3x3);
+Matrix3x3 inverse(Matrix3x3);
+
+/********************************/
+
+/*			Matrix2x2			*/
+
+/********************************/
+
+struct Matrix2x2
+{
+	Vector2 columns[2];
+	Vector2 row(int);
+	Vector2 column(int);
+
+	Vector2& operator[](int index)
+	{
+		return columns[index];
+	}
+};
+
+float determinant(Matrix2x2);
+
 /********************************/
 
 /*			Quaternion			*/
@@ -292,6 +330,7 @@ struct Quaternion
 
 	Quaternion();
 	Quaternion(Vector3 axis, float angle);
+	Quaternion(float x, float y, float z, float w);
 
 	float& operator[](int index)
 	{
@@ -309,6 +348,6 @@ Quaternion inverse(Quaternion);
 float norm(Quaternion);
 
 Quaternion compute_great_circle_point(Vector2);
-Matrix3x3 quaternion_to_matrix(Quaternion);
+Matrix4x4 quaternion_to_matrix(Quaternion);
 Quaternion compute_rotation_between_quaternions(Quaternion, Quaternion);
-Matrix3x3 compute_rotation_matrix_between_quaternions(Quaternion, Quaternion);
+Matrix4x4 compute_rotation_matrix_between_quaternions(Quaternion, Quaternion);

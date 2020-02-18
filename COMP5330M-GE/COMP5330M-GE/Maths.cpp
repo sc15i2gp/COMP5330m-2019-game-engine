@@ -125,6 +125,7 @@ float dot(Vector4 v, Vector4 w)
 	d += v.x*w.x;
 	d += v.y*w.y;
 	d += v.z*w.z;
+	d += v.w*w.w;
 	return d;
 }
 
@@ -533,12 +534,6 @@ Matrix4x4 perspective(float fov, float aspect_ratio, float n, float f)
 
 Matrix4x4 look_at(Vector4 eye_position, Vector4 forward_vector, Vector4 right_vector, Vector4 upward_vector)
 {
-	/*
-	OutputDebugStringf("LA: Position: %f %f %f\n", eye_position.x, eye_position.y, eye_position.z);
-	OutputDebugStringf("LA: Forward: %f %f %f\n", forward_vector.x, forward_vector.y, forward_vector.z);
-	OutputDebugStringf("LA: Upward: %f %f %f\n", upward_vector.x, upward_vector.y, upward_vector.z);
-	OutputDebugStringf("LA: Rightward: %f %f %f\n", right_vector.x, right_vector.y, right_vector.z);
-	*/
 	Vector4 column_0(right_vector.x, upward_vector.x, forward_vector.x, 0.0f);
 	Vector4 column_1(right_vector.y, upward_vector.y, forward_vector.y, 0.0f);
 	Vector4 column_2(right_vector.z, upward_vector.z, forward_vector.z, 0.0f);
@@ -580,6 +575,20 @@ Matrix4x4 look_at(Vector3 eye_position, Vector3 target_position)
 Matrix4x4 look_at(Vector3 eye_position, Vector3 forward_vector, Vector3 rightward_vector, Vector3 upward_vector)
 {
 	return look_at(Vector4(eye_position, 0.0f), Vector4(forward_vector, 0.0f), Vector4(rightward_vector, 0.0f), Vector4(upward_vector, 0.0f));
+}
+
+float determinant(Matrix4x4 m)
+{
+	float d = 0.0f;
+	int f = 1;
+	for (int i = 0; i < 4; ++i)
+	{
+		Matrix3x3 s;
+		for(int j = 0, k = 0; j < 4; ++j) if(j != i) s[k++] = m[i].yzw;
+		d += (float)f * m[i][0] * determinant(s);
+		f *= -1;
+	}
+	return d;
 }
 
 /********************************/
@@ -707,6 +716,45 @@ Matrix3x3 transpose(Matrix3x3 m)
 	return t;
 }
 
+//Copy the first 3 columns of 4x4 matrix
+Matrix3x3 matrix_4x4_to_3x3(Matrix4x4 m)
+{
+	Matrix3x3 t = {};
+	for (int i = 0; i < 3; ++i)
+	{
+		t[i] = m[i].xyz;
+	}
+	return t;
+}
+
+float determinant(Matrix3x3 m)
+{
+	float d = 0.0f;
+	int f = 1;
+	for (int i = 0; i < 3; ++i)
+	{
+		Matrix2x2 s;
+		for (int j = 0, k = 0; j < 3; ++j)
+		{
+			if (j != i) s[k++] = m[j].yz;
+		}
+		d += (float)(f) * m[i][0] * determinant(s);
+		f *= -1;
+	}
+	return d;
+}
+
+/********************************/
+
+/*			Matrix2x2			*/
+
+/********************************/
+
+float determinant(Matrix2x2 m)
+{
+	return m[0][0] * m[1][1] - m[1][0] * m[0][1];
+}
+
 /********************************/
 
 /*			Quaternion			*/
@@ -722,6 +770,14 @@ Quaternion::Quaternion(Vector3 axis, float angle)
 {
 	this->xyz = sin_deg(angle) * axis;
 	this->w = cos_deg(angle);
+}
+
+Quaternion::Quaternion(float x, float y, float z, float w)
+{
+	this->x = x;
+	this->y = y;
+	this->z = z;
+	this->w = w;
 }
 
 Quaternion operator*(Quaternion q, Quaternion r)
@@ -770,9 +826,9 @@ Quaternion compute_great_circle_point(Vector2 v)
 	return q;
 }
 
-Matrix3x3 quaternion_to_matrix(Quaternion q)
+Matrix4x4 quaternion_to_matrix(Quaternion q)
 {
-	Matrix3x3 m = {};
+	Matrix4x4 m = {};
 	m[0][0] = 1.0f - 2.0f*(q.y*q.y + q.z*q.z);
 	m[0][1] = 2.0f*(q.x*q.y + q.w*q.z);
 	m[0][2] = 2.0f*(q.x*q.z - q.w*q.y);
@@ -782,6 +838,7 @@ Matrix3x3 quaternion_to_matrix(Quaternion q)
 	m[2][0] = 2.0f*(q.x*q.z + q.w*q.y);
 	m[2][1] = 2.0f*(q.y*q.z - q.w*q.x);
 	m[2][2] = 1.0f - 2.0f*(q.x*q.x + q.y*q.y);
+	m[3][3] = 1.0f;
 	return m;
 }
 
@@ -790,7 +847,7 @@ Quaternion compute_rotation_between_quaternions(Quaternion q, Quaternion r)
 	return r * inverse(q);
 }
 
-Matrix3x3 compute_rotation_matrix_between_quaternions(Quaternion q, Quaternion r)
+Matrix4x4 compute_rotation_matrix_between_quaternions(Quaternion q, Quaternion r)
 {
 	return quaternion_to_matrix(compute_rotation_between_quaternions(q, r));
 }
