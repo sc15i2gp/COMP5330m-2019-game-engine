@@ -4,15 +4,10 @@
 #include "Landscape.h"
 #include "l_system.h"
 #include "turtle.h"
-#include "imgui.h"
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_win32.h"
 #include "Camera.h"
+#include "UI.h"
 
 //DOING:
-//	- UI module
-//		- Program parameters as a struct which UI edits
-//		- Keep in consideration that the UI will need to be turned off for release/gameplay mode
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -174,18 +169,14 @@ long int elapsed_time(timer* t)
 
 	return elapsed.QuadPart;
 }
+
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
 	bool platform_ready = initialise_platform(instance);
 	bool graphics_ready = initialise_graphics();
+	bool ui_ready = initialise_ui();
 
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
-	ImGui::StyleColorsDark();
-	ImGui_ImplWin32_Init(get_window());
-	ImGui_ImplOpenGL3_Init("#version 460");
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	if (platform_ready && graphics_ready)
 	{
 		int bp_shader = load_shader_program("vshader.glsl", "fshader.glsl");
@@ -206,9 +197,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		bool dragging = false;
 		int fps = 60;
-		bool render_pines = true;
-		bool render_rowans = true;
 		bool render_wireframes = false;
+		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
+
 		timer t;
 		//Main loop
 		while (!should_window_close()) 
@@ -216,10 +207,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			start_timer(&t);
 			long int mspf = fps_to_mspf(fps);
 
-			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
+
 			handle_input();
+			handle_ui(ui_parameters);
 			
 			if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging)
 			{
@@ -244,39 +234,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
 
-			ImGui::Begin("Camera");
-			ImGui::Text("Position");
-			ImGui::NewLine();
-			ImGui::InputFloat3("##P",&main_view_camera.position[0]);
-			ImGui::NewLine();
-			ImGui::Text("Forward direction");
-			ImGui::NewLine();
-			ImGui::InputFloat3("##Q", &main_view_camera.forward[0]);
-			ImGui::NewLine();
-			ImGui::Text("Movement Sensitivity");
-			ImGui::SliderFloat("", &main_view_camera.movement_sensitivity, 0.001f, 1.0f);
-			ImGui::End();
-
-			ImGui::Begin("Performance");
-			ImGui::Text("FPS");
-			ImGui::NewLine();
-			ImGui::SliderInt("", &fps, 24, 120);
-			ImGui::End();
-
-			ImGui::Begin("Landscape");
-			ImGui::Text("Render Pines?");
-			ImGui::SameLine();
-			ImGui::Checkbox("##Pines", &render_pines);
-			ImGui::NewLine();
-			ImGui::Text("Render Rowans?");
-			ImGui::SameLine();
-			ImGui::Checkbox("##Rowans", &render_rowans);
-			ImGui::NewLine();
-			ImGui::Text("Render as wireframes?");
-			ImGui::SameLine();
-			ImGui::Checkbox("##Wireframes", &render_wireframes);
-			ImGui::End();
-
 			begin_render();
 			if (render_wireframes) draw_as_wireframes();
 			else draw_as_polygons();
@@ -288,9 +245,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			buffer_camera_data_to_gpu(main_view_camera);
 
 			//Draw landscape
-			landscape.draw(render_pines, render_rowans);
-			ImGui::Render();
-			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			landscape.draw();
+			render_ui();
 			swap_window_buffers();
 
 			stop_timer(&t);

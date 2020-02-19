@@ -176,10 +176,12 @@ Landscape_Data create_landscape(float width, float length, float terrain_cell_le
 	Landscape_Data landscape = {};
 	landscape.forest = create_forest(width, length, number_of_trees);
 	landscape.terrain = create_terrain(width, length, terrain_cell_length);
+	landscape.render_pines = true;
+	landscape.render_rowans = true;
 	return landscape;
 }
 
-void Landscape_Data::draw(bool render_pines, bool render_rowans)
+void Landscape_Data::draw()
 {
 	Matrix4x4 model = identity();
 	set_model_matrix(model);
@@ -198,7 +200,7 @@ void Landscape_Data::draw(bool render_pines, bool render_rowans)
 		Tree_Type current_tree_type = this->forest.tree_distribution.tree_types[i];
 		int current_tree_id = this->forest.tree_distribution.tree_ids[i];
 		
-		if (current_tree_type == TREE_PINE && render_pines)
+		if (current_tree_type == TREE_PINE && this->render_pines)
 		{
 			//OutputDebugStringf("PINE %d: %f %f %f\n", i, tree_position.x, tree_position.y, tree_position.z);
 			set_material(wood);
@@ -206,7 +208,7 @@ void Landscape_Data::draw(bool render_pines, bool render_rowans)
 			set_material(leaf);
 			::draw(this->forest.pine_leaf_drawables[current_tree_id]);
 		}
-		else if (current_tree_type == TREE_ROWAN && render_rowans)
+		else if (current_tree_type == TREE_ROWAN && this->render_rowans)
 		{
 			//OutputDebugStringf("ROWAN %d: %f %f %f\n", i, tree_position.x, tree_position.y, tree_position.z);
 			set_material(wood);

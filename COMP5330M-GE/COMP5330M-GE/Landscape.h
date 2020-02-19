@@ -55,8 +55,10 @@ struct Landscape_Data
 {
 	Forest_Data forest;
 	Terrain_Data terrain;
+	bool render_pines;
+	bool render_rowans;
 
-	void draw(bool render_pines = true, bool render_rowans = true);
+	void draw();
 };
 
 Terrain_Data create_terrain(float width, float length, float terrain_cell_length);
