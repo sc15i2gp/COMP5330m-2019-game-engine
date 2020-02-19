@@ -9,15 +9,7 @@
 #include "imgui_impl_win32.h"
 #include "Camera.h"
 
-//DOING: 
-//	- Fix arcball camera rotation
-//	- FPS governing
-//		- Timing
-//		- Limit frame time
-//	- Rendering
-//		- Checkboxes for rendering rowans and pines
-//		- Checkbox for rendering terrain
-//		- Checkbox for rendering as wireframes/polygons
+//DOING:
 //	- UI module
 //		- Program parameters as a struct which UI edits
 //		- Keep in consideration that the UI will need to be turned off for release/gameplay mode
@@ -45,12 +37,18 @@
 //TODO: Camera/UI
 //	- UI elements to affect terrain generation
 //	- Draw xyz axes
+//	- Fix arcball camera rotation
+//	- Make it so that if a mouse click is on a UI element, it doesn't rotate the camera
+//	- Better starting dimensions (not too small or big)
 
 //TODO: Maintenance
 //	- Edit interfaces to Platform and Graphics to be:
 //		- More consistent
 //		- More descriptive (eg. change parameter names in function macros)
 //	- Make using OS input easier
+
+//TODO: Profiling
+//	- Time functions
 
 Material gold =
 {
@@ -143,6 +141,39 @@ Drawable buffer_heightmap_to_textured_quad(GLuint* heightmap_texture)
 	return quad;
 }
 
+long int fps_to_mspf(int fps)
+{
+	float spf = 1.0f / (float)fps;
+	float mspf = 1000.0f*spf;
+	return (long int)mspf;
+}
+
+struct timer
+{
+	LARGE_INTEGER clock_frequency;
+	LARGE_INTEGER start_time;
+	LARGE_INTEGER stop_time;
+};
+void start_timer(timer* t)
+{
+	QueryPerformanceFrequency(&t->clock_frequency);
+	QueryPerformanceCounter(&t->start_time);
+}
+
+void stop_timer(timer* t)
+{
+	QueryPerformanceCounter(&t->stop_time);
+}
+
+long int elapsed_time(timer* t)
+{
+	LARGE_INTEGER elapsed;
+	elapsed.QuadPart = t->stop_time.QuadPart - t->start_time.QuadPart;
+	elapsed.QuadPart *= 1000;
+	elapsed.QuadPart /= t->clock_frequency.QuadPart;
+
+	return elapsed.QuadPart;
+}
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
@@ -173,29 +204,22 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
-		bool drawing_as_wireframes = false;
 		bool dragging = false;
+		int fps = 60;
+		bool render_pines = true;
+		bool render_rowans = true;
+		bool render_wireframes = false;
+		timer t;
 		//Main loop
 		while (!should_window_close()) 
 		{
+			start_timer(&t);
+			long int mspf = fps_to_mspf(fps);
+
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
 			handle_input();
-
-			if (was_key_pressed(KEY_RETURN))
-			{
-				if (drawing_as_wireframes)
-				{
-					draw_as_polygons();
-					drawing_as_wireframes = false;
-				}
-				else
-				{
-					draw_as_wireframes();
-					drawing_as_wireframes = true;
-				}
-			}
 			
 			if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging)
 			{
@@ -232,7 +256,31 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			ImGui::Text("Movement Sensitivity");
 			ImGui::SliderFloat("", &main_view_camera.movement_sensitivity, 0.001f, 1.0f);
 			ImGui::End();
+
+			ImGui::Begin("Performance");
+			ImGui::Text("FPS");
+			ImGui::NewLine();
+			ImGui::SliderInt("", &fps, 24, 120);
+			ImGui::End();
+
+			ImGui::Begin("Landscape");
+			ImGui::Text("Render Pines?");
+			ImGui::SameLine();
+			ImGui::Checkbox("##Pines", &render_pines);
+			ImGui::NewLine();
+			ImGui::Text("Render Rowans?");
+			ImGui::SameLine();
+			ImGui::Checkbox("##Rowans", &render_rowans);
+			ImGui::NewLine();
+			ImGui::Text("Render as wireframes?");
+			ImGui::SameLine();
+			ImGui::Checkbox("##Wireframes", &render_wireframes);
+			ImGui::End();
+
 			begin_render();
+			if (render_wireframes) draw_as_wireframes();
+			else draw_as_polygons();
+
 			set_projection_matrix(perspective(50.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
 			set_model_matrix(identity());
 			use_shader(terrain_lighting_shader);
@@ -240,10 +288,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			buffer_camera_data_to_gpu(main_view_camera);
 
 			//Draw landscape
-			landscape.draw();
+			landscape.draw(render_pines, render_rowans);
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			swap_window_buffers();
+
+			stop_timer(&t);
+			long int frame_time = elapsed_time(&t);
+			if (frame_time < mspf)
+			{
+				DWORD sleep_time = mspf - frame_time;
+				Sleep(sleep_time);
+			}
 		}
 		//release_drawable();
 		//ReleaseDC(window, window_device_context);
