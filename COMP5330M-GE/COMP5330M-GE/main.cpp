@@ -30,7 +30,6 @@
 //	- Boundaries in flow caused by trees and hills
 
 //TODO: Camera/UI
-//	- UI elements to affect terrain generation
 //	- Draw xyz axes
 //	- Fix arcball camera rotation
 //	- Make it so that if a mouse click is on a UI element, it doesn't rotate the camera
@@ -41,6 +40,7 @@
 //		- More consistent
 //		- More descriptive (eg. change parameter names in function macros)
 //	- Make using OS input easier
+//	- Directory structure to group files/project contributions
 
 //TODO: Profiling
 //	- Time functions
@@ -206,7 +206,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		{
 			start_timer(&t);
 			long int mspf = fps_to_mspf(fps);
-
 
 			handle_input();
 			handle_ui(ui_parameters);
