@@ -14,11 +14,12 @@ struct Particle {
 
 // A particle given rigid body features so it can be acted under forces
 struct ParticleBody {
-	Particle particle;
+	Particle* particle;
 	Vector3 acceleration;
 	float mass;
 
-	ParticleBody(Particle&, Vector3 acceleration, float mass);
+	ParticleBody();
+	ParticleBody(Particle* particle, Vector3 acceleration, float mass);
 };
 
 // A point or area that emits particles
@@ -51,14 +52,14 @@ ParticleBody simpleReleaseOneRigidParticle(Emitter&, Vector3 acceleration, float
 // Particle release functions
 Particle* releaseManyParticlesAtOnce(Emitter&, int numOfParticles);
 Particle* releaseManyParticlesInASequence(Emitter&, int numOfParticles, float rate);
-Particle* releaseBurstsOfParticlesInASequence(Emitter&, int numOfBursts, int minNumOfParticlesPerGroup, int maxNumOfParticlesPerGroup, float rate);
+Particle* releaseBurstsOfParticlesInASequence(Emitter&, int numOfBursts, int numOfParticlesPerGroup, float rate);
 
 // Rigid particle release functions
 ParticleBody* releaseManyRigidParticlesAtOnce(Emitter&, int numOfParticles, Vector3 acceleration, float mass);
 ParticleBody* releaseManyRigidParticlesInASequence(Emitter&, int numOfParticles, float rate, Vector3 acceleration, float mass);
-ParticleBody* releaseBurstsOfRigidParticlesInASequence(Emitter&, int numOfBursts, int minNumOfParticlesPerGroup, int maxNumOfParticlesPerGroup, float rate, Vector3 acceleration, float mass);
+ParticleBody* releaseBurstsOfRigidParticlesInASequence(Emitter&, int numOfBursts, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass);
 
 // Particle movement functions
-ParticleBody makeParticleRigidBody(Particle&, Vector3 acceleration, float mass);
+ParticleBody makeParticleRigidBody(Particle* p, Vector3 acceleration, float mass);
 Vector3 updateParticlePosition(Particle&, float timeStep);
 Vector3 updateParticlePositionUnderForces(ParticleBody&, Vector3* forces, int numOfForces, float timeStep);
