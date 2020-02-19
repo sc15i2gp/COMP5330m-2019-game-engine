@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{E0119C51-8D04-4FE5-B04B-07FE83DE9A4A}</ProjectGuid>
     <RootNamespace>COMP5330MGE</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -145,6 +145,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
+    <None Include="testFragShader.glsl" />
+    <None Include="testVertexShader.glsl" />
     <None Include="vshader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

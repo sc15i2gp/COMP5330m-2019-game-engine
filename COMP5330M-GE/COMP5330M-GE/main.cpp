@@ -30,12 +30,10 @@ void print_mat(Matrix4x4 m)
 	}
 }
 
-float vertices[] =
-{
-	0.5f, 0.5f, 0.0f,
+float vertices[] = {
+	-0.5f, -0.5f, 0.0f,
 	0.5f, -0.5f, 0.0f,
-	-0.5f, -0.5, 0.0f,
-	-0.5f, 0.5f, 0.0f
+	0.0f,  0.5f, 0.0f
 };
 
 //Windows entry point
@@ -44,72 +42,85 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 	bool platform_ready = initialise_platform(instance);
 	bool graphics_ready = initialise_graphics();
 
-	unsigned int vbo;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	const char* vertexShaderSourceCode = read_file("testVertexShader.glsl");
-
-	glShaderSource(vertexShader, 1, &vertexShaderSourceCode, NULL);
+	// build and compile our shader program
+	// ------------------------------------
+	// vertex shader
+	int vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	const char* vertexShaderSource = read_file("testVertexShader.glsl");
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	glCompileShader(vertexShader);
-
-	int compilationStatus;
-	char debugMessage[1024];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compilationStatus);
-
-	if (!compilationStatus)
+	// check for shader compile errors
+	int success;
+	char infoLog[512];
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success)
 	{
-		glGetShaderInfoLog(vertexShader, 1024, NULL, debugMessage);
-		std::cout << debugMessage << std::endl;
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		OutputDebugStringA(infoLog);
 	}
-
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	// fragment shader
+	int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	const char* fragmentShaderSource = read_file("testFragShader.glsl");
-
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compilationStatus);
-
-	if (!compilationStatus)
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+	// check for shader compile errors
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success)
 	{
-		glGetShaderInfoLog(fragmentShader, 1024, NULL, debugMessage);
-		std::cout << debugMessage << std::endl;
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		OutputDebugStringA(infoLog);
 	}
-
-	unsigned int programObject;
-	programObject = glCreateProgram();
-
-	glAttachShader(programObject, vertexShader);
-	glAttachShader(programObject, fragmentShader);
-
-	glLinkProgram(programObject);
-
-	int linked;
-	glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
-
-	if (!linked)
-	{
-		glGetProgramInfoLog(programObject, 1024, NULL, debugMessage);
-		std::cout << debugMessage << std::endl;
+	// link shaders
+	int shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+	// check for linking errors
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		OutputDebugStringA(infoLog);
 	}
 
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	unsigned int vao;
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(1, &vbo);
 
-	glBindVertexArray(vao);
+	float vertices[] = {
+		0.9f,  0.9f, 0.0f,  // top right
+		0.9f, -0.9f, 0.0f,  // bottom right
+		-0.9f, -0.9f, 0.0f,  // bottom left
+		-0.9f,  0.9f, 0.0f   // top left 
+	};
+	unsigned int indices[] = {  // note that we start from 0!
+		0, 1, 3,  // first Triangle
+		1, 2, 3   // second Triangle
+	};
+	unsigned int VBO, VAO, EBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+	glBindVertexArray(VAO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glUseProgram(programObject);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+
+	glBindVertexArray(0);
+
+	
+	/*Draws the surface in wire-frame mode*/
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	if (platform_ready && graphics_ready)
 	{
@@ -122,13 +133,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			glClearColor(131.0f / 255.0f, 122.0f / 255.0f, 122.0f / 255.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glUseProgram(programObject);
-			glBindVertexArray(0);
-			glDrawArrays(GL_TRIANGLES, 0, 3);
+			glUseProgram(shaderProgram);
+			glBindVertexArray(VAO);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
 			swap_window_buffers();
 		}
+
+		/*Release resources before shut down*/
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+		glDeleteBuffers(1, &EBO);
 
 		//ReleaseDC(window, window_device_context);
 		shutdown_platform();
@@ -136,64 +152,3 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 	}
 	else return 1;
 }
-
-
-//load_shader_program("vshader.glsl", "fshader.glsl");
-//
-////Load triangle data to GPU
-//Mesh_vertex vertices[] =
-//{
-//	{{0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},//Top
-//	{{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f} },//Left
-//	{{ 1.0f, -1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } }//Right
-//};
-
-//GLuint indices[] = { 0, 1, 2 };
-
-//Drawable triangle = buffer_mesh(vertices, 3, indices, 3);
-////Drawable cylinder = buffer_cylinder_mesh(0.5f, 1.0f, 64);
-
-//Matrix4x4 model = identity();
-//Matrix4x4 view = look_at(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.0f, 0.0f, 0.0f));
-//Matrix4x4 projection = perspective(90.0f, get_window_aspect_ratio(), 0.1f, 10.0f);
-
-//set_model_matrix(model);
-//set_view_matrix(view);
-//set_projection_matrix(projection);
-
-//set_view_origin(Vector3(0.0f, 0.0f, 1.0f));
-
-//set_window_clear_colour(Vector3(0.98f, 0.85f, 0.86f));
-
-//Material emerald;
-//emerald.ambient = Vector3(0.0215f, 0.1745f, 0.0215f);
-//emerald.diffuse = Vector3(0.07568f, 0.61424f, 0.07568f);
-//emerald.specular = Vector3(0.633f, 0.727811f, 0.633f);
-//emerald.shininess = 256.f;
-
-//Material gold;
-//gold.ambient = Vector3(0.247, 0.199, 0.075);
-//gold.diffuse = Vector3(0.752, 0.606, 0.226);
-//gold.specular = Vector3(0.628, 0.556, 0.367);
-//gold.shininess = 25.f;
-
-//Material light_properties;
-//light_properties.ambient = Vector3(0.2, 0.2, 0.2);
-//light_properties.diffuse = Vector3(0.9, 0.9, 0.9);
-//light_properties.specular = Vector3(1.0, 1.0, 1.0);
-
-//activate_direction_light(0);
-//set_direction_light_direction(0, Vector3(0.0f, -1.0f, 0.0f));
-//set_direction_light_blinn_phong_properties(0, light_properties);
-
-//activate_point_light(0);
-//set_point_light_position(0, Vector3(0.0f, 0.0f, 2.0f));
-//set_point_light_blinn_phong_properties(0, light_properties);
-//set_point_light_attenuation_properties(0, 1.0, 0.14, 0.07);
-//
-//set_spot_light_position(0, Vector3(0.0f, 0.0f, 2.0f));
-//set_spot_light_direction(0, Vector3(0.0f, 0.0f, -1.0f));
-//set_spot_light_blinn_phong_properties(0, light_properties);
-//set_spot_light_inner_cutoff(0, 45.0f);
-//set_spot_light_outer_cutoff(0, 90.0f);
-//set_spot_light_attenuation_properties(0, 1.0, 0.14, 0.07);

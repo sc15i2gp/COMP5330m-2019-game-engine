@@ -64,5 +64,11 @@
     <None Include="vshader.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="testFragShader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="testVertexShader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
