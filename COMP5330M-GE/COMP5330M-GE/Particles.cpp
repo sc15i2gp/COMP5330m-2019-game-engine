@@ -1,4 +1,5 @@
 #include "Particles.h"
+#include <Windows.h>
 
 Particle::Particle() 
 {
