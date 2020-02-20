@@ -76,3 +76,12 @@ bool initialise_opengl(HWND window)
 
 	return pixel_format_set && gl_context_created && gl_functions_loaded;
 }
+
+void opengl_check_for_errors()
+{
+	GLenum error;
+	while ((error = glGetError()) != GL_NO_ERROR)
+	{
+		OutputDebugStringf("OpenGL error: %x\n", error);
+	}
+}

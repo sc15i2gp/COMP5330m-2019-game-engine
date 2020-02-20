@@ -1,6 +1,6 @@
 #pragma once
 #include <math.h>
-#include "Platform.h"
+#include <stdlib.h>
 
 //Properties:
 //Matrix: Column major, since OpenGL uses column major matrices
@@ -9,6 +9,8 @@
 //Matrix.row(i) returns a copy of the i'th row as a column vector
 
 #define PI 3.141592653f
+
+float random(float min = -1.0f, float max = 1.0f);
 
 /****************************/
 
@@ -38,9 +40,21 @@ struct Vector2
 			float y;
 		};
 	};
+
+	Vector2();
+	Vector2(float,float);
+
+	float& operator[](int index);
 };
 
+Vector2 operator+(Vector2, Vector2);
+Vector2 operator-(Vector2, Vector2);
+Vector2 operator/(Vector2, float);
+Vector2 operator/(Vector2, Vector2); //Pairwise division
+Vector2 operator*(float, Vector2);
 float dot(Vector2, Vector2);
+float length(Vector2);
+Vector2 normalise(Vector2);
 
 /****************************/
 
@@ -68,6 +82,11 @@ struct Vector3
 		struct
 		{
 			Vector2 xy;
+		};
+		struct
+		{
+			float _f;
+			Vector2 yz;
 		};
 	};
 
@@ -131,6 +150,11 @@ struct Vector4
 		struct
 		{
 			Vector3 xyz;
+		};
+		struct
+		{
+			float _f;
+			Vector3 yzw;
 		};
 	};
 
@@ -202,9 +226,16 @@ void translate(Matrix4x4&, Vector4 translation);
 void rotate(Matrix4x4&, Vector3 axis, float angle);
 void translate(Matrix4x4&, Vector3 translation);
 
+Vector3 rotate_point_about_axis(Vector3 point, Vector3 axis, float angle);
+
 Matrix4x4 perspective(float fov, float aspect_ratio, float n, float f);
 Matrix4x4 look_at(Vector4 eye_position, Vector4 target_position);
+Matrix4x4 look_at(Vector4 eye_position, Vector4 forward_vector, Vector4 right_vector, Vector4 upward_vector);
 Matrix4x4 look_at(Vector3 eye_position, Vector3 target_position);
+Matrix4x4 look_at(Vector3 eye_position, Vector3 forward_vector, Vector3 right_vector, Vector3 upward_vector);
+
+float determinant(Matrix4x4);
+Matrix4x4 inverse(Matrix4x4);
 
 /********************************/
 
@@ -245,6 +276,31 @@ void operator/=(Matrix3x3&, float);
 
 Matrix3x3 transpose(Matrix3x3);
 
+Matrix3x3 matrix_4x4_to_3x3(Matrix4x4);
+
+float determinant(Matrix3x3);
+Matrix3x3 inverse(Matrix3x3);
+
+/********************************/
+
+/*			Matrix2x2			*/
+
+/********************************/
+
+struct Matrix2x2
+{
+	Vector2 columns[2];
+	Vector2 row(int);
+	Vector2 column(int);
+
+	Vector2& operator[](int index)
+	{
+		return columns[index];
+	}
+};
+
+float determinant(Matrix2x2);
+
 /********************************/
 
 /*			Quaternion			*/
@@ -274,6 +330,7 @@ struct Quaternion
 
 	Quaternion();
 	Quaternion(Vector3 axis, float angle);
+	Quaternion(float x, float y, float z, float w);
 
 	float& operator[](int index)
 	{
@@ -292,4 +349,5 @@ float norm(Quaternion);
 
 Quaternion compute_great_circle_point(Vector2);
 Matrix4x4 quaternion_to_matrix(Quaternion);
-Matrix4x4 compute_rotation_between_quaternions(Quaternion, Quaternion);
+Quaternion compute_rotation_between_quaternions(Quaternion, Quaternion);
+Matrix4x4 compute_rotation_matrix_between_quaternions(Quaternion, Quaternion);
