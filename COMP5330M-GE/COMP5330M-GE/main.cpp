@@ -1,11 +1,13 @@
 #include "Platform.h"
 #include "Graphics.h"
+#include "Particles.h"
 #include "Maths.h"
 #include "Landscape.h"
 #include "l_system.h"
 #include "turtle.h"
 #include "Camera.h"
 #include "UI.h"
+#include <thread>
 
 //DOING:
 
@@ -195,6 +197,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
+		Emitter* fireEmitter = new Emitter({ 0.0,0.0,0.0 }, 2.0, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40);
+
 		bool dragging = false;
 		int fps = 60;
 		bool render_wireframes = false;
@@ -247,6 +251,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			landscape.draw();
 			render_ui();
 			swap_window_buffers();
+
+			// Emit particles
+			Particle particles[200];
+			std::thread emit(releaseManyParticlesInASequence, *fireEmitter, 200, 20.0);
 
 			stop_timer(&t);
 			long int frame_time = elapsed_time(&t);

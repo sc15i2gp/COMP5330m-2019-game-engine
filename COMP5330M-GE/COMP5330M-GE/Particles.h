@@ -50,6 +50,7 @@ ParticleBody releaseOneRigidParticle(Emitter&, Vector3 acceleration, float mass)
 ParticleBody simpleReleaseOneRigidParticle(Emitter&, Vector3 acceleration, float mass);
 
 // Particle release functions
+// Rate is particles per second
 Particle* releaseManyParticlesAtOnce(Emitter&, int numOfParticles);
 Particle* releaseManyParticlesInASequence(Emitter&, int numOfParticles, float rate);
 Particle* releaseBurstsOfParticlesInASequence(Emitter&, int numOfBursts, int numOfParticlesPerGroup, float rate);
