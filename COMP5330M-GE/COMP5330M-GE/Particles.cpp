@@ -102,37 +102,31 @@ ParticleBody simpleReleaseOneRigidParticle(Emitter& e, Vector3 acceleration, flo
 	return ParticleBody(&p, acceleration, mass);
 }
 
-Particle* releaseManyParticlesAtOnce(Emitter& e, int numOfParticles)
+void releaseManyParticlesAtOnce(Emitter& e, Particle* particles, int numOfParticles)
 {
-	Particle* particles = new Particle[numOfParticles];
 	for (int i = 0; i < numOfParticles; i++) {
 		particles[i] = releaseOneParticle(e);
 	}
-	return particles;
 }
 
 // Should be run in a thread so Sleep() does not affect the whole program
-Particle* releaseManyParticlesInASequence(Emitter& e, int numOfParticles, float rate)
+void releaseManyParticlesInASequence(Emitter& e, Particle* particles, int numOfParticles, float rate)
 {
-	Particle* particles = new Particle[numOfParticles];
 	float time = 1000.0 / rate;
 	for (int i = 0; i < numOfParticles; i++) {
 		particles[i] = releaseOneParticle(e);
 		Sleep(time);
 	}
-	return particles;
 }
 
-Particle* releaseBurstsOfParticlesInASequence(Emitter& e, int numOfBursts, int numOfParticlesPerGroup, float rate)
+void releaseBurstsOfParticlesInASequence(Emitter& e, Particle* particles, int numOfBursts, int numOfParticlesPerGroup, float rate)
 {
-	Particle* particles = new Particle[numOfBursts * numOfParticlesPerGroup];
 	float time = 1000.0 / rate;
 	for (int i = 0; i < numOfBursts; i++) {
-		particles = releaseManyParticlesAtOnce(e, numOfParticlesPerGroup);
+		releaseManyParticlesAtOnce(e, particles, numOfParticlesPerGroup);
 		particles += numOfParticlesPerGroup;
 		Sleep(time);
 	}
-	return particles;
 }
 
 ParticleBody* releaseManyRigidParticlesAtOnce(Emitter& e, int numOfParticles, Vector3 acceleration, float mass)

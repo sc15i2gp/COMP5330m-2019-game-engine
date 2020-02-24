@@ -197,7 +197,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
+		// Emit particles
 		Emitter* fireEmitter = new Emitter({ 0.0,0.0,0.0 }, 2.0, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40);
+		Particle particles[200];
+		for (int i = 0; i < 200; i++) particles[i].life = 0;
+		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, particles, 200, 20.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -206,14 +210,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		timer t;
 		//Main loop
-		while (!should_window_close()) 
+		while (!should_window_close())
 		{
 			start_timer(&t);
 			long int mspf = fps_to_mspf(fps);
 
 			handle_input();
 			handle_ui(ui_parameters);
-			
+
 			if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging)
 			{
 				dragging = true;
@@ -252,9 +256,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			render_ui();
 			swap_window_buffers();
 
-			// Emit particles
-			Particle particles[200];
-			std::thread emit(releaseManyParticlesInASequence, *fireEmitter, 200, 20.0);
+			// Check each particle
+			for (int i = 0; i < 200; i++) {
+				if (particles[i].life <= 0) {
+					break;
+				}
+				else {
+					particles[i].life--;
+					OutputDebugStringf("Life left on particle %i: %i", i, particles[i].life);
+				}
+			}
 
 			stop_timer(&t);
 			long int frame_time = elapsed_time(&t);
@@ -268,6 +279,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		//ReleaseDC(window, window_device_context);
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplWin32_Shutdown();
+		emit.join();
 		shutdown_platform();
 		return 0;
 	}
