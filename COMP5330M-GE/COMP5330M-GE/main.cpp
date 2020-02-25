@@ -263,7 +263,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				}
 				else {
 					particles[i].life--;
-					OutputDebugStringf("Life left on particle %i: %i", i, particles[i].life);
+					OutputDebugStringf("Life left on particle %i: %i\n", i, particles[i].life);
 				}
 			}
 

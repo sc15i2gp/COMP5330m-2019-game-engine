@@ -22,6 +22,11 @@ struct ParticleBody {
 	ParticleBody(Particle* particle, Vector3 acceleration, float mass);
 };
 
+struct ParticlePoolNode {
+	Particle* particle;
+	bool nodeActive;
+};
+
 // A point or area that emits particles
 struct Emitter {
 	Vector3 position;
@@ -51,14 +56,14 @@ ParticleBody simpleReleaseOneRigidParticle(Emitter&, Vector3 acceleration, float
 
 // Particle release functions
 // Rate is particles per second
-void releaseManyParticlesAtOnce(Emitter&, Particle* particles, int numOfParticles);
-void releaseManyParticlesInASequence(Emitter&, Particle* particles, int numOfParticles, float rate);
-void releaseBurstsOfParticlesInASequence(Emitter&, Particle* particles, int numOfBursts, int numOfParticlesPerGroup, float rate);
+void releaseManyParticlesAtOnce(Emitter&, ParticlePoolNode* nodes, int numOfParticles);
+void releaseManyParticlesInASequence(Emitter&, ParticlePoolNode* nodes, int numOfParticles, float rate);
+void releaseBurstsOfParticlesInASequence(Emitter&, ParticlePoolNode* nodes, int numOfBursts, int numOfParticlesPerGroup, float rate);
 
 // Rigid particle release functions
-ParticleBody* releaseManyRigidParticlesAtOnce(Emitter&, int numOfParticles, Vector3 acceleration, float mass);
-ParticleBody* releaseManyRigidParticlesInASequence(Emitter&, int numOfParticles, float rate, Vector3 acceleration, float mass);
-ParticleBody* releaseBurstsOfRigidParticlesInASequence(Emitter&, int numOfBursts, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass);
+void releaseManyRigidParticlesAtOnce(Emitter&, ParticleBody* particles, int numOfParticles, Vector3 acceleration, float mass);
+void releaseManyRigidParticlesInASequence(Emitter&, ParticleBody* particles, int numOfParticles, float rate, Vector3 acceleration, float mass);
+void releaseBurstsOfRigidParticlesInASequence(Emitter&, ParticleBody* particles, int numOfBursts, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass);
 
 // Particle movement functions
 ParticleBody makeParticleRigidBody(Particle* p, Vector3 acceleration, float mass);
