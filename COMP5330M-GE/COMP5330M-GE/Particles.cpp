@@ -102,29 +102,47 @@ ParticleBody simpleReleaseOneRigidParticle(Emitter& e, Vector3 acceleration, flo
 	return ParticleBody(&p, acceleration, mass);
 }
 
-void releaseManyParticlesAtOnce(Emitter& e, ParticlePoolNode* particles, int numOfParticles)
+void initialisePool(ParticlePool& pool, int numOfParticles) 
 {
+	pool.numOfParticles = numOfParticles;
+	pool.nodes = new ParticlePoolNode[numOfParticles];
+	pool.lowestNumberInactiveParticle = 0;
 	for (int i = 0; i < numOfParticles; i++) {
-		particles[i] = releaseOneParticle(e);
+		pool.nodes[i].nodeActive = false;
+	}
+}
+
+void releaseManyParticlesAtOnce(Emitter& e, ParticlePool pool, int numOfParticles)
+{
+	for (int i = pool.lowestNumberInactiveParticle; i < numOfParticles + pool.lowestNumberInactiveParticle; i++) {
+		if (i < pool.numOfParticles) {
+			pool.nodes[i].particle = releaseOneParticle(e);
+			pool.nodes[i].nodeActive = true;
+			pool.lowestNumberInactiveParticle = i + 1;
+		}
 	}
 }
 
 // Should be run in a thread so Sleep() does not affect the whole program
-void releaseManyParticlesInASequence(Emitter& e, ParticlePoolNode* particles, int numOfParticles, float rate)
+void releaseManyParticlesInASequence(Emitter& e, ParticlePool pool, int numOfParticles, float rate)
 {
 	float time = 1000.0 / rate;
 	for (int i = 0; i < numOfParticles; i++) {
-		particles[i] = releaseOneParticle(e);
-		Sleep(time);
+		int index = pool.lowestNumberInactiveParticle;
+		if (index < pool.numOfParticles) {
+			pool.nodes[index].particle = releaseOneParticle(e);
+			pool.nodes[index].nodeActive = true;
+			pool.lowestNumberInactiveParticle = index + 1;
+			Sleep(time);
+		}
 	}
 }
 
-void releaseBurstsOfParticlesInASequence(Emitter& e, ParticlePoolNode* particles, int numOfBursts, int numOfParticlesPerGroup, float rate)
+void releaseBurstsOfParticlesInASequence(Emitter& e, ParticlePool pool, int numOfBursts, int numOfParticlesPerGroup, float rate)
 {
 	float time = 1000.0 / rate;
 	for (int i = 0; i < numOfBursts; i++) {
-		releaseManyParticlesAtOnce(e, particles, numOfParticlesPerGroup);
-		particles += numOfParticlesPerGroup;
+		releaseManyParticlesAtOnce(e, pool, numOfParticlesPerGroup);
 		Sleep(time);
 	}
 }

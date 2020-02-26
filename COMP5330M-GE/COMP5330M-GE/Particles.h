@@ -23,8 +23,14 @@ struct ParticleBody {
 };
 
 struct ParticlePoolNode {
-	Particle* particle;
+	Particle particle;
 	bool nodeActive;
+};
+
+struct ParticlePool {
+	ParticlePoolNode* nodes;
+	int numOfParticles;
+	int lowestNumberInactiveParticle;
 };
 
 // A point or area that emits particles
@@ -54,11 +60,14 @@ Particle simpleReleaseOneParticle(Emitter&);
 ParticleBody releaseOneRigidParticle(Emitter&, Vector3 acceleration, float mass);
 ParticleBody simpleReleaseOneRigidParticle(Emitter&, Vector3 acceleration, float mass);
 
+// Particle pool initialisation
+void initialisePool(ParticlePool&, int numOfParticles);
+
 // Particle release functions
 // Rate is particles per second
-void releaseManyParticlesAtOnce(Emitter&, ParticlePoolNode* nodes, int numOfParticles);
-void releaseManyParticlesInASequence(Emitter&, ParticlePoolNode* nodes, int numOfParticles, float rate);
-void releaseBurstsOfParticlesInASequence(Emitter&, ParticlePoolNode* nodes, int numOfBursts, int numOfParticlesPerGroup, float rate);
+void releaseManyParticlesAtOnce(Emitter&, ParticlePool pool, int numOfParticles);
+void releaseManyParticlesInASequence(Emitter&, ParticlePool pool, int numOfParticles, float rate);
+void releaseBurstsOfParticlesInASequence(Emitter&, ParticlePool pool, int numOfBursts, int numOfParticlesPerGroup, float rate);
 
 // Rigid particle release functions
 void releaseManyRigidParticlesAtOnce(Emitter&, ParticleBody* particles, int numOfParticles, Vector3 acceleration, float mass);

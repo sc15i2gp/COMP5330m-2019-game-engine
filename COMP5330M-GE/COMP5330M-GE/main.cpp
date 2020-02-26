@@ -199,9 +199,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		// Emit particles
 		Emitter* fireEmitter = new Emitter({ 0.0,0.0,0.0 }, 2.0, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40);
-		Particle particles[200];
-		for (int i = 0; i < 200; i++) particles[i].life = 0;
-		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, particles, 200, 20.0);
+		ParticlePool pool;
+		initialisePool(pool, 200);
+		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, pool, 200, 20.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -256,14 +256,17 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			render_ui();
 			swap_window_buffers();
 
-			// Check each particle
-			for (int i = 0; i < 200; i++) {
-				if (particles[i].life <= 0) {
-					break;
+			// Check the particle pool
+			for (int i = 0; i <= pool.lowestNumberInactiveParticle; i++) {
+				if (pool.nodes[i].particle.life > 0) {
+					OutputDebugStringf("Life left on particle %i: %i\n", i, pool.nodes[i].particle.life);
+					OutputDebugStringf("%i\n", pool.lowestNumberInactiveParticle);
+					pool.nodes[i].particle.life--;
 				}
 				else {
-					particles[i].life--;
-					OutputDebugStringf("Life left on particle %i: %i\n", i, particles[i].life);
+					pool.nodes[i] = pool.nodes[pool.lowestNumberInactiveParticle - 1];
+					pool.nodes[pool.lowestNumberInactiveParticle - 1].nodeActive = false;
+					pool.lowestNumberInactiveParticle--;
 				}
 			}
 
