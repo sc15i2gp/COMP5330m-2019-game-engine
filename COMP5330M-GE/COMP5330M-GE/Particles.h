@@ -30,7 +30,6 @@ struct ParticlePoolNode {
 struct ParticlePool {
 	ParticlePoolNode* nodes;
 	int numOfParticles;
-	int lowestNumberInactiveParticle;
 };
 
 // A point or area that emits particles

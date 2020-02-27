@@ -257,16 +257,19 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			swap_window_buffers();
 
 			// Check the particle pool
-			for (int i = 0; i <= pool.lowestNumberInactiveParticle; i++) {
-				if (pool.nodes[i].particle.life > 0) {
+			for (int i = 0; i <= 199; i++) {
+				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
 					OutputDebugStringf("Life left on particle %i: %i\n", i, pool.nodes[i].particle.life);
-					OutputDebugStringf("%i\n", pool.lowestNumberInactiveParticle);
 					pool.nodes[i].particle.life--;
 				}
-				else {
-					pool.nodes[i] = pool.nodes[pool.lowestNumberInactiveParticle - 1];
-					pool.nodes[pool.lowestNumberInactiveParticle - 1].nodeActive = false;
-					pool.lowestNumberInactiveParticle--;
+				else if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life <= 0) {
+					for (int index = i; index < pool.numOfParticles; index++) {
+						if (!pool.nodes[index].nodeActive) {
+							pool.nodes[i] = pool.nodes[index];
+							pool.nodes[index].nodeActive = false;
+							break;
+						}
+					}
 				}
 			}
 

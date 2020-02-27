@@ -1,4 +1,5 @@
 #include "Particles.h"
+#include "Platform.h"
 #include <Windows.h>
 
 Particle::Particle() 
@@ -106,7 +107,6 @@ void initialisePool(ParticlePool& pool, int numOfParticles)
 {
 	pool.numOfParticles = numOfParticles;
 	pool.nodes = new ParticlePoolNode[numOfParticles];
-	pool.lowestNumberInactiveParticle = 0;
 	for (int i = 0; i < numOfParticles; i++) {
 		pool.nodes[i].nodeActive = false;
 	}
@@ -114,11 +114,17 @@ void initialisePool(ParticlePool& pool, int numOfParticles)
 
 void releaseManyParticlesAtOnce(Emitter& e, ParticlePool pool, int numOfParticles)
 {
-	for (int i = pool.lowestNumberInactiveParticle; i < numOfParticles + pool.lowestNumberInactiveParticle; i++) {
-		if (i < pool.numOfParticles) {
-			pool.nodes[i].particle = releaseOneParticle(e);
-			pool.nodes[i].nodeActive = true;
-			pool.lowestNumberInactiveParticle = i + 1;
+	int index = 0;
+	for (int i = 0; i < pool.numOfParticles; i++) {
+		if (!pool.nodes[i].nodeActive) {
+			index = i;
+			break;
+		}
+	}
+	for (int j = 0; j < numOfParticles; j++) {
+		if (j < pool.numOfParticles) {
+			pool.nodes[index+j].particle = releaseOneParticle(e);
+			pool.nodes[index+j].nodeActive = true;
 		}
 	}
 }
@@ -128,12 +134,13 @@ void releaseManyParticlesInASequence(Emitter& e, ParticlePool pool, int numOfPar
 {
 	float time = 1000.0 / rate;
 	for (int i = 0; i < numOfParticles; i++) {
-		int index = pool.lowestNumberInactiveParticle;
-		if (index < pool.numOfParticles) {
-			pool.nodes[index].particle = releaseOneParticle(e);
-			pool.nodes[index].nodeActive = true;
-			pool.lowestNumberInactiveParticle = index + 1;
-			Sleep(time);
+		for (int index = 0; index < pool.numOfParticles; index++) {
+			if (!pool.nodes[index].nodeActive) {
+				pool.nodes[index].particle = releaseOneParticle(e);
+				pool.nodes[index].nodeActive = true;
+				Sleep(time);
+				break;
+			}
 		}
 	}
 }
