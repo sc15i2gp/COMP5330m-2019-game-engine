@@ -172,6 +172,13 @@ void Graphics_Table::__set_max_height(GLfloat max_height)
 	copy_to_gpu_mem(&max_height, this->max_height_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
 }
 
+void Graphics_Table::__set_shader_sampler_uniform(int shader, char* sampler_name, int sampler_unit)
+{
+	GL_ERROR_CHECK(use_shader(shader));
+	GL_ERROR_CHECK(GLint sampler_location = glGetUniformLocation(this->shaders[shader], sampler_name));
+	GL_ERROR_CHECK(glUniform1i(sampler_location, sampler_unit));
+}
+
 GLuint alloc_and_bind_ubo(GLsizei size, GLuint binding, GLenum target, GLenum usage)
 {
 	void* init_data = alloc_mem(size); //Zeroes the ubo data
@@ -223,8 +230,9 @@ GLuint Graphics_Table::__buffer_texture(GLuint texture_width, GLuint texture_hei
 	return gen_texture(texture_width, texture_height, format, GL_FLOAT, texture_data);
 }
 
-void Graphics_Table::__use_texture(GLuint texture)
+void Graphics_Table::__use_texture(GLuint texture, GLuint texture_unit)
 {
+	glActiveTexture(GL_TEXTURE0 + texture_unit);
 	glBindTexture(GL_TEXTURE_2D, texture);
 }
 
@@ -304,22 +312,27 @@ void Graphics_Table::__use_shader(int shader)
 
 GLuint compile_shader_src(char* shader_src, GLenum shader_type)
 {
-	GLuint shader = glCreateShader(shader_type);
-	glShaderSource(shader, 1, &shader_src, NULL);
-	glCompileShader(shader);
-	
+	GL_ERROR_CHECK(GLuint shader = glCreateShader(shader_type));
+	GL_ERROR_CHECK(glShaderSource(shader, 1, &shader_src, NULL));
+	GL_ERROR_CHECK(glCompileShader(shader));
+
 	char info[2048] = {};
 	GLint success;
 
 	//NOTE: OpenGL/AMD/whoever is really shit, this caused a crash when a specific compiler error occurred on my machine
 	//Error was referring to a uniform variable within a uniform block as "uniform_block.var_name" instead of just "var_name"
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+	GL_ERROR_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &success));
 	
 	if (!success)
 	{
-		glGetShaderInfoLog(shader, 512, NULL, info);
+		GL_ERROR_CHECK(glGetShaderInfoLog(shader, 2048, NULL, info));
 		OutputDebugStringf("Error: Shader compilation failed: \n%s", info);
 		return 0;
+	}
+	else
+	{
+		GL_ERROR_CHECK(glGetShaderInfoLog(shader, 2048, NULL, info));
+		OutputDebugStringf("Shader %u compilation was successful\n%s", shader, info);
 	}
 	return shader;
 }
@@ -329,20 +342,27 @@ GLuint create_shader_program(char* v_shader_src, char* f_shader_src)
 	GLuint v_shader = compile_shader_src(v_shader_src, GL_VERTEX_SHADER);
 	GLuint f_shader = compile_shader_src(f_shader_src, GL_FRAGMENT_SHADER);
 
-	GLuint shader = glCreateProgram();
-	glAttachShader(shader, v_shader);
-	glAttachShader(shader, f_shader);
-	glLinkProgram(shader);
+	GL_ERROR_CHECK(GLuint shader = glCreateProgram());
+	GL_ERROR_CHECK(glAttachShader(shader, v_shader));
+	GL_ERROR_CHECK(glAttachShader(shader, f_shader));
+	GL_ERROR_CHECK(glLinkProgram(shader));
 
+	char info[2048] = {};
 	GLint success;
-	glGetProgramiv(shader, GL_LINK_STATUS, &success);
+	GL_ERROR_CHECK(glGetProgramiv(shader, GL_LINK_STATUS, &success));
 	if (!success)
 	{//If the shader program wasn't linked
-		OutputDebugString("Failed to link shader program\n");
+		GL_ERROR_CHECK(glGetProgramInfoLog(shader, 2048, NULL, info));
+		OutputDebugStringf("Failed to link shader program:\n%s", info);
 		return 0;
 	}
-	glDeleteShader(v_shader);
-	glDeleteShader(f_shader);
+	else
+	{
+		GL_ERROR_CHECK(glGetProgramInfoLog(shader, 2048, NULL, info));
+		OutputDebugStringf("Linked shader program %u successfully\n", shader, info);
+	}
+	GL_ERROR_CHECK(glDeleteShader(v_shader));
+	GL_ERROR_CHECK(glDeleteShader(f_shader));
 	return shader;
 }
 
@@ -352,18 +372,20 @@ int Graphics_Table::__load_shader_program(const char* v_shader_path, const char*
 	char* f_shader_src = read_file(f_shader_path);
 
 	int shader = -1;
-	for (int i = 0; i < MAX_SHADER_COUNT; ++i) if (this->shaders[i] == 0) shader = i;
+	for (int i = 0; i < MAX_SHADER_COUNT; ++i)
+	{
+		if (this->shaders[i] == 0)
+		{
+			shader = i;
+			break;
+		}
+	}
 	this->shaders[shader] = create_shader_program(v_shader_src, f_shader_src);
 
 	dealloc_mem(v_shader_src);
 	dealloc_mem(f_shader_src);
 
 	return shader;
-}
-
-GLuint gen_renderbuffer()
-{
-
 }
 
 int Graphics_Table::__alloc_framebuffer(int width, int height, int framebuffer)
@@ -430,9 +452,13 @@ void Graphics_Table::__use_framebuffer(int framebuffer_index)
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 }
 
-void Graphics_Table::__use_framebuffer_texture(int framebuffer)
+void Graphics_Table::__use_framebuffer_texture(int framebuffer, int texture_unit)
 {
-	use_texture((framebuffer != -1) ? this->framebuffer_textures[framebuffer] : 0);
+	GLint sampler_location = glGetUniformLocation(this->shaders[5], "smoke_texture");
+	GLint sampler_value = -1;
+	glGetUniformiv(this->shaders[5], sampler_location, &sampler_value);
+	//OutputDebugStringf("Loc = %d Value = %d\n", sampler_location, sampler_value);
+	use_texture((framebuffer != -1) ? this->framebuffer_textures[framebuffer] : 0, texture_unit);
 }
 
 Drawable buffer_sphere_mesh(float radius, int number_of_slices, int number_of_stacks)

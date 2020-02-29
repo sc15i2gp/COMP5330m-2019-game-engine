@@ -116,13 +116,14 @@ public:
 	void __set_spot_light_outer_cutoff(GLuint light_number, GLfloat angle);
 	void __set_spot_light_attenuation_properties(GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
 	void __set_max_height(GLfloat max_height);
+	void __set_shader_sampler_uniform(int shader, char* sampler_name, int sampler_unit);
 	void __use_shader(int shader);
 	int __load_shader_program(const char* v_shader_path, const char* f_shader_path);
 	GLuint __buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format = GL_RGB);
-	void __use_texture(GLuint texture);
+	void __use_texture(GLuint texture, GLuint texture_unit = 0);
 	int __alloc_framebuffer(int width, int height, int framebuffer = -1);
 	void __use_framebuffer(int framebuffer = -1);
-	void __use_framebuffer_texture(int framebuffer = -1);
+	void __use_framebuffer_texture(int framebuffer = -1, int texture_unit = 0);
 	void __resize_framebuffer(int width, int height, int framebuffer);
 	void __resize_framebuffers(int width, int height);
 
@@ -186,12 +187,13 @@ void begin_render();
 #define set_spot_light_outer_cutoff(l, o)					__graphics.__set_spot_light_outer_cutoff(l, o)
 #define set_spot_light_attenuation_properties(n, c, l, q)	__graphics.__set_spot_light_attenuation_properties(n, c, l, q)
 #define set_max_height(h)									__graphics.__set_max_height(h)
+#define set_shader_sampler_uniform(s, n, u)					__graphics.__set_shader_sampler_uniform(s, n, u)
 #define use_shader(s)										__graphics.__use_shader(s)
 #define load_shader_program(v, f)							__graphics.__load_shader_program(v, f)
 #define initialise_graphics()								__graphics.__initialise_graphics()
 #define buffer_texture(w, h, d, f)							__graphics.__buffer_texture(w, h, d, f)
-#define use_texture(t)										__graphics.__use_texture(t)
+#define use_texture(...)									__graphics.__use_texture(__VA_ARGS__)
 #define alloc_framebuffer(w, h)								__graphics.__alloc_framebuffer(w, h)
 #define use_framebuffer(f)									__graphics.__use_framebuffer(f)
-#define use_framebuffer_texture(t)							__graphics.__use_framebuffer_texture(t)
+#define use_framebuffer_texture(...)						__graphics.__use_framebuffer_texture(__VA_ARGS__)
 #define resize_framebuffers(w, h)							__graphics.__resize_framebuffers(w, h)

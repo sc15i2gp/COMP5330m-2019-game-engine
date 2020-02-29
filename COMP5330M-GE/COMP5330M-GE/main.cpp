@@ -9,7 +9,7 @@
 
 //DOING:
 //	- Render smoke to framebuffer
-//	- Change framebuffer sizes when screen size changes
+//	- Composite framebuffer textures in shaders
 //	- 3D texture
 //	- Render grid of smoke density
 //		- Smoke density grid
@@ -204,18 +204,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 	if (platform_ready && graphics_ready)
 	{
-		int bp_shader = load_shader_program("vshader.glsl", "fshader.glsl");
-		int terrain_shader = load_shader_program("vshader.glsl", "terrain_fshader.glsl");
 		int terrain_lighting_shader = load_shader_program("vshader.glsl", "fshader.glsl");
-		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 		int depth_shader = load_shader_program("vshader.glsl", "depth_fshader.glsl");
 		int framebuffer_composite_shader = load_shader_program("framebuffer_vshader.glsl", "framebuffer_fshader.glsl");
-
+		int smoke_shader = load_shader_program("smoke_vshader.glsl", "smoke_fshader.glsl");
+		
 		int scene_framebuffer = alloc_framebuffer(get_window_width(), get_window_height());
+		int smoke_framebuffer = alloc_framebuffer(get_window_width(), get_window_height());
 		
 		OutputDebugStringf("Scene Framebuffer: %d\n", scene_framebuffer);
+		OutputDebugStringf("Smoke framebuffer: %d\n", smoke_framebuffer);
 		Drawable scene_quad = buffer_quad();
-
+		
 		Camera main_view_camera = {};
 		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{0.0f, 0.0f, 1.0f});
 		main_view_camera.movement_sensitivity = 0.1f;
@@ -233,6 +233,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		bool render_depth_buffer = false;
 		float fov = 90.0f;
 		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes, &render_depth_buffer, &fov);
+
+		set_shader_sampler_uniform(framebuffer_composite_shader, "scene_texture", 1);
+		set_shader_sampler_uniform(framebuffer_composite_shader, "smoke_texture", 0);
 
 		timer t;
 		//Main loop
@@ -271,9 +274,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_window_resized()) resize_framebuffers(get_window_width(), get_window_height());
 
 			//RENDERING
+			//Set global rendering parameters
 			if (render_wireframes) draw_as_wireframes();
 			else draw_as_polygons();
 
+			//Render scene into scene buffer
 			use_framebuffer(scene_framebuffer);
 			begin_render();
 
@@ -289,15 +294,26 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			//Draw landscape
 			landscape.draw();
 			render_ui();
-
-			use_framebuffer(DEFAULT_FRAMEBUFFER);
 			
+			//Render smoke
+			
+			use_framebuffer(smoke_framebuffer);
 			begin_render();
-			use_framebuffer_texture(scene_framebuffer);
-			use_shader(framebuffer_composite_shader);
+			use_shader(smoke_shader);
 			draw(scene_quad);
-			use_texture(0);
 			
+			//Composite framebuffers and render to window
+			use_framebuffer(DEFAULT_FRAMEBUFFER);
+			begin_render();
+			use_shader(framebuffer_composite_shader);
+			use_framebuffer_texture(scene_framebuffer, 1);
+			use_framebuffer_texture(smoke_framebuffer, 0);
+
+			draw(scene_quad);
+			use_texture(0, 0);
+			use_texture(0, 1);
+			
+
 			swap_window_buffers();
 
 			stop_timer(&t);

@@ -194,6 +194,8 @@
     <None Include="fshader.glsl" />
     <None Include="heightmap_fshader.glsl" />
     <None Include="heightmap_vshader.glsl" />
+    <None Include="smoke_fshader.glsl" />
+    <None Include="smoke_vshader.glsl" />
     <None Include="terrain_fshader.glsl" />
     <None Include="vshader.glsl" />
   </ItemGroup>

@@ -77,6 +77,27 @@ bool initialise_opengl(HWND window)
 	return pixel_format_set && gl_context_created && gl_functions_loaded;
 }
 
+char* get_gl_error_name(GLenum gl_error)
+{
+	char* gl_error_name;
+	switch (gl_error)
+	{
+	case GL_NO_ERROR:
+		gl_error_name = "GL_NO_ERROR";
+		break;
+	case GL_INVALID_OPERATION:
+		gl_error_name = "GL_INVALID_OPERATION";
+		break;
+	case GL_INVALID_VALUE:
+		gl_error_name = "GL_INVALID_VALUE";
+		break;
+	default:
+		gl_error_name = "GL_ERROR_UNKNOWN";
+		break;
+	}
+	return gl_error_name;
+}
+
 void opengl_check_for_errors()
 {
 	GLenum error;

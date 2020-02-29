@@ -54,11 +54,26 @@ GL_FUNCTION(PFNGLBINDRENDERBUFFERPROC, glBindRenderbuffer) \
 GL_FUNCTION(PFNGLFRAMEBUFFERRENDERBUFFERPROC, glFramebufferRenderbuffer) \
 GL_FUNCTION(PFNGLRENDERBUFFERSTORAGEPROC, glRenderbufferStorage) \
 GL_FUNCTION(PFNGLCHECKFRAMEBUFFERSTATUSPROC, glCheckFramebufferStatus) \
-GL_FUNCTION(PFNGLDELETERENDERBUFFERSPROC, glDeleteRenderbuffers)
+GL_FUNCTION(PFNGLDELETERENDERBUFFERSPROC, glDeleteRenderbuffers) \
+GL_FUNCTION(PFNGLGETACTIVEUNIFORMPROC, glGetActiveUniform) \
+GL_FUNCTION(PFNGLGETUNIFORMIVPROC, glGetUniformiv)
 
 #define GL_FUNCTION(FUNCTION_TYPE, FUNCTION_NAME) extern FUNCTION_TYPE FUNCTION_NAME;
 GL_REQUIRED_FUNCTIONS_LIST
 #undef GL_FUNCTION
+
+char* get_gl_error_name(GLenum gl_error);
+
+#define GL_ERROR_CHECK(GL_FUNCTION) __GL_ERROR_CHECK__(GL_FUNCTION, __FILE__, __LINE__)
+
+#define CALL_RESULT(LINE_NUM) gl_error_##LINE_NUM
+
+#define __GL_ERROR_CHECK__(GL_FUNCTION, FILE_NAME, LINE_NUM) \
+GL_FUNCTION; \
+GLenum CALL_RESULT(LINE_NUM) = glGetError(); \
+if(CALL_RESULT(LINE_NUM) != GL_NO_ERROR) \
+OutputDebugStringf("OpenGL Error %s calling %s in file %s line %d\n", get_gl_error_name(CALL_RESULT(LINE_NUM)), #GL_FUNCTION, FILE_NAME, LINE_NUM)
+
 
 //Sets up opengl and returns whether initialisation was successful
 bool initialise_opengl(HWND window);

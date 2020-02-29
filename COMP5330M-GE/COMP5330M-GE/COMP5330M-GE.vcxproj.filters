@@ -202,5 +202,11 @@
     <None Include="framebuffer_fshader.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="smoke_vshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="smoke_fshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
