@@ -45,6 +45,9 @@ LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, 
 		__platform.final_cursor_position = get_cursor_position(__platform.window);
 		__platform.was_mouse_moved = true;
 		break;
+	case WM_EXITSIZEMOVE:
+		__platform.window_resized = true;
+		break;
 	default: //Anything else
 		result = DefWindowProc(window, message, wparam, lparam); //Call the default window handling routine for the given message
 		break;
@@ -191,6 +194,13 @@ bool Platform_Table::__was_mouse_button_pressed(Mouse_Button button)
 bool Platform_Table::__was_key_pressed(Keyboard_Key key)
 {
 	return this->was_key_pressed[key];
+}
+
+bool Platform_Table::__was_window_resized()
+{
+	bool resized = this->window_resized;
+	this->window_resized = false;
+	return resized;
 }
 
 bool Platform_Table::__should_close()

@@ -8,6 +8,28 @@
 #include "UI.h"
 
 //DOING:
+//	- Render smoke to framebuffer
+//	- Change framebuffer sizes when screen size changes
+//	- 3D texture
+//	- Render grid of smoke density
+//		- Smoke density grid
+//			- Covers whole terrain
+//			- Above water, but there needs to be a max height
+//			- Cell size shouldn't scale with terrain
+//			- Need to limit due to gpu transfer, only minimum relevant data transfer
+//		- Single pass ray cast to render density grid
+
+//Smoke + Scene rendering algorithm:
+//Render scene geometry to one framebuffer
+//Render smoke to another
+//Composite them
+
+//Smoke rendering algorithm:
+//Cast a ray through a pixel
+//While the ray should continue (max distance reached or intersects with scene object)
+//	Sample point along the ray
+//	Composite optical properties sampled
+//	Continue
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -22,18 +44,18 @@
 //	- Find tree L-systems
 
 //TODO: Volume rendering
-//	- Render still uniform density grid
-//	- Move densities
-//		- Diffusion
-//		- Constant wind vector field
-//	- Convection of smoke particles
-//	- Boundaries in flow caused by trees and hills
+//	- Smoke density source
+//	- Smoke diffusion
+//	- Smoke movement due to velocity field
+//	- Integrate with scene geometry
 
 //TODO: Camera/UI
 //	- Draw xyz axes
 //	- Fix arcball camera rotation
 //	- Make it so that if a mouse click is on a UI element, it doesn't rotate the camera
 //	- Better starting dimensions (not too small or big)
+//	- Better integration of render surface and UI
+//		- Solves problems such as the camera rotating while using a slider without nasty workarounds
 
 //TODO: Maintenance
 //	- Edit interfaces to Platform and Graphics to be:
@@ -75,8 +97,44 @@ void buffer_camera_data_to_gpu(Camera c)
 	set_view_origin(c.position);
 }
 
-//Render 4*4 perlin noise grid on 64*64 texture
-Drawable buffer_heightmap_to_textured_quad(GLuint* heightmap_texture)
+Drawable buffer_quad()
+{
+	//Create quad mesh
+	Mesh_vertex quad_vertices[4] = {};
+	//Top left
+	quad_vertices[0] =
+	{
+		{-1.0f, -1.0f, 0.0f}, //Position
+		{}, //Normal
+		{0.0f, 0.0f}  //Texture coords
+	};
+	//Bottom left
+	quad_vertices[1] =
+	{
+		{-1.0f, 1.0f, 0.0f}, //Position
+		{}, //Normal
+		{0.0f, 1.0f}  //Texture coords
+	};
+	//Bottom right
+	quad_vertices[2] =
+	{
+		{1.0f, 1.0f, 0.0f}, //Position
+		{}, //Normal
+		{1.0f, 1.0f}  //Texture coords
+	};
+	//Top right
+	quad_vertices[3] =
+	{
+		{1.0f, -1.0f, 0.0f}, //Position
+		{}, //Normal
+		{1.0f, 0.0f}  //Texture coords
+	};
+	GLuint quad_indices[] = { 0, 1, 2, 2, 3, 0 };
+	Drawable quad = buffer_mesh(quad_vertices, 4, quad_indices, 6);
+	return quad;
+}
+
+GLuint buffer_heightmap()
 {
 	Perlin_Noise_Function perlin_noise = generate_noise_function();
 	GLuint heightmap_data_width = 1024;
@@ -98,42 +156,9 @@ Drawable buffer_heightmap_to_textured_quad(GLuint* heightmap_texture)
 			heightmap_data[y * heightmap_data_width + x] = noise_val;
 		}
 	}
-	*heightmap_texture = buffer_texture(heightmap_data_width, heightmap_data_height, heightmap_data, GL_RED);
-
-	//Create quad mesh
-	Mesh_vertex quad_vertices[4] = {};
-	//Top left
-	quad_vertices[0] = 
-	{
-		{-1.0f, 1.0f, 0.0f}, //Position
-		{}, //Normal
-		{0.0f, 0.0f}  //Texture coords
-	};
-	//Bottom left
-	quad_vertices[1] = 
-	{
-		{-1.0f, -1.0f, 0.0f}, //Position
-		{}, //Normal
-		{0.0f, 1.0f}  //Texture coords
-	};
-	//Bottom right
-	quad_vertices[2] =
-	{
-		{1.0f, -1.0f, 0.0f}, //Position
-		{}, //Normal
-		{1.0f, 1.0f}  //Texture coords
-	};
-	//Top right
-	quad_vertices[3] =
-	{
-		{1.0f, 1.0f, 0.0f}, //Position
-		{}, //Normal
-		{1.0f, 0.0f}  //Texture coords
-	};
-	GLuint quad_indices[] = { 0, 1, 2, 2, 3, 0 };
-	Drawable quad = buffer_mesh(quad_vertices, 4, quad_indices, 6);
+	GLuint heightmap_texture = buffer_texture(heightmap_data_width, heightmap_data_height, heightmap_data, GL_RED);
 	dealloc_mem(heightmap_data);
-	return quad;
+	return heightmap_texture;
 }
 
 long int fps_to_mspf(int fps)
@@ -183,6 +208,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int terrain_shader = load_shader_program("vshader.glsl", "terrain_fshader.glsl");
 		int terrain_lighting_shader = load_shader_program("vshader.glsl", "fshader.glsl");
 		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
+		int depth_shader = load_shader_program("vshader.glsl", "depth_fshader.glsl");
+		int framebuffer_composite_shader = load_shader_program("framebuffer_vshader.glsl", "framebuffer_fshader.glsl");
+
+		int scene_framebuffer = alloc_framebuffer(get_window_width(), get_window_height());
+		
+		OutputDebugStringf("Scene Framebuffer: %d\n", scene_framebuffer);
+		Drawable scene_quad = buffer_quad();
 
 		Camera main_view_camera = {};
 		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{0.0f, 0.0f, 1.0f});
@@ -198,7 +230,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		bool dragging = false;
 		int fps = 60;
 		bool render_wireframes = false;
-		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
+		bool render_depth_buffer = false;
+		float fov = 90.0f;
+		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes, &render_depth_buffer, &fov);
 
 		timer t;
 		//Main loop
@@ -207,10 +241,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			start_timer(&t);
 			long int mspf = fps_to_mspf(fps);
 
+			//INPUT + UI
 			handle_input();
 			handle_ui(ui_parameters);
 			
-			if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging)
+			if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging && !ImGui::IsAnyItemActive())
 			{
 				dragging = true;
 				main_view_camera.rotation_start(get_initial_mouse_position());
@@ -233,19 +268,36 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
 
-			begin_render();
+			if (was_window_resized()) resize_framebuffers(get_window_width(), get_window_height());
+
+			//RENDERING
 			if (render_wireframes) draw_as_wireframes();
 			else draw_as_polygons();
 
-			set_projection_matrix(perspective(50.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
+			use_framebuffer(scene_framebuffer);
+			begin_render();
+
+			Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 10.0f);
+			set_projection_matrix(projection);
+
 			set_model_matrix(identity());
-			use_shader(terrain_lighting_shader);
+			if (!render_depth_buffer) use_shader(terrain_lighting_shader);
+			else use_shader(depth_shader);
 
 			buffer_camera_data_to_gpu(main_view_camera);
 
 			//Draw landscape
 			landscape.draw();
 			render_ui();
+
+			use_framebuffer(DEFAULT_FRAMEBUFFER);
+			
+			begin_render();
+			use_framebuffer_texture(scene_framebuffer);
+			use_shader(framebuffer_composite_shader);
+			draw(scene_quad);
+			use_texture(0);
+			
 			swap_window_buffers();
 
 			stop_timer(&t);

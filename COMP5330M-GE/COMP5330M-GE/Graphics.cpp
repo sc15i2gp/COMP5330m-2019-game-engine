@@ -204,24 +204,23 @@ bool Graphics_Table::__initialise_graphics()
 	return true;
 }
 
-GLuint Graphics_Table::__buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format)
+GLuint gen_texture(GLsizei width, GLsizei height, GLenum format = GL_RGBA, GLenum type = GL_UNSIGNED_BYTE, GLvoid* texture_data = NULL)
 {
-	//Generate texture
 	GLuint texture;
 	glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
-
-	//Set texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, type, texture_data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, format, texture_width, texture_height, 0, format, GL_FLOAT, texture_data);
-	//glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return texture;
+}
+
+GLuint Graphics_Table::__buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format)
+{
+	return gen_texture(texture_width, texture_height, format, GL_FLOAT, texture_data);
 }
 
 void Graphics_Table::__use_texture(GLuint texture)
@@ -347,14 +346,13 @@ GLuint create_shader_program(char* v_shader_src, char* f_shader_src)
 	return shader;
 }
 
-
 int Graphics_Table::__load_shader_program(const char* v_shader_path, const char* f_shader_path)
 {
 	char* v_shader_src = read_file(v_shader_path);
 	char* f_shader_src = read_file(f_shader_path);
 
 	int shader = -1;
-	for (int i = 0; i < 4; ++i) if (this->shaders[i] == 0) shader = i;
+	for (int i = 0; i < MAX_SHADER_COUNT; ++i) if (this->shaders[i] == 0) shader = i;
 	this->shaders[shader] = create_shader_program(v_shader_src, f_shader_src);
 
 	dealloc_mem(v_shader_src);
@@ -363,6 +361,79 @@ int Graphics_Table::__load_shader_program(const char* v_shader_path, const char*
 	return shader;
 }
 
+GLuint gen_renderbuffer()
+{
+
+}
+
+int Graphics_Table::__alloc_framebuffer(int width, int height, int framebuffer)
+{
+	if(framebuffer == -1)
+	{
+		for (int i = 0; i < MAX_FRAMEBUFFER_COUNT; ++i)
+		{
+			if (this->framebuffers[i] == 0)
+			{
+				framebuffer = i;
+				break;
+			}
+		}
+	}
+
+	glGenFramebuffers(1, this->framebuffers + framebuffer);
+	glGenRenderbuffers(1, this->framebuffer_renderbuffers + framebuffer);
+	OutputDebugStringf("Generated framebuffer %u\n", this->framebuffers[framebuffer]);
+	glBindFramebuffer(GL_FRAMEBUFFER, this->framebuffers[framebuffer]);
+
+	this->framebuffer_textures[framebuffer] = gen_texture(width, height);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->framebuffer_textures[framebuffer], 0);
+	
+	glBindRenderbuffer(GL_RENDERBUFFER, this->framebuffer_renderbuffers[framebuffer]);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->framebuffer_renderbuffers[framebuffer]);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		OutputDebugStringf("Framebuffer buggered\n");
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return framebuffer;
+}
+
+void Graphics_Table::__resize_framebuffer(int width, int height, int framebuffer)
+{
+	glBindTexture(GL_TEXTURE_2D, this->framebuffer_textures[framebuffer]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glBindRenderbuffer(GL_RENDERBUFFER, this->framebuffer_renderbuffers[framebuffer]);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
+void Graphics_Table::__resize_framebuffers(int width, int height)
+{
+	for (int i = 0; i < MAX_FRAMEBUFFER_COUNT; ++i)
+	{
+		GLuint framebuffer = this->framebuffers[i];
+		if (framebuffer) this->__resize_framebuffer(width, height, i);
+	}
+}
+
+void Graphics_Table::__use_framebuffer(int framebuffer_index)
+{
+	GLuint framebuffer = (framebuffer_index != -1) ? this->framebuffers[framebuffer_index] : 0;
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+}
+
+void Graphics_Table::__use_framebuffer_texture(int framebuffer)
+{
+	use_texture((framebuffer != -1) ? this->framebuffer_textures[framebuffer] : 0);
+}
 
 Drawable buffer_sphere_mesh(float radius, int number_of_slices, int number_of_stacks)
 {

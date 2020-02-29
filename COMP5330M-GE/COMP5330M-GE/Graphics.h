@@ -88,6 +88,10 @@ struct Lights_Block
 
 //This class contains mostly shader data which needs to persist throughout the game's running
 #define MAX_SHADER_COUNT 8
+#define MAX_FRAMEBUFFER_COUNT 4
+
+#define DEFAULT_FRAMEBUFFER -1
+
 class Graphics_Table
 {
 public:
@@ -116,6 +120,11 @@ public:
 	int __load_shader_program(const char* v_shader_path, const char* f_shader_path);
 	GLuint __buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format = GL_RGB);
 	void __use_texture(GLuint texture);
+	int __alloc_framebuffer(int width, int height, int framebuffer = -1);
+	void __use_framebuffer(int framebuffer = -1);
+	void __use_framebuffer_texture(int framebuffer = -1);
+	void __resize_framebuffer(int width, int height, int framebuffer);
+	void __resize_framebuffers(int width, int height);
 
 private:
 	//Uniform buffer objects
@@ -129,6 +138,11 @@ private:
 
 	//Shaders
 	GLuint shaders[MAX_SHADER_COUNT];
+
+	//Framebuffers
+	GLuint framebuffers[MAX_FRAMEBUFFER_COUNT];
+	GLuint framebuffer_textures[MAX_FRAMEBUFFER_COUNT];
+	GLuint framebuffer_renderbuffers[MAX_FRAMEBUFFER_COUNT];
 };
 
 extern Graphics_Table __graphics;
@@ -177,3 +191,7 @@ void begin_render();
 #define initialise_graphics()								__graphics.__initialise_graphics()
 #define buffer_texture(w, h, d, f)							__graphics.__buffer_texture(w, h, d, f)
 #define use_texture(t)										__graphics.__use_texture(t)
+#define alloc_framebuffer(w, h)								__graphics.__alloc_framebuffer(w, h)
+#define use_framebuffer(f)									__graphics.__use_framebuffer(f)
+#define use_framebuffer_texture(t)							__graphics.__use_framebuffer_texture(t)
+#define resize_framebuffers(w, h)							__graphics.__resize_framebuffers(w, h)

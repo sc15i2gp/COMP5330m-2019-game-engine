@@ -193,5 +193,14 @@
     <None Include="heightmap_fshader.glsl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="depth_fshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="framebuffer_vshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="framebuffer_fshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

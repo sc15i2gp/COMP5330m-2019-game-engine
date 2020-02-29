@@ -188,6 +188,9 @@
     <ClInclude Include="wglext.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="depth_fshader.glsl" />
+    <None Include="framebuffer_fshader.glsl" />
+    <None Include="framebuffer_vshader.glsl" />
     <None Include="fshader.glsl" />
     <None Include="heightmap_fshader.glsl" />
     <None Include="heightmap_vshader.glsl" />

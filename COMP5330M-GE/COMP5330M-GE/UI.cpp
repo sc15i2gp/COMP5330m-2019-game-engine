@@ -35,6 +35,9 @@ void handle_ui(UI_Parameters parameters)
 	ImGui::NewLine();
 	ImGui::Text("Movement Sensitivity");
 	ImGui::SliderFloat("", parameters.camera_sensitivity, 0.001f, 1.0f);
+	ImGui::NewLine();
+	ImGui::Text("FoV");
+	ImGui::SliderFloat("##FOV", parameters.fov, 30.0f, 120.0f);
 	ImGui::End();
 
 	ImGui::Begin("Performance");
@@ -43,7 +46,7 @@ void handle_ui(UI_Parameters parameters)
 	ImGui::SliderInt("", parameters.fps, 24, 120);
 	ImGui::End();
 
-	ImGui::Begin("Landscape");
+	ImGui::Begin("Rendering");
 	ImGui::Text("Render Pines?");
 	ImGui::SameLine();
 	ImGui::Checkbox("##Pines", parameters.render_pines);
@@ -55,10 +58,14 @@ void handle_ui(UI_Parameters parameters)
 	ImGui::Text("Render as wireframes?");
 	ImGui::SameLine();
 	ImGui::Checkbox("##Wireframes", parameters.render_wireframes);
+	ImGui::NewLine();
+	ImGui::Text("Render depth buffer?");
+	ImGui::SameLine();
+	ImGui::Checkbox("##Depth_buffer", parameters.render_depth_buffer);
 	ImGui::End();
 }
 
-UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera* camera, int* fps, bool* render_wireframes)
+UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera* camera, int* fps, bool* render_wireframes, bool* render_depth_buffer, float* fov)
 {
 	UI_Parameters ui_parameters = {};
 	ui_parameters.fps = fps;
@@ -68,6 +75,8 @@ UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera
 	ui_parameters.camera_forward = &camera->forward[0];
 	ui_parameters.camera_position = &camera->position[0];
 	ui_parameters.camera_sensitivity = &camera->movement_sensitivity;
+	ui_parameters.render_depth_buffer = render_depth_buffer;
+	ui_parameters.fov = fov;
 
 	return ui_parameters;
 }

@@ -528,7 +528,7 @@ Matrix4x4 perspective(float fov, float aspect_ratio, float n, float f)
 		p[3][2] = (2.0f*f*n) / (n - f);
 		p[2][3] = -1.0f;
 	}
-	p[3][3] = 1.0f;
+	p[3][3] = 0.0f;
 	return p;
 }
 

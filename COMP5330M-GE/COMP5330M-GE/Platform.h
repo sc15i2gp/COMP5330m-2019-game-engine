@@ -80,6 +80,8 @@ public:
 	bool __was_mouse_button_pressed(Mouse_Button button);
 	bool __was_mouse_moved();
 
+	bool __was_window_resized();
+
 	Vector2 __get_initial_mouse_position();
 	Vector2 __get_final_mouse_position();
 
@@ -95,6 +97,7 @@ private:
 	Vector2 initial_cursor_position;
 	Vector2 final_cursor_position;
 	bool was_mouse_moved;
+	bool window_resized;
 
 	friend LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, LPARAM lparam);
 };
@@ -123,3 +126,4 @@ void OutputDebugStringf(const char* debug_string_f, ...);
 #define was_mouse_moved()					__platform.__was_mouse_moved()
 #define read_file(path)						__platform.__read_file(path)
 #define copy_mem(src, dst, length)			__platform.__copy_mem(src, dst, length)
+#define was_window_resized()				__platform.__was_window_resized()
