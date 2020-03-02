@@ -8,8 +8,6 @@
 #include "UI.h"
 
 //DOING:
-//	- Render smoke to framebuffer
-//	- Composite framebuffer textures in shaders
 //	- 3D texture
 //	- Render grid of smoke density
 //		- Smoke density grid
@@ -18,11 +16,6 @@
 //			- Cell size shouldn't scale with terrain
 //			- Need to limit due to gpu transfer, only minimum relevant data transfer
 //		- Single pass ray cast to render density grid
-
-//Smoke + Scene rendering algorithm:
-//Render scene geometry to one framebuffer
-//Render smoke to another
-//Composite them
 
 //Smoke rendering algorithm:
 //Cast a ray through a pixel
@@ -35,6 +28,8 @@
 //	- Internal error handling
 //	- Better memory management(?)
 //	- glDelete functions
+//	- Create separate 2d texture sub buffer function
+//	- Free resources
 
 //TODO: Landscape
 //	- Parameterise (with UI)
@@ -219,14 +214,20 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Camera main_view_camera = {};
 		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{0.0f, 0.0f, 1.0f});
 		main_view_camera.movement_sensitivity = 0.1f;
-		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
+		Vector3 sky_colour(0.52, 0.8, 0.92);
+		Vector3 black = Vector3();
 
 		activate_direction_light(0);
 		set_direction_light_direction(0, Vector3(0.0f, -1.0f, -1.0f));
 		set_direction_light_blinn_phong_properties(0, light_properties);
 
-		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
+		float landscape_width = 10.0f;
+		float landscape_length = 10.0f;
+		Landscape_Data landscape = create_landscape(landscape_width, landscape_length, 0.01f, 10);
 
+		int field_width = (int)landscape_width;
+		int field_height = 10;
+		int field_length = (int)landscape_length;
 		bool dragging = false;
 		int fps = 60;
 		bool render_wireframes = false;
@@ -236,6 +237,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		set_shader_sampler_uniform(framebuffer_composite_shader, "scene_texture", 1);
 		set_shader_sampler_uniform(framebuffer_composite_shader, "smoke_texture", 0);
+		set_shader_sampler_uniform(smoke_shader, "density_field", 0);
+
+		float* density_field = (float*)alloc_mem(field_width * field_height * field_length * sizeof(float));
+		for (int z = 0; z < field_length; ++z)
+		{
+			for (int y = 0; y < field_height; ++y)
+			{
+				for (int x = 0; x < field_width; ++x)
+				{
+					density_field[z*field_height*field_width + y * field_width + x] = 0.5f;
+				}
+			}
+		}
+		int density_field_texture = create_volume_texture(field_width, field_height, field_length);
+		buffer_volume_data(density_field_texture, field_width, field_height, field_length, density_field);
 
 		timer t;
 		//Main loop
@@ -280,6 +296,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			//Render scene into scene buffer
 			use_framebuffer(scene_framebuffer);
+			set_window_clear_colour(sky_colour);
 			begin_render();
 
 			Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 10.0f);
@@ -296,10 +313,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			render_ui();
 			
 			//Render smoke
-			
 			use_framebuffer(smoke_framebuffer);
+			set_window_clear_colour(black);
 			begin_render();
 			use_shader(smoke_shader);
+			use_volume_texture(density_field_texture, 0);
+			set_model_matrix(identity());
 			draw(scene_quad);
 			
 			//Composite framebuffers and render to window

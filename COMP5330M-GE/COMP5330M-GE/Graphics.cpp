@@ -225,15 +225,60 @@ GLuint gen_texture(GLsizei width, GLsizei height, GLenum format = GL_RGBA, GLenu
 	return texture;
 }
 
+GLuint gen_texture(GLsizei width, GLsizei height, GLsizei depth, GLenum type = GL_FLOAT, GLenum format = GL_RED)
+{
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_3D, texture);
+	GL_ERROR_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, format, width, height, depth, 0, format, type, NULL));
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_3D, 0);
+	return texture;
+}
+
+int Graphics_Table::__create_volume_texture(int width, int height, int depth)
+{
+	int volume_texture;
+	for (int i = 0; i < MAX_VOLUME_COUNT; ++i)
+	{
+		if (this->volume_textures[i] == 0)
+		{
+			volume_texture = i;
+			break;
+		}
+	}
+
+	
+	this->volume_textures[volume_texture] = gen_texture(width, height, depth);
+
+	return volume_texture;
+}
+
+void Graphics_Table::__buffer_volume_data(int volume_texture, int width, int height, int depth, float* volume_data, GLenum type, GLenum format)
+{
+	glBindTexture(GL_TEXTURE_3D, this->volume_textures[volume_texture]);
+	GL_ERROR_CHECK(glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, format, type, volume_data));
+	glBindTexture(GL_TEXTURE_3D, 0);
+}
+
 GLuint Graphics_Table::__buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format)
 {
 	return gen_texture(texture_width, texture_height, format, GL_FLOAT, texture_data);
 }
 
-void Graphics_Table::__use_texture(GLuint texture, GLuint texture_unit)
+void Graphics_Table::__use_texture(GLuint texture, GLuint texture_unit, GLenum texture_target)
 {
 	glActiveTexture(GL_TEXTURE0 + texture_unit);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindTexture(texture_target, texture);
+}
+
+void Graphics_Table::__use_volume_texture(int volume_texture, GLuint texture_unit)
+{
+	this->__use_texture(this->volume_textures[volume_texture], texture_unit, GL_TEXTURE_3D);
 }
 
 void draw_as_polygons()
