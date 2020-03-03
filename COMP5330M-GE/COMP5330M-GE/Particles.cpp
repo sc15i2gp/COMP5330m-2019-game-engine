@@ -1,5 +1,4 @@
 #include "Particles.h"
-#include "Platform.h"
 #include <Windows.h>
 
 Particle::Particle() 
@@ -59,9 +58,8 @@ Particle releaseOneParticle(Emitter& e)
 {
 	// Generate a position
 	float p1 = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.radius;
-	float p2 = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.radius;
 	float p3 = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.radius;
-	Vector3 pos = { e.position.x + p1, e.position.y + p2, e.position.z + p3 };
+	Vector3 pos = { e.position.x + p1, e.position.y, e.position.z + p3 };
 	// Generate the velocity in which it is released
 	float xAngle = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.maxAngleAroundX;
 	float yAngle = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.maxAngleAroundY;
