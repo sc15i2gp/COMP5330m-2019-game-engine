@@ -198,10 +198,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
 		// Emit particles
-		Emitter* fireEmitter = new Emitter({ 0.0,0.0,2.0 }, 2.0, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40);
+		Emitter* fireEmitter = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40);
 		ParticlePool pool;
-		initialisePool(pool, 200);
-		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, pool, 200, 20.0);
+		int totalNumOfParticles = 500;
+		initialisePool(pool, totalNumOfParticles);
+		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, pool, 500, 100.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -251,19 +252,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			buffer_camera_data_to_gpu(main_view_camera);
 
-			//Draw landscape
-			landscape.draw();
-			render_ui();
-			swap_window_buffers();
-
 			// Check the particle pool
 			int inactive = 0;
-			for (int i = 0; i <= 199; i++) {
+			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
 				if (pool.nodes[i].nodeActive) {
-					OutputDebugStringf("Particle %i: Life: %i, Velocity: {%f, %f, %f}, Displacement: {%f, %f, %f}\n", 
-						i, pool.nodes[i].particle.life, 
-						pool.nodes[i].particle.velocity.x, pool.nodes[i].particle.velocity.y, pool.nodes[i].particle.velocity.z,
-						pool.nodes[i].particle.displacement.x, pool.nodes[i].particle.displacement.y, pool.nodes[i].particle.displacement.z);
 					Vector3 pos = updateParticlePosition(pool.nodes[i].particle, mspf / 1000.0);
 				}
 				else {
@@ -271,21 +263,28 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					break;
 				}
 			}
-			for (int i = 0; i <= 199; i++) {
+			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
 				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
-					//glPointSize(10.0f);
-					//glBegin(GL_POINTS);
-					//glVertex3f(pool.nodes[i].particle.displacement.x,
-					//	pool.nodes[i].particle.displacement.y,
-					//	pool.nodes[i].particle.displacement.z);
-					//glEnd();
+					glLoadIdentity();
+					glPointSize(5.0f);
+					glColor3f(1.0f, 1.0f, 1.0f);
+					glBegin(GL_POINTS);
+					glVertex3f(pool.nodes[i].particle.displacement.x,
+						pool.nodes[i].particle.displacement.y,
+						pool.nodes[i].particle.displacement.z);
+					glEnd();
 				}
 				else if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life <= 0) {
-					pool.nodes[i] = pool.nodes[inactive-1];
-					pool.nodes[inactive-1].nodeActive = false;
+					pool.nodes[i] = pool.nodes[inactive - 1];
+					pool.nodes[inactive - 1].nodeActive = false;
 					inactive--;
 				}
 			}
+
+			//Draw landscape
+			landscape.draw();
+			render_ui();
+			swap_window_buffers();
 
 			stop_timer(&t);
 			long int frame_time = elapsed_time(&t);
