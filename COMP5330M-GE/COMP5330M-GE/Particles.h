@@ -7,9 +7,10 @@ struct Particle {
 	Vector3 displacement;
 	Vector3 velocity;
 	int life;		// In terms of frames
+	float size;		// The quads are drawn (x-s,y-s,z) (x-s,y+s,z) (x+s,y+s,z) (x+s,y-s,z)
 
 	Particle();
-	Particle(Vector3 initialDisplacement, Vector3 initialVelocity, int life);
+	Particle(Vector3 initialDisplacement, Vector3 initialVelocity, int life, float size);
 };
 
 // A particle given rigid body features so it can be acted under forces
@@ -45,9 +46,12 @@ struct Emitter {
 	// Life in terms of frames
 	int minLife;
 	int maxLife;
+	// Particle size
+	float minSize;
+	float maxSize;
 
 	Emitter();
-	Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife);
+	Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife, float minSize, float maxSize);
 };
 
 // Simple particle emission

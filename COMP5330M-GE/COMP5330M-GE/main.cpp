@@ -198,7 +198,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
 		// Emit particles
-		Emitter* fireEmitter = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40);
+		Emitter* fireEmitter = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.02);
 		ParticlePool pool;
 		int totalNumOfParticles = 500;
 		initialisePool(pool, totalNumOfParticles);
@@ -265,13 +265,33 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			}
 			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
 				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
+					float size = 0.0;
+					// Have the particle decrease in size when it's coming to the end of its life
+					if (pool.nodes[i].particle.life >= 10) {
+						size = pool.nodes[i].particle.size;
+					}
+					else {
+						size = pool.nodes[i].particle.size * (pool.nodes[i].particle.life / 10.0);
+					}
 					glLoadIdentity();
-					glPointSize(5.0f);
 					glColor3f(1.0f, 1.0f, 1.0f);
-					glBegin(GL_POINTS);
-					glVertex3f(pool.nodes[i].particle.displacement.x,
-						pool.nodes[i].particle.displacement.y,
-						pool.nodes[i].particle.displacement.z);
+					glBegin(GL_QUADS);
+					Vector3 point1 = { pool.nodes[i].particle.displacement.x - size,
+						pool.nodes[i].particle.displacement.y - size,
+						pool.nodes[i].particle.displacement.z };
+					Vector3 point2 = { pool.nodes[i].particle.displacement.x - size,
+						pool.nodes[i].particle.displacement.y + size,
+						pool.nodes[i].particle.displacement.z };
+					Vector3 point3 = { pool.nodes[i].particle.displacement.x + size,
+						pool.nodes[i].particle.displacement.y + size,
+						pool.nodes[i].particle.displacement.z };
+					Vector3 point4 = { pool.nodes[i].particle.displacement.x + size,
+						pool.nodes[i].particle.displacement.y - size,
+						pool.nodes[i].particle.displacement.z };
+					glVertex3f(point1.x, point1.y, point1.z);
+					glVertex3f(point2.x, point2.y, point2.z);
+					glVertex3f(point3.x, point3.y, point3.z);
+					glVertex3f(point4.x, point4.y, point4.z);
 					glEnd();
 				}
 				else if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life <= 0) {

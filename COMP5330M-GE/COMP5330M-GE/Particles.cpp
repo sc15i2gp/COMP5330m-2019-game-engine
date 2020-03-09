@@ -6,13 +6,15 @@ Particle::Particle()
 	displacement = { 0.0, 0.0, 0.0 };
 	velocity = { 0.0, 0.0, 0.0 };
 	life = 60;
+	size = 1.0;
 }
 
-Particle::Particle(Vector3 initialDisplacement, Vector3 initialVelocity, int life) 
+Particle::Particle(Vector3 initialDisplacement, Vector3 initialVelocity, int life, float size) 
 {
 	displacement = initialDisplacement;
 	velocity = initialVelocity;
 	this->life = life;
+	this->size = size;
 }
 
 ParticleBody::ParticleBody()
@@ -39,9 +41,11 @@ Emitter::Emitter()
 	minSpeedRatio = 0.5;
 	minLife = 60;
 	maxLife = 500;
+	minSize = 0.1;
+	maxSize = 1.0;
 }
 
-Emitter::Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife)
+Emitter::Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, float maxAngleAroundX, float maxAngleAroundY, float maxAngleAroundZ, float minSpeedRatio, int minLife, int maxLife, float minSize, float maxSize)
 {
 	this->position = position;
 	this->radius = radius;
@@ -52,6 +56,8 @@ Emitter::Emitter(Vector3 position, float radius, Vector3 normalSpeedVector, floa
 	this->minSpeedRatio = minSpeedRatio;
 	this->minLife = minLife;
 	this->maxLife = maxLife;
+	this->minSize = minSize;
+	this->maxSize = maxSize;
 }
 
 Particle releaseOneParticle(Emitter& e) 
@@ -79,14 +85,15 @@ Particle releaseOneParticle(Emitter& e)
 	// Multiply the speed by a random value between minSpeedRatio and 1.0
 	float ratio = e.minSpeedRatio + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1 - e.minSpeedRatio))));
 	vel = ratio * vel;
-	// Generate a lifespan
+	// Generate a lifespan and size
 	int life = e.minLife + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (e.maxLife - e.minLife))));
-	return Particle(pos,vel,life);
+	float size = e.minSize + (static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (e.maxSize - e.minSize))));
+	return Particle(pos,vel,life,size);
 }
 
 Particle simpleReleaseOneParticle(Emitter& e)
 {
-	return Particle(e.position, e.normalSpeedVector, e.maxLife);
+	return Particle(e.position, e.normalSpeedVector, e.maxLife, e.maxSize);
 }
 
 ParticleBody releaseOneRigidParticle(Emitter& e, Vector3 acceleration, float mass)
