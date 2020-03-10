@@ -199,10 +199,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		// Emit particles
 		Emitter* fireEmitter = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.02);
+		Emitter* fireEmitter2 = new Emitter({ 5.0,0.0,4.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.02);
 		ParticlePool pool;
-		int totalNumOfParticles = 500;
+		int totalNumOfParticles = 1000;
 		initialisePool(pool, totalNumOfParticles);
-		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, pool, 500, 100.0);
+		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, pool, 5000, 100.0);
+		std::thread emit2(releaseManyParticlesInASequence, *fireEmitter2, pool, 5000, 100.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -276,18 +278,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					glLoadIdentity();
 					glColor3f(1.0f, 1.0f, 1.0f);
 					glBegin(GL_QUADS);
-					Vector3 point1 = { pool.nodes[i].particle.displacement.x - size,
-						pool.nodes[i].particle.displacement.y - size,
-						pool.nodes[i].particle.displacement.z };
-					Vector3 point2 = { pool.nodes[i].particle.displacement.x - size,
-						pool.nodes[i].particle.displacement.y + size,
-						pool.nodes[i].particle.displacement.z };
-					Vector3 point3 = { pool.nodes[i].particle.displacement.x + size,
-						pool.nodes[i].particle.displacement.y + size,
-						pool.nodes[i].particle.displacement.z };
-					Vector3 point4 = { pool.nodes[i].particle.displacement.x + size,
-						pool.nodes[i].particle.displacement.y - size,
-						pool.nodes[i].particle.displacement.z };
+					Vector3 point1 = pool.nodes[i].particle.displacement + ((-size) * main_view_camera.rightward) + ((-size) * main_view_camera.upward);
+					Vector3 point2 = pool.nodes[i].particle.displacement + ((-size) * main_view_camera.rightward) + ((size) * main_view_camera.upward);
+					Vector3 point3 = pool.nodes[i].particle.displacement + ((size) * main_view_camera.rightward) + ((size) * main_view_camera.upward);
+					Vector3 point4 = pool.nodes[i].particle.displacement + ((size) * main_view_camera.rightward) + ((-size) * main_view_camera.upward);
 					glVertex3f(point1.x, point1.y, point1.z);
 					glVertex3f(point2.x, point2.y, point2.z);
 					glVertex3f(point3.x, point3.y, point3.z);
@@ -319,6 +313,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplWin32_Shutdown();
 		emit.join();
+		emit2.join();
 		shutdown_platform();
 		return 0;
 	}
