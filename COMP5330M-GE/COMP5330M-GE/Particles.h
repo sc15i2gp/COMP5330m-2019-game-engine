@@ -33,6 +33,16 @@ struct ParticlePool {
 	int numOfParticles;
 };
 
+struct RigidParticlePoolNode {
+	ParticleBody particleBody;
+	bool nodeActive;
+};
+
+struct RigidParticlePool {
+	RigidParticlePoolNode* nodes;
+	int numOfParticles;
+};
+
 // A point or area that emits particles
 struct Emitter {
 	Vector3 position;
@@ -70,12 +80,16 @@ void initialisePool(ParticlePool&, int numOfParticles);
 // Rate is particles per second
 void releaseManyParticlesAtOnce(Emitter&, ParticlePool pool, int numOfParticles);
 void releaseManyParticlesInASequence(Emitter&, ParticlePool pool, int numOfParticles, float rate);
+void releaseManyParticlesInASequenceForever(Emitter&, ParticlePool pool, float rate);
 void releaseBurstsOfParticlesInASequence(Emitter&, ParticlePool pool, int numOfBursts, int numOfParticlesPerGroup, float rate);
+void releaseBurstsOfParticlesInASequenceForever(Emitter&, ParticlePool pool, int numOfParticlesPerGroup, float rate);
 
 // Rigid particle release functions
-void releaseManyRigidParticlesAtOnce(Emitter&, ParticleBody* particles, int numOfParticles, Vector3 acceleration, float mass);
-void releaseManyRigidParticlesInASequence(Emitter&, ParticleBody* particles, int numOfParticles, float rate, Vector3 acceleration, float mass);
-void releaseBurstsOfRigidParticlesInASequence(Emitter&, ParticleBody* particles, int numOfBursts, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass);
+void releaseManyRigidParticlesAtOnce(Emitter&, RigidParticlePool pool, int numOfParticles, Vector3 acceleration, float mass);
+void releaseManyRigidParticlesInASequence(Emitter&, RigidParticlePool pool, int numOfParticles, float rate, Vector3 acceleration, float mass);
+void releaseManyRigidParticlesInASequenceForever(Emitter&, RigidParticlePool pool, float rate, Vector3 acceleration, float mass);
+void releaseBurstsOfRigidParticlesInASequence(Emitter&, RigidParticlePool pool, int numOfBursts, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass);
+void releaseBurstsOfRigidParticlesInASequenceForever(Emitter&, RigidParticlePool pool, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass);
 
 // Particle movement functions
 ParticleBody makeParticleRigidBody(Particle* p, Vector3 acceleration, float mass);

@@ -203,8 +203,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		ParticlePool pool;
 		int totalNumOfParticles = 1000;
 		initialisePool(pool, totalNumOfParticles);
-		std::thread emit(releaseManyParticlesInASequence, *fireEmitter, pool, 5000, 100.0);
-		std::thread emit2(releaseManyParticlesInASequence, *fireEmitter2, pool, 5000, 100.0);
+		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 100.0);
+		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 100.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -312,8 +312,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		//ReleaseDC(window, window_device_context);
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplWin32_Shutdown();
-		emit.join();
-		emit2.join();
+		emit.detach();
+		emit2.detach();
 		shutdown_platform();
 		return 0;
 	}

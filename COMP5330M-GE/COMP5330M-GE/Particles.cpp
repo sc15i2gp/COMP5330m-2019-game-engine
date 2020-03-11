@@ -150,6 +150,21 @@ void releaseManyParticlesInASequence(Emitter& e, ParticlePool pool, int numOfPar
 	}
 }
 
+void releaseManyParticlesInASequenceForever(Emitter& e, ParticlePool pool, float rate)
+{
+	float time = 1000.0 / rate;
+	while (true) {
+		for (int index = 0; index < pool.numOfParticles; index++) {
+			if (!pool.nodes[index].nodeActive) {
+				pool.nodes[index].particle = releaseOneParticle(e);
+				pool.nodes[index].nodeActive = true;
+				Sleep(time);
+				break;
+			}
+		}
+	}
+}
+
 void releaseBurstsOfParticlesInASequence(Emitter& e, ParticlePool pool, int numOfBursts, int numOfParticlesPerGroup, float rate)
 {
 	float time = 1000.0 / rate;
@@ -159,28 +174,76 @@ void releaseBurstsOfParticlesInASequence(Emitter& e, ParticlePool pool, int numO
 	}
 }
 
-void releaseManyRigidParticlesAtOnce(Emitter& e, ParticleBody* particles, int numOfParticles, Vector3 acceleration, float mass)
-{
-	for (int i = 0; i < numOfParticles; i++) {
-		particles[i] = releaseOneRigidParticle(e, acceleration, mass);
-	}
-}
-
-void releaseManyRigidParticlesInASequence(Emitter& e, ParticleBody* particles, int numOfParticles, float rate, Vector3 acceleration, float mass)
+void releaseBurstsOfParticlesInASequenceForever(Emitter& e, ParticlePool pool, int numOfParticlesPerGroup, float rate)
 {
 	float time = 1000.0 / rate;
-	for (int i = 0; i < numOfParticles; i++) {
-		particles[i] = releaseOneRigidParticle(e, acceleration, mass);
+	while (true) {
+		releaseManyParticlesAtOnce(e, pool, numOfParticlesPerGroup);
 		Sleep(time);
 	}
 }
 
-void releaseBurstsOfRigidParticlesInASequence(Emitter& e, ParticleBody* particles, int numOfBursts, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass)
+void releaseManyRigidParticlesAtOnce(Emitter& e, RigidParticlePool pool, int numOfParticles, Vector3 acceleration, float mass)
+{
+	int index = 0;
+	for (int i = 0; i < pool.numOfParticles; i++) {
+		if (!pool.nodes[i].nodeActive) {
+			index = i;
+			break;
+		}
+	}
+	for (int j = 0; j < numOfParticles; j++) {
+		if (j < pool.numOfParticles) {
+			pool.nodes[index + j].particleBody = releaseOneRigidParticle(e, acceleration, mass);
+			pool.nodes[index + j].nodeActive = true;
+		}
+	}
+}
+
+void releaseManyRigidParticlesInASequence(Emitter& e, RigidParticlePool pool, int numOfParticles, float rate, Vector3 acceleration, float mass)
+{
+	float time = 1000.0 / rate;
+	for (int i = 0; i < numOfParticles; i++) {
+		for (int index = 0; index < pool.numOfParticles; index++) {
+			if (!pool.nodes[index].nodeActive) {
+				pool.nodes[index].particleBody = releaseOneRigidParticle(e, acceleration, mass);
+				pool.nodes[index].nodeActive = true;
+				Sleep(time);
+				break;
+			}
+		}
+	}
+}
+
+void releaseManyRigidParticlesInASequenceForever(Emitter& e, RigidParticlePool pool, float rate, Vector3 acceleration, float mass)
+{
+	float time = 1000.0 / rate;
+	while (true) {
+		for (int index = 0; index < pool.numOfParticles; index++) {
+			if (!pool.nodes[index].nodeActive) {
+				pool.nodes[index].particleBody = releaseOneRigidParticle(e, acceleration, mass);
+				pool.nodes[index].nodeActive = true;
+				Sleep(time);
+				break;
+			}
+		}
+	}
+}
+
+void releaseBurstsOfRigidParticlesInASequence(Emitter& e, RigidParticlePool pool, int numOfBursts, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass)
 {
 	float time = 1000.0 / rate;
 	for (int i = 0; i < numOfBursts; i++) {
-		releaseManyRigidParticlesAtOnce(e, particles, numOfParticlesPerGroup, acceleration, mass);
-		particles += numOfParticlesPerGroup;
+		releaseManyRigidParticlesAtOnce(e, pool, numOfParticlesPerGroup, acceleration, mass);
+		Sleep(time);
+	}
+}
+
+void releaseBurstsOfRigidParticlesInASequenceForever(Emitter& e, RigidParticlePool pool, int numOfParticlesPerGroup, float rate, Vector3 acceleration, float mass)
+{
+	float time = 1000.0 / rate;
+	while (true) {
+		releaseManyRigidParticlesAtOnce(e, pool, numOfParticlesPerGroup, acceleration, mass);
 		Sleep(time);
 	}
 }
