@@ -185,6 +185,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int terrain_shader = load_shader_program("vshader.glsl", "terrain_fshader.glsl");
 		int terrain_lighting_shader = load_shader_program("vshader.glsl", "fshader.glsl");
 		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
+		int fire_shader = load_shader_program("fire_vshader.glsl", "fire_fshader.glsl");
 
 		Camera main_view_camera = {};
 		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{0.0f, 0.0f, 1.0f});
@@ -258,7 +259,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			landscape.draw();
 			render_ui();
 
-			glUseProgram(0);
+			use_shader(fire_shader);
 
 			// Check the particle pool
 			int inactive = 0;
@@ -292,6 +293,19 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					glVertex3f(point2.x, point2.y, point2.z);
 					glVertex3f(point3.x, point3.y, point3.z);
 					glVertex3f(point4.x, point4.y, point4.z);
+					GLfloat texCoords[] = {
+						0.0f, 0.0f,
+						1.0f, 0.0f,
+						1.0f, 1.0f,
+						0.0f, 1.0f
+					};
+					GLuint texture;
+					glGenTextures(1, &texture);
+					glBindTexture(GL_TEXTURE_2D, texture);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 					glEnd();
 				}
 				else if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life <= 0) {

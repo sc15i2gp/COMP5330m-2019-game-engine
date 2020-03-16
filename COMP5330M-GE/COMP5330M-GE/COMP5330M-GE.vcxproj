@@ -190,6 +190,8 @@
     <ClInclude Include="wglext.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fire_fshader.glsl" />
+    <None Include="fire_vshader.glsl" />
     <None Include="fshader.glsl" />
     <None Include="heightmap_fshader.glsl" />
     <None Include="heightmap_vshader.glsl" />
