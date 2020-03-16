@@ -6,15 +6,9 @@
 #include "turtle.h"
 #include "Camera.h"
 #include "UI.h"
+#include "./Rendering/WaterRendering.h"
 
-Material gold =
-{
-	Vector3(0.247, 0.199, 0.075),
-	Vector3(0.752, 0.606, 0.226),
-	Vector3(0.628, 0.556, 0.367),
-	25.f
-};
-
+/*To understand by the end of today*/
 Material light_properties =
 {
 	Vector3(0.2, 0.2, 0.2),
@@ -23,18 +17,20 @@ Material light_properties =
 	0.0f
 };
 
+/*
+	
+*/
 void buffer_camera_data_to_gpu(Camera c)
 {
-	//Compute lookat matrix
+	/*Computes a view matrix for the camera. It takes in four paramaters.*/
+	/*They are as follows: The camera position, the forward vector, expressed in negative z*/
+	/*The rightward vector (facing positive X), and the upward vector (facing positive Y)*/
+	Matrix4x4 view = look_at(c.getPosition(), c.getForwardVector(), c.getRightVector(), c.getUpwardVector());
 
-	//Matrix4x4 view = look_at(c.position, c.position + c.forward);
-	Matrix4x4 view = look_at(c.position, -c.forward, c.rightward, c.upward);
-
-	//Buffer lookat matrix to shader
 	set_view_matrix(view);
 
 	//Buffer view position to shader
-	set_view_origin(c.position);
+	set_view_origin(c.getPosition());
 }
 
 //Render 4*4 perlin noise grid on 64*64 texture
@@ -137,7 +133,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 {
 	bool platform_ready = initialise_platform(instance);
 	bool graphics_ready = initialise_graphics();
-	bool ui_ready = initialise_ui();
+	/*bool ui_ready = initialise_ui();*/
 
 	if (platform_ready && graphics_ready)
 	{
@@ -146,8 +142,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int terrain_lighting_shader = load_shader_program("vshader.glsl", "fshader.glsl");
 		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 
-		Camera main_view_camera = {};
-		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, 0.0f, 1.0f });
+		Camera main_view_camera(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f) );
+
+		//main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, 0.0f, 1.0f });
 		main_view_camera.movement_sensitivity = 0.1f;
 		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
 
@@ -160,7 +157,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		bool dragging = false;
 		int fps = 60;
 		bool render_wireframes = false;
-		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
+		/*UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);*/
+
+
+		WaterRendering water;
+		water.renderWaterSurface();
 
 		timer t;
 		//Main loop
@@ -170,30 +171,30 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			long int mspf = fps_to_mspf(fps);
 
 			handle_input();
-			handle_ui(ui_parameters);
+			/*handle_ui(ui_parameters);*/
 
-			if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging)
-			{
-				dragging = true;
-				main_view_camera.rotation_start(get_initial_mouse_position());
-			}
-			if (was_mouse_moved() && dragging)
-			{
-				//main_view_camera.rotation_start(get_initial_mouse_position());
-				main_view_camera.rotate_by_arcball(get_final_mouse_position());
-			}
-			if (!was_mouse_button_pressed(BUTTON_LEFT) && dragging)
-			{
-				main_view_camera.rotation_end();
-				dragging = false;
-			}
+			//if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging)
+			//{
+			//	dragging = true;
+			//	//main_view_camera.rotation_start(get_initial_mouse_position());
+			//}
+			//if (was_mouse_moved() && dragging)
+			//{
+			//	//main_view_camera.rotation_start(get_initial_mouse_position());
+			//	main_view_camera.rotate_by_arcball(get_final_mouse_position());
+			//}
+			//if (!was_mouse_button_pressed(BUTTON_LEFT) && dragging)
+			//{
+			//	main_view_camera.rotation_end();
+			//	dragging = false;
+			//}
 
-			if (was_key_pressed(KEY_W)) main_view_camera.move_forward();
-			if (was_key_pressed(KEY_A)) main_view_camera.move_left();
-			if (was_key_pressed(KEY_S)) main_view_camera.move_backward();
-			if (was_key_pressed(KEY_D)) main_view_camera.move_right();
-			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
-			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
+			if (was_key_pressed(KEY_W)) main_view_camera.moveForward();
+			if (was_key_pressed(KEY_A)) main_view_camera.moveLeft();
+			if (was_key_pressed(KEY_S)) main_view_camera.moveBackward();
+			if (was_key_pressed(KEY_D)) main_view_camera.moveRight();
+			if (was_key_pressed(KEY_Q)) main_view_camera.moveUp();
+			if (was_key_pressed(KEY_E)) main_view_camera.moveDown();
 
 			begin_render();
 			if (render_wireframes) draw_as_wireframes();
@@ -207,7 +208,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			//Draw landscape
 			landscape.draw();
-			render_ui();
+			/*render_ui();*/
+
+			use_shader(water.getProgramID());
+			glBindVertexArray(water.getVAO());
+
+			glDrawArrays(GL_TRIANGLES, 0, 9);
+
+
 			swap_window_buffers();
 
 			stop_timer(&t);
@@ -220,8 +228,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		}
 		//release_drawable();
 		//ReleaseDC(window, window_device_context);
-		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplWin32_Shutdown();
+	/*	ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplWin32_Shutdown();*/
 		shutdown_platform();
 		return 0;
 	}

@@ -65,9 +65,9 @@ UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera
 	ui_parameters.render_pines = &landscape->render_pines;
 	ui_parameters.render_rowans = &landscape->render_rowans;
 	ui_parameters.render_wireframes = render_wireframes;
-	ui_parameters.camera_forward = &camera->forward[0];
-	ui_parameters.camera_position = &camera->position[0];
-	ui_parameters.camera_sensitivity = &camera->movement_sensitivity;
+	//ui_parameters.camera_forward = &camera->forward[0];
+	//ui_parameters.camera_position = &camera->position[0];
+	//ui_parameters.camera_sensitivity = &camera->movement_sensitivity;
 
 	return ui_parameters;
 }

@@ -2,14 +2,50 @@
 #include "Maths.h"
 #include "Platform.h"
 
+/*The Up vector, facing positive Y*/
 extern Vector3 world_up;
-struct Camera
+
+/*
+	A class implementing a camera object, 
+	with which we can view the scene.
+
+*/
+class Camera
 {
-	Vector3 position;
-	Vector3 forward;
-	Vector3 upward;
-	Vector3 rightward;
-	Vector3 initial_forward;
+private:
+
+	Vector3 m_cameraPosition; // The position of the camera, located in the scene
+	Vector3 m_cameraForwardVector; // A direction vector which will be the way the camera is currently looking at
+	Vector3 m_cameraTarget; // A point which the camera will be looking at
+	Vector3 m_cameraRightVector; // The positive X axis of the camera
+	Vector3 m_cameraUpVector; // The camera's coordinate frame's up vector
+
+	const float m_cameraSpeed = 0.05f; // Make the speed of the camera slower/faster
+
+	float yaw;
+	float pitch;
+
+public:
+
+	Camera();
+	Camera(const Vector3& position, const Vector3& target);
+
+	/*Movement*/
+	void moveUp();
+	void moveDown();
+
+	void moveLeft();
+	void moveRight();
+
+	void moveForward();
+	void moveBackward();
+
+	/*Getters*/
+	Vector3 getPosition() const;
+	Vector3 getTarget() const;
+	Vector3 getRightVector() const;
+	Vector3 getForwardVector() const;
+	Vector3 getUpwardVector() const;
 
 	//Two states of arcball code: previous and current, where previous is for the previous mouse drag
 	Quaternion arcball_q_previous;
@@ -17,22 +53,5 @@ struct Camera
 	Matrix4x4 m_current;
 	Vector2 drag_origin;
 	float movement_sensitivity;
-
-	//Converts given screen coordinates to a vector in the range ([-1, 1], [-1, 1])
-	Vector2 screen_coords_to_circle_coords(Vector2 v);
-
-	void update_rightward_and_upward_vectors();
-
-	void set_position_and_target(Vector3 position, Vector3 target);
-
-	void rotate_by_arcball(Vector2 drag_now);
-	void rotation_start(Vector2 starting_screen_coords);
-	void rotation_end();
-
-	void move_forward();
-	void move_backward();
-	void move_left();
-	void move_right();
-	void move_up();
-	void move_down();
+	Vector3 initial_forward;
 };

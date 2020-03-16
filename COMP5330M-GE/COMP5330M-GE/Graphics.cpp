@@ -289,7 +289,8 @@ Drawable buffer_mesh(Mesh m)
 
 void set_window_clear_colour(Vector3 c)
 {
-	glClearColor(c.r, c.g, c.b, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	/*glClearColor(c.r, c.g, c.b, 1.0f);*/
 }
 
 void begin_render()

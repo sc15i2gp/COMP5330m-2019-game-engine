@@ -23,6 +23,9 @@
     <ClCompile Include="string_functions.cpp" />
     <ClCompile Include="turtle.cpp" />
     <ClCompile Include="UI.cpp" />
+    <ClCompile Include="Rendering\WaterRendering.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arithmetic_tokeniser.h" />
@@ -56,6 +59,9 @@
     <ClInclude Include="turtle_stack.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="wglext.h" />
+    <ClInclude Include="Rendering\WaterRendering.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
@@ -65,5 +71,16 @@
     <None Include="heightmap_vshader.glsl" />
     <None Include="terrain_fshader.glsl" />
     <None Include="vshader.glsl" />
+    <None Include="Rendering\waterShader.frag">
+      <Filter>Rendering</Filter>
+    </None>
+    <None Include="Rendering\waterShader.vert">
+      <Filter>Rendering</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{8851e2ba-a261-4483-825d-d590c3b2d74b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

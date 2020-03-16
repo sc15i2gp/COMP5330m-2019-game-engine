@@ -150,6 +150,7 @@
     <ClCompile Include="OpenGL.cpp" />
     <ClCompile Include="Perlin_Noise.cpp" />
     <ClCompile Include="Platform.cpp" />
+    <ClCompile Include="Rendering\WaterRendering.cpp" />
     <ClCompile Include="string_functions.cpp" />
     <ClCompile Include="turtle.cpp" />
     <ClCompile Include="UI.cpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="Perlin_Noise.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="polygon_stack.h" />
+    <ClInclude Include="Rendering\WaterRendering.h" />
     <ClInclude Include="string_functions.h" />
     <ClInclude Include="turtle.h" />
     <ClInclude Include="turtle_stack.h" />
@@ -189,6 +191,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl" />
+    <None Include="Rendering\waterShader.frag" />
+    <None Include="Rendering\waterShader.vert" />
     <!--<<<<<<< HEAD-->
     <None Include="testFragShader.glsl" />
     <None Include="testVertexShader.glsl" />
