@@ -1,4 +1,5 @@
 #include "Platform.h"
+#include <assert.h>
 
 Platform_Table __platform;
 
@@ -16,6 +17,7 @@ Vector2 get_cursor_position(HWND window)
 	Vector2 v(p.x, p.y );
 	return v;
 }
+
 //This is here so that imgui inputs work
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam);
 //Function is called for every event passed to the process by Windows
@@ -52,25 +54,73 @@ LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, 
 	return result;
 }
 
+ATOM registerWindowClass(HINSTANCE instance)
+{
+	//Create a window class
+	WNDCLASS windowClass = {};
+	windowClass.style = CS_HREDRAW | CS_VREDRAW;
+	windowClass.lpfnWndProc = window_event_handler;
+
+	// The name of the window class
+	windowClass.lpszClassName = "GameEngineClass";
+
+	//Return the value of the registered window class. If != 0, success.
+	return RegisterClass(&windowClass);
+}
+
 bool Platform_Table::__initialise_platform(HINSTANCE instance)
 {
-	//Create window class
-	WNDCLASS window_class = {};
-	window_class.style = CS_HREDRAW | CS_VREDRAW;
-	window_class.lpfnWndProc = window_event_handler;
-	window_class.lpszClassName = "GameEngineClass";
+	//Register the window class, and retrieve the cal
+	ATOM windowRegistered = registerWindowClass(instance);
 
-	//Attempt to register the window class
-	if (RegisterClass(&window_class))
-	{//If the class registation was successful
-		this->window = CreateWindow(window_class.lpszClassName, "Game Engine Test",
-			WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, 0, 0, instance, 0);
+	//Any value different from 0, would be success. 
+	assert(windowRegistered != 0);
+	
+	//If successful
+	if (windowRegistered != 0)
+	{
+		//Get the string value for so we can pass it to CreateWindow. This string uniquely identifies the window class.
+		LPTSTR windowName = MAKEINTATOM(windowRegistered);
+
+		////Set up the fake window
+		//dummyWindow = CreateWindow(windowName, "FakeWindow", 
+		//	WS_CLIPCHILDREN, 0, 0, 1, 1, NULL, NULL, instance, NULL);
+
+		//HDC dummyDeviceContext = GetDC(dummyWindow);
+
+		//PIXELFORMATDESCRIPTOR dummyPixelFormat = createDummyPFD(dummyDeviceContext);
+
+		//const int pixelFormatID = ChoosePixelFormat(dummyDeviceContext, &dummyPixelFormat);
+
+		//int formatIsSet = SetPixelFormat(dummyDeviceContext, pixelFormatID, &dummyPixelFormat);
+
+		//assert(formatIsSet != false);
+
+		//HGLRC dummyRenderingContext = wglCreateContext(dummyDeviceContext);
+
+		//assert(dummyRenderingContext != 0);
+
+		//int wglSucceededStatus = wglMakeCurrent(dummyDeviceContext, dummyRenderingContext);
+
+		//Create window
+		this->window = CreateWindow(windowName, "Game Engine Test",
+			WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 1024, 720, 0, 0, instance, 0);
+
+		//wglMakeCurrent(NULL, NULL);
+		//wglDeleteContext(dummyRenderingContext);
+
+		//ReleaseDC(dummyWindow, dummyDeviceContext);
+
+		//DestroyWindow(dummyWindow);
 
 		this->running = true;
 		this->initial_cursor_position = get_cursor_position(this->window);
 		return true;
 	}
-	else return false;
+	else
+	{
+		return false;
+	}
 }
 
 void Platform_Table::__shutdown_platform()
@@ -206,6 +256,19 @@ Vector2 Platform_Table::__get_initial_mouse_position()
 Vector2 Platform_Table::__get_final_mouse_position()
 {
 	return this->final_cursor_position;
+}
+
+PIXELFORMATDESCRIPTOR Platform_Table::createDummyPFD(HDC dummyDC)
+{
+	PIXELFORMATDESCRIPTOR dummyPixelFormat;
+	dummyPixelFormat.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+	dummyPixelFormat.nVersion = 1;
+	dummyPixelFormat.dwFlags = PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+	dummyPixelFormat.cColorBits = 24; 
+	dummyPixelFormat.cAlphaBits = 8; 
+	dummyPixelFormat.iLayerType = PFD_MAIN_PLANE;
+
+	return dummyPixelFormat;
 }
 
 bool Platform_Table::__was_mouse_moved()

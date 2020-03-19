@@ -1,8 +1,5 @@
 #pragma once
 #include "Platform.h"
-#include <gl/GL.h>
-#include "wglext.h"
-#include "glext.h"
 
 //List of gl functions that we need
 //WARNING: Please don't touch without talking to Isaac first

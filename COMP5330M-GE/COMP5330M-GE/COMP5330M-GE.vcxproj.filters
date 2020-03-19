@@ -26,6 +26,12 @@
     <ClCompile Include="Rendering\WaterRendering.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="Vertex.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Rendering\RGBAColour.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="arithmetic_tokeniser.h" />
@@ -60,6 +66,12 @@
     <ClInclude Include="UI.h" />
     <ClInclude Include="wglext.h" />
     <ClInclude Include="Rendering\WaterRendering.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\RGBAColour.h">
       <Filter>Rendering</Filter>
     </ClInclude>
   </ItemGroup>

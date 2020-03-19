@@ -37,6 +37,26 @@ bool set_window_pixel_format(HDC window_device_context)
 
 bool create_gl_context(HDC window_device_context)
 {
+	//const int versionMajor = 4;
+	//const int versionMinor = 0;
+
+	//// In order to load the function, we have to first create a context, which we won't use for the main application
+	//PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
+	//wglCreateContextAttribsARB = reinterpret_cast<PFNWGLCREATECONTEXTATTRIBSARBPROC>(wglGetProcAddress("wglCreateContextAttribsARB"));
+
+	//if (wglCreateContextAttribsARB == nullptr)
+	//{
+	//	MessageBox(0, "Failed to load wglContextAttribsARB", "Window::create", MB_ICONERROR);
+	//	return false;
+	//}
+
+	//int  contextAttributes[] = {
+	//WGL_CONTEXT_MAJOR_VERSION_ARB, versionMajor,
+	//WGL_CONTEXT_MINOR_VERSION_ARB, versionMinor,
+	//WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+	//0
+	//};
+
 	HGLRC gl_context = wglCreateContext(window_device_context);
 	return wglMakeCurrent(window_device_context, gl_context);
 }
@@ -85,3 +105,6 @@ void opengl_check_for_errors()
 		OutputDebugStringf("OpenGL error: %x\n", error);
 	}
 }
+
+
+

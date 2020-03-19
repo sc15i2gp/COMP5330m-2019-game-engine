@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "UI.h"
 #include "./Rendering/WaterRendering.h"
+#include <string>
 
 /*To understand by the end of today*/
 Material light_properties =
@@ -210,10 +211,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			landscape.draw();
 			/*render_ui();*/
 
-			use_shader(water.getProgramID());
-			glBindVertexArray(water.getVAO());
+			/*Get a vlue for sine and cosine*/
 
-			glDrawArrays(GL_TRIANGLES, 0, 9);
+
+			water.drawWater();
 
 
 			swap_window_buffers();

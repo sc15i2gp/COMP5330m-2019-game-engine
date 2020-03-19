@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include "Maths.h"
 
+#include <gl/GL.h>
+#include "glext.h"
+#include "wglext.h"
+
 enum Keyboard_Key
 {
 	KEY_START = 0,
@@ -83,9 +87,17 @@ public:
 	Vector2 __get_initial_mouse_position();
 	Vector2 __get_final_mouse_position();
 
+	/*For setting up the fake context*/
+	PIXELFORMATDESCRIPTOR createDummyPFD(HDC dummyDC);
+
+
+
 private:
 	bool running;
+
+	HWND dummyWindow; // A dummy window for allowing OpenGL 3.2+
 	HWND window;
+
 	void* file_buffer; //A buffer for storing file data
 	void* mem_buffer; //A buffer for dynamic allocations
 	bool was_key_pressed[KEY_COUNT];
@@ -97,12 +109,15 @@ private:
 	bool was_mouse_moved;
 
 	friend LRESULT CALLBACK window_event_handler(HWND window, UINT message, WPARAM wparam, LPARAM lparam);
+
+
 };
+
+ATOM registerWindowClass(HINSTANCE instance);
 
 extern Platform_Table __platform;
 
 void OutputDebugStringf(const char* debug_string_f, ...);
-
 
 //NOTE: HERE IS THE PUBLIC API
 #define initialise_platform(instance)		__platform.__initialise_platform(instance)
