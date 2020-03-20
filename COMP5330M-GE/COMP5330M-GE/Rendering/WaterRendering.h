@@ -21,6 +21,8 @@ private:
 	GLuint waterVAO; // Vertex Buffer Object
 	GLuint waterIBO; // Index buffer
 
+	uint32_t gridVertices;
+
 public:
 
 	WaterRendering();

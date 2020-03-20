@@ -19,7 +19,6 @@ Material light_properties =
 };
 
 /*
-	
 */
 void buffer_camera_data_to_gpu(Camera c)
 {

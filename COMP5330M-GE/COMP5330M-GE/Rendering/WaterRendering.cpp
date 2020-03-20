@@ -9,7 +9,6 @@ float vertices[] = {
 	0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
 	0.0f, 2.0f, 0.0f, 0.0f, 1.0f, 1.0f,
 	2.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f
-
 };
 
 WaterRendering::WaterRendering() : vertShader("./Rendering/waterShader.vert"), fragShader("./Rendering/waterShader.frag")
@@ -21,18 +20,12 @@ WaterRendering::WaterRendering() : vertShader("./Rendering/waterShader.vert"), f
 void WaterRendering::renderWaterSurface()
 {
 
-	float vertices[] = {
-
-		//pos                  //col
-		0.5f, 0.5f, 0.0f,	  1.0f, 0.0f, 0.0f, 1.0f,
-		0.5f, -0.5f, 0.0f,	  0.0f, 1.0f, 0.0f, 1.0f,
-		-0.5f, -0.5f, 0.0f,	  0.0f, 0.0f, 1.0f, 1.0f,
-	};
-
 	//generateData(Vector2(0.0f, 0.0f), 10, 10, 3);
 
-	std::vector<Vertex> grid = generateCells(Vector3(0.0f, 0.0f, 0.0f), 3.0f, 3.0f, 5, 5);
+	std::vector<Vertex> grid = generateCells(Vector3(+6.0f, 0.0f, +6.0f), 2.0f, 2.0f, 32, 32);
 	const uint32_t gridSize = grid.size() * sizeof(Vector3) + grid.size() * sizeof(RGBAColour);
+	gridVertices = grid.size();
+
 	/*Generating a vao*/
 	glGenVertexArrays(1, &waterVAO);
 
@@ -69,42 +62,92 @@ void WaterRendering::drawWater()
 {
 	use_shader(program);
 	glBindVertexArray(waterVAO);
-	glDisable(GL_CULL_FACE);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_TRIANGLES, 0, gridVertices);
 }
 
 std::vector<Vertex> WaterRendering::generateCells(const Vector3 & startPoint, const float quadWidth, const float quadHeight, const unsigned int cellsAlongX, const unsigned int cellsAlongY)
 {
 	std::vector<Vertex> data;
 
-	RGBAColour red(1.0f, 0.0f, 0.0f, 1.0f);
-	RGBAColour green(0.0f, 1.0f, 0.0f, 1.0f);
-	RGBAColour blue(0.0f, 0.0f, 1.0f, 1.0f);
-	RGBAColour yellow(0.0f, 1.0f, 1.0f, 1.0f);
-
-	Vector3 pos0(0.5f, 0.5f, 0.0f);
-	Vector3 pos1(0.5f, -0.5f, 0.0f);
-	Vector3 pos2(-0.5f, -0.5f, 0.0f);
-	Vector3 pos3(-0.5f, 0.5f, 0.0f);
-
-	Vertex v(pos0, red);
-	Vertex v1(pos1, green);
-	Vertex v2(pos2, blue);
-
-	Vertex v3(pos2, blue);
-	Vertex v4(pos3, yellow);
-	Vertex v5(pos0, red);
+	//RGBAColour red(1.0f, 0.0f, 0.0f, 1.0f);
+	//RGBAColour green(0.0f, 1.0f, 0.0f, 1.0f);
+	//RGBAColour blue(0.0f, 0.0f, 1.0f, 1.0f);
+	//RGBAColour yellow(0.0f, 1.0f, 1.0f, 1.0f);
 
 
-	data.push_back(v);
-	data.push_back(v1);
-	data.push_back(v2);
+	/****************************************************************************/
+	/*
 
-	data.push_back(v3);
-	data.push_back(v4);
-	data.push_back(v5);
+				pos1  ------------- pos0
+					  | \         |
+					  |	   \      |
+					  |       \   |
+				pos2  ------------- pos3
 
 
+
+	*/
+	/***************************************************************************/
+
+	for (uint32_t cellX = 0; cellX < cellsAlongX; cellX++)
+	{
+		for (uint32_t cellY = 0; cellY < cellsAlongY; cellY++)
+		{
+			const uint32_t cellOffsetAlongX = cellX * quadWidth;
+			const uint32_t cellsOffsetAlongY = cellY * quadHeight;
+
+			/*The positions of each vertex in the quad*/
+			Vector3 pos0(startPoint.x + cellOffsetAlongX, startPoint.y, startPoint.z + cellsOffsetAlongY);
+			Vector3 pos1(startPoint.x + cellOffsetAlongX + quadWidth, startPoint.y, startPoint.z + cellsOffsetAlongY);
+			Vector3 pos2(startPoint.x + cellOffsetAlongX + quadWidth, startPoint.y, startPoint.z + cellsOffsetAlongY + quadHeight);
+			Vector3 pos3(startPoint.x + cellOffsetAlongX, startPoint.y, startPoint.z  + cellsOffsetAlongY + quadHeight);
+
+			RGBAColour colour(1.0f, 1.0f, 1.0f, 1.0f);
+
+			if (cellX == 0 && cellY == 0)
+			{
+				colour.red = 1.0f;
+				colour.green = 0.0f;
+				colour.blue = 0.0f;
+			}
+			if (cellX == 0 && cellY == 1)
+			{
+				colour.red = 0.0f;
+				colour.green = 1.0f;
+				colour.blue = 0.0f;
+			}
+			if (cellX == 1 && cellY == 0)
+			{
+				colour.red = 1.0f;
+				colour.green = 0.0f;
+				colour.blue = 1.0f;
+			}
+			if (cellX == 1 && cellY == 1)
+			{
+				colour.red = 1.0f;
+				colour.green = 1.0f;
+				colour.blue = 0.0f;
+			}
+
+			/*Each quad gets made up from 2 individual triangles*/
+			Vertex v(pos0, colour);
+			Vertex v1(pos1, colour);
+			Vertex v2(pos3, colour);
+
+			Vertex v3(pos1, colour);
+			Vertex v4(pos2, colour);
+			Vertex v5(pos3, colour);
+
+			/*Add the data to the array*/
+			data.push_back(v);
+			data.push_back(v1);
+			data.push_back(v2);
+
+			data.push_back(v3);
+			data.push_back(v4);
+			data.push_back(v5);
+		}
+	}
 
 	return data;
 }
