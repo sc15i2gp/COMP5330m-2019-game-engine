@@ -1,9 +1,9 @@
 #version 460 core
 
 layout (location = 0) in vec3 in_pos;
-layout (location = 2) in vec2 in_tex_coords;
+//layout (location = 2) in vec2 in_tex_coords;
 
-out vec2 texture_coordinates;
+//out vec2 texture_coordinates;
 out vec3 fragment_position;
 
 layout(std140, binding = 0) uniform model_block
@@ -22,5 +22,5 @@ void main()
 {
 	gl_Position = projection * view * model * vec4(in_pos, 1.0);
 	fragment_position = vec3(model * vec4(in_pos, 1.0));
-	texture_coordinates = in_tex_coords;
+	//texture_coordinates = in_tex_coords;
 }

@@ -199,13 +199,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
 		// Emit particles
-		Emitter* fireEmitter = new Emitter({ -1.0,0.0,-1.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.02);
-		Emitter* fireEmitter2 = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.02);
+		Emitter* fireEmitter = new Emitter({ -1.0,0.0,-1.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.015);
+		Emitter* fireEmitter2 = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.015);
 		ParticlePool pool;
-		int totalNumOfParticles = 1000;
+		int totalNumOfParticles = 10000;
 		initialisePool(pool, totalNumOfParticles);
-		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 100.0);
-		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 100.0);
+		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 1000.0);
+		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 1000.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -282,30 +282,32 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					else {
 						size = pool.nodes[i].particle.size * (pool.nodes[i].particle.life / 10.0);
 					}
-					//glLoadIdentity();
-					glColor3f(1.0f, 0.0f, 0.0f);
 					glBegin(GL_QUADS);
 					Vector3 point1 = pool.nodes[i].particle.displacement + ((-size) * main_view_camera.rightward) + ((-size) * main_view_camera.upward);
 					Vector3 point2 = pool.nodes[i].particle.displacement + ((-size) * main_view_camera.rightward) + ((size)*main_view_camera.upward);
 					Vector3 point3 = pool.nodes[i].particle.displacement + ((size)*main_view_camera.rightward) + ((size)*main_view_camera.upward);
 					Vector3 point4 = pool.nodes[i].particle.displacement + ((size)*main_view_camera.rightward) + ((-size) * main_view_camera.upward);
-					glVertex3f(point1.x, point1.y, point1.z);
-					glVertex3f(point2.x, point2.y, point2.z);
-					glVertex3f(point3.x, point3.y, point3.z);
-					glVertex3f(point4.x, point4.y, point4.z);
-					GLfloat texCoords[] = {
-						0.0f, 0.0f,
-						1.0f, 0.0f,
-						1.0f, 1.0f,
-						0.0f, 1.0f
+					/*float pixels[] = {
+						0.0f, 0.0f, 0.0f,	1.0f, 1.0f, 1.0f,
+						1.0f, 1.0f, 1.0f,	0.0f, 0.0f, 0.0f
 					};
 					GLuint texture;
+					glEnable(GL_TEXTURE_2D);
 					glGenTextures(1, &texture);
 					glBindTexture(GL_TEXTURE_2D, texture);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, pixels);*/
+					//glTexCoord2f(0.0f, 0.0f);
+					glVertex3f(point1.x, point1.y, point1.z);
+					//glTexCoord2f(0.0f, 1.0f);
+					glVertex3f(point2.x, point2.y, point2.z);
+					//glTexCoord2f(1.0f, 1.0f);
+					glVertex3f(point3.x, point3.y, point3.z);
+					//glTexCoord2f(1.0f, 0.0f);
+					glVertex3f(point4.x, point4.y, point4.z);
 					glEnd();
 				}
 				else if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life <= 0) {
