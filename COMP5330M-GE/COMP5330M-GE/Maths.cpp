@@ -1,5 +1,12 @@
 #include "Maths.h"
 
+float random(float min, float max)
+{
+	float n = (float)rand() / (float)RAND_MAX;
+	float range = max - min;
+	return min + n * range;
+}
+
 /****************************/
 
 /*			Trig			*/
@@ -118,6 +125,7 @@ float dot(Vector4 v, Vector4 w)
 	d += v.x*w.x;
 	d += v.y*w.y;
 	d += v.z*w.z;
+	d += v.w*w.w;
 	return d;
 }
 
@@ -211,7 +219,7 @@ void operator+=(Vector3& v, Vector3 w)
 
 void operator-=(Vector3& v, Vector3 w)
 {
-	v = w - w;
+	v = v - w;
 }
 
 void operator*=(Vector3& v, float d)
@@ -271,12 +279,74 @@ Vector3 normalise(Vector3 v)
 
 /****************************/
 
+Vector2::Vector2()
+{
+	this->x = 0.0;
+	this->y = 0.0;
+}
+
+Vector2::Vector2(float x, float y)
+{
+	this->x = x;
+	this->y = y;
+}
+
+float& Vector2::operator[](int index)
+{
+	return this->xy[index];
+}
+
+Vector2 operator+(Vector2 v, Vector2 w)
+{
+	v.x += w.x;
+	v.y += w.y;
+	return v;
+}
+
+Vector2 operator-(Vector2 v, Vector2 w)
+{
+	v.x -= w.x;
+	v.y -= w.y;
+	return v;
+}
+
+Vector2 operator/(Vector2 v, float f)
+{
+	v.x /= f;
+	v.y /= f;
+	return v;
+}
+
+Vector2 operator/(Vector2 v, Vector2 w)
+{
+	v.x /= w.x;
+	v.y /= w.y;
+	return v;
+}
+
+Vector2 operator*(float f, Vector2 v)
+{
+	v.x *= f;
+	v.y *= f;
+	return v;
+}
+
 float dot(Vector2 v, Vector2 w)
 {
 	float d = 0.0f;
 	d += v.x * w.x;
 	d += v.y * w.y;
 	return d;
+}
+
+float length(Vector2 v)
+{
+	return sqrt(dot(v, v));
+}
+
+Vector2 normalise(Vector2 v)
+{
+	return v / length(v);
 }
 
 /********************************/
@@ -309,20 +379,6 @@ Vector4 operator*(Matrix4x4 m, Vector4 v)
 	}
 	return w;
 }
-void _print_mat(Matrix4x4 m)
-{
-	for (int i = 0; i < 4; ++i)
-	{
-		OutputDebugStringf("%f %f %f %f\n", m[0][i], m[1][i], m[2][i], m[3][i]);
-	}
-}
-
-
-void print_vec(Vector4 v)
-{
-	OutputDebugStringf("%f %f %f %f\n", v.x, v.y, v.z, v.w);
-}
-
 
 Matrix4x4 operator*(Matrix4x4 m, Matrix4x4 n)
 {
@@ -408,6 +464,13 @@ void rotate(Matrix4x4& m, Vector4 axis, float angle)
 	rotate(m, axis_3, angle);
 }
 
+Vector3 rotate_point_about_axis(Vector3 point, Vector3 axis, float angle)
+{
+	Matrix4x4 rotation = identity();
+	rotate(rotation, axis, angle);
+	return Vector3((rotation * Vector4(point, 1.0f)).xyz);
+}
+
 //Applies translation v to matrix m
 void translate(Matrix4x4& m, Vector4 v)
 {
@@ -448,7 +511,7 @@ void rotate(Matrix4x4& m, Vector3 axis, float angle)
 
 void translate(Matrix4x4& m, Vector3 v)
 {
-	Vector4 v_4(v, 1.0f);
+	Vector4 v_4(v, 0.0f);
 	translate(m, v_4);
 }
 
@@ -469,6 +532,22 @@ Matrix4x4 perspective(float fov, float aspect_ratio, float n, float f)
 	return p;
 }
 
+Matrix4x4 look_at(Vector4 eye_position, Vector4 forward_vector, Vector4 right_vector, Vector4 upward_vector)
+{
+	Vector4 column_0(right_vector.x, upward_vector.x, forward_vector.x, 0.0f);
+	Vector4 column_1(right_vector.y, upward_vector.y, forward_vector.y, 0.0f);
+	Vector4 column_2(right_vector.z, upward_vector.z, forward_vector.z, 0.0f);
+	Vector4 column_3(dot(right_vector, eye_position), dot(upward_vector, eye_position), dot(forward_vector, eye_position), 1.0f);
+
+	Matrix4x4 camera;
+	camera[0] = column_0;
+	camera[1] = column_1;
+	camera[2] = column_2;
+	camera[3] = -column_3;
+	return camera;
+}
+
+
 Matrix4x4 look_at(Vector4 eye_position, Vector4 target_position)
 {
 	//Constant used to compute look_at's right vector
@@ -485,23 +564,31 @@ Matrix4x4 look_at(Vector4 eye_position, Vector4 target_position)
 	Vector4 right_dir = normalise(cross(constant, target_dir));
 	Vector4 up_dir = normalise(cross(target_dir, right_dir));
 
-	Vector4 column_0(right_dir.x, up_dir.x, target_dir.x, 0.0f);
-	Vector4 column_1(right_dir.y, up_dir.y, target_dir.y, 0.0f);
-	Vector4 column_2(right_dir.z, up_dir.z, target_dir.z, 0.0f);
-	Vector4 column_3(dot(right_dir, eye_position), dot(up_dir, eye_position),
-		dot(target_dir, eye_position), 1.0f);
-
-	Matrix4x4 camera;
-	camera[0] = column_0;
-	camera[1] = column_1;
-	camera[2] = column_2;
-	camera[3] = -column_3;
-	return camera;
+	return look_at(eye_position, target_dir, right_dir, up_dir);
 }
 
 Matrix4x4 look_at(Vector3 eye_position, Vector3 target_position)
 {
 	return look_at(Vector4(eye_position, 0.0f), Vector4(target_position, 0.0f));
+}
+
+Matrix4x4 look_at(Vector3 eye_position, Vector3 forward_vector, Vector3 rightward_vector, Vector3 upward_vector)
+{
+	return look_at(Vector4(eye_position, 0.0f), Vector4(forward_vector, 0.0f), Vector4(rightward_vector, 0.0f), Vector4(upward_vector, 0.0f));
+}
+
+float determinant(Matrix4x4 m)
+{
+	float d = 0.0f;
+	int f = 1;
+	for (int i = 0; i < 4; ++i)
+	{
+		Matrix3x3 s;
+		for(int j = 0, k = 0; j < 4; ++j) if(j != i) s[k++] = m[i].yzw;
+		d += (float)f * m[i][0] * determinant(s);
+		f *= -1;
+	}
+	return d;
 }
 
 /********************************/
@@ -629,6 +716,45 @@ Matrix3x3 transpose(Matrix3x3 m)
 	return t;
 }
 
+//Copy the first 3 columns of 4x4 matrix
+Matrix3x3 matrix_4x4_to_3x3(Matrix4x4 m)
+{
+	Matrix3x3 t = {};
+	for (int i = 0; i < 3; ++i)
+	{
+		t[i] = m[i].xyz;
+	}
+	return t;
+}
+
+float determinant(Matrix3x3 m)
+{
+	float d = 0.0f;
+	int f = 1;
+	for (int i = 0; i < 3; ++i)
+	{
+		Matrix2x2 s;
+		for (int j = 0, k = 0; j < 3; ++j)
+		{
+			if (j != i) s[k++] = m[j].yz;
+		}
+		d += (float)(f) * m[i][0] * determinant(s);
+		f *= -1;
+	}
+	return d;
+}
+
+/********************************/
+
+/*			Matrix2x2			*/
+
+/********************************/
+
+float determinant(Matrix2x2 m)
+{
+	return m[0][0] * m[1][1] - m[1][0] * m[0][1];
+}
+
 /********************************/
 
 /*			Quaternion			*/
@@ -642,8 +768,16 @@ Quaternion::Quaternion()
 
 Quaternion::Quaternion(Vector3 axis, float angle)
 {
-	this->xyz = axis;
-	this->w = angle;
+	this->xyz = sin_deg(angle) * axis;
+	this->w = cos_deg(angle);
+}
+
+Quaternion::Quaternion(float x, float y, float z, float w)
+{
+	this->x = x;
+	this->y = y;
+	this->z = z;
+	this->w = w;
 }
 
 Quaternion operator*(Quaternion q, Quaternion r)
@@ -656,7 +790,7 @@ Quaternion operator*(Quaternion q, Quaternion r)
 
 bool operator!=(Quaternion q, Quaternion r)
 {
-	return q.xyzw == r.xyzw;
+	return !(q.xyzw == r.xyzw);
 }
 
 Quaternion operator/(Quaternion q, float d)
@@ -685,7 +819,7 @@ Quaternion compute_great_circle_point(Vector2 v)
 {
 	Quaternion q = {};
 
-	float z = sqrt(1.0f - dot(v, v));
+	float z = (dot(v,v) < 1.0f) ? sqrt(1.0f - dot(v, v)) : 0.0f;
 	q.xyz = Vector3(v, z);
 	q.w = 0.0f;
 
@@ -708,8 +842,12 @@ Matrix4x4 quaternion_to_matrix(Quaternion q)
 	return m;
 }
 
-Matrix4x4 compute_rotation_between_quaternions(Quaternion q, Quaternion r)
+Quaternion compute_rotation_between_quaternions(Quaternion q, Quaternion r)
 {
-	Quaternion s = r * inverse(q);
-	return quaternion_to_matrix(s);
+	return r * inverse(q);
+}
+
+Matrix4x4 compute_rotation_matrix_between_quaternions(Quaternion q, Quaternion r)
+{
+	return quaternion_to_matrix(compute_rotation_between_quaternions(q, r));
 }
