@@ -6,6 +6,7 @@
 #include "turtle.h"
 #include "Camera.h"
 #include "UI.h"
+#include "RigidBody.h"
 
 //DOING:
 
@@ -200,6 +201,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		bool render_wireframes = false;
 		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
 
+		RigidBody* practiceBall = new RigidBody({ 5.0,5.0,5.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 5.0, 10.0);
+
 		timer t;
 		//Main loop
 		while (!should_window_close()) 
@@ -232,6 +235,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_D)) main_view_camera.move_right();
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
+			if (was_key_pressed(KEY_F)) practiceBall = new RigidBody({ 5.0,5.0,5.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 5.0, 10.0);
 
 			begin_render();
 			if (render_wireframes) draw_as_wireframes();
@@ -242,6 +246,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			use_shader(terrain_lighting_shader);
 
 			buffer_camera_data_to_gpu(main_view_camera);
+
+			float downward = -9.8 * practiceBall->mass;
+			Vector3 gravity = { 0.0,downward,0.0 };
+			Vector3 wind = { 5.0,0.0,5.0 };
+			Vector3 forces[2] = { gravity, wind };
+			Vector3 position = updateDisplacement(*practiceBall, forces, 2, mspf / 1000.0);
+			if (practiceBall->displacement.y <= 0.0) {
+				practiceBall->velocity.y *= -0.5;
+				practiceBall->displacement.y = 0.01;
+			}
+			glLoadIdentity();
+			glPointSize(practiceBall->radius);
+			glBegin(GL_POINTS);
+				glVertex3f(practiceBall->displacement.x, practiceBall->displacement.y, practiceBall->displacement.z);
+			glEnd();
 
 			//Draw landscape
 			landscape.draw();
