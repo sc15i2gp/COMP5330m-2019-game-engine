@@ -41,7 +41,6 @@ bool create_gl_context(HDC window_device_context)
 	return wglMakeCurrent(window_device_context, gl_context);
 }
 
-
 bool load_opengl_function_ptrs()
 {
 	bool functions_successfully_loaded = true;

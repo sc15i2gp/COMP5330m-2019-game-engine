@@ -254,7 +254,6 @@ int Graphics_Table::__create_volume_texture(int width, int height, int depth)
 
 	
 	this->volume_textures[volume_texture] = gen_texture(width, height, depth);
-
 	return volume_texture;
 }
 
@@ -499,10 +498,6 @@ void Graphics_Table::__use_framebuffer(int framebuffer_index)
 
 void Graphics_Table::__use_framebuffer_texture(int framebuffer, int texture_unit)
 {
-	GLint sampler_location = glGetUniformLocation(this->shaders[5], "smoke_texture");
-	GLint sampler_value = -1;
-	glGetUniformiv(this->shaders[5], sampler_location, &sampler_value);
-	//OutputDebugStringf("Loc = %d Value = %d\n", sampler_location, sampler_value);
 	use_texture((framebuffer != -1) ? this->framebuffer_textures[framebuffer] : 0, texture_unit);
 }
 

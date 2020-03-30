@@ -8,21 +8,6 @@
 #include "UI.h"
 
 //DOING:
-//	- 3D texture
-//	- Render grid of smoke density
-//		- Smoke density grid
-//			- Covers whole terrain
-//			- Above water, but there needs to be a max height
-//			- Cell size shouldn't scale with terrain
-//			- Need to limit due to gpu transfer, only minimum relevant data transfer
-//		- Single pass ray cast to render density grid
-
-//Smoke rendering algorithm:
-//Cast a ray through a pixel
-//While the ray should continue (max distance reached or intersects with scene object)
-//	Sample point along the ray
-//	Composite optical properties sampled
-//	Continue
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -39,8 +24,6 @@
 //	- Find tree L-systems
 
 //TODO: Volume rendering
-//	- Smoke density source
-//	- Smoke diffusion
 //	- Smoke movement due to velocity field
 //	- Integrate with scene geometry
 
@@ -190,6 +173,68 @@ long int elapsed_time(timer* t)
 	return elapsed.QuadPart;
 }
 
+struct Scalar_Field
+{
+	float* values;
+	int width;
+	int height;
+	int depth;
+
+	float& access(int x, int y, int z)
+	{
+		return values[z*this->height*this->width + y * this->width + x];
+	}
+};
+
+void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, float diff, float dt)
+{
+	int width = smoke_density_field.width;
+	int height = smoke_density_field.height;
+	int depth = smoke_density_field.depth;
+
+	Scalar_Field final_smoke_density_field = smoke_density_field;
+	final_smoke_density_field.values = (float*)alloc_mem(width * height * depth * sizeof(float));
+
+	for (int i = 0; i < width * height * depth; ++i)
+	{
+		smoke_density_field.values[i] += dt * smoke_source_field.values[i];
+		final_smoke_density_field.values[i] = smoke_density_field.values[i];
+	}
+
+	//Diffusion
+	float diffusion_rate = diff * dt;
+	for (int i = 0; i < 20; ++i)
+	{
+		for (int z = 1; z < depth - 1; ++z)
+		{
+			for (int y = 1; y < height - 1; ++y)
+			{
+				for (int x = 1; x < width - 1; ++x)
+				{
+					final_smoke_density_field.access(x, y, z) = (smoke_density_field.access(x, y, z)
+						+ diffusion_rate * (final_smoke_density_field.access(x - 1, y, z) + final_smoke_density_field.access(x + 1, y, z)
+							+ final_smoke_density_field.access(x, y - 1, z) + final_smoke_density_field.access(x, y + 1, z)
+							+ final_smoke_density_field.access(x, y, z - 1) + final_smoke_density_field.access(x, y, z + 1)))
+						/ (1 + 6 * diffusion_rate);
+				}
+			}
+		}
+	}
+	float max_density = 5.0f;
+	for (int z = 0; z < depth; ++z)
+	{
+		for (int y = 0; y < height; ++y)
+		{
+			for (int x = 0; x < width; ++x)
+			{
+				float value = final_smoke_density_field.access(x, y, z);
+				smoke_density_field.access(x, y, z) = (value < max_density) ? value : max_density;
+			}
+		}
+	}
+	dealloc_mem(final_smoke_density_field.values);
+}
+
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
@@ -227,7 +272,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		int field_width = (int)landscape_width;
 		int field_height = 10;
-		int field_length = (int)landscape_length;
+		int field_depth = (int)landscape_length;
 		bool dragging = false;
 		int fps = 60;
 		bool render_wireframes = false;
@@ -239,20 +284,28 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_shader_sampler_uniform(framebuffer_composite_shader, "smoke_texture", 0);
 		set_shader_sampler_uniform(smoke_shader, "density_field", 0);
 
-		float* density_field = (float*)alloc_mem(field_width * field_height * field_length * sizeof(float));
-		for (int z = 0; z < field_length; ++z)
+		Scalar_Field smoke_density_field;
+		smoke_density_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
+		smoke_density_field.width = field_width;
+		smoke_density_field.height = field_height;
+		smoke_density_field.depth = field_depth;
+		for (int z = 1; z < field_depth - 1; ++z)
 		{
-			for (int y = 0; y < field_height; ++y)
+			for (int y = 1; y < field_height - 1; ++y)
 			{
-				for (int x = 0; x < field_width; ++x)
+				for (int x = 1; x < field_width - 1; ++x)
 				{
-					density_field[z*field_height*field_width + y * field_width + x] = 0.5f;
+					smoke_density_field.access(x, y, z) = (x == 1) ? 0.5f : 0.0f;
 				}
-			}
+			} 
 		}
-		int density_field_texture = create_volume_texture(field_width, field_height, field_length);
-		buffer_volume_data(density_field_texture, field_width, field_height, field_length, density_field);
+		Scalar_Field smoke_source_field = smoke_density_field;
+		smoke_source_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
+		smoke_source_field.access(2, 2, 2) = 1.0f;
 
+		int density_field_texture = create_volume_texture(field_width, field_height, field_depth);
+		buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
+		
 		timer t;
 		//Main loop
 		while (!should_window_close()) 
@@ -289,6 +342,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			if (was_window_resized()) resize_framebuffers(get_window_width(), get_window_height());
 
+			//UPDATE
+			progress_smoke_simulation(smoke_density_field, smoke_source_field, 0.05f, mspf/1000.0f);
+			
+			buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
+			
 			//RENDERING
 			//Set global rendering parameters
 			if (render_wireframes) draw_as_wireframes();
@@ -298,7 +356,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			use_framebuffer(scene_framebuffer);
 			set_window_clear_colour(sky_colour);
 			begin_render();
-
+			
+			
 			Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 10.0f);
 			set_projection_matrix(projection);
 
@@ -307,7 +366,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			else use_shader(depth_shader);
 
 			buffer_camera_data_to_gpu(main_view_camera);
-
+			
 			//Draw landscape
 			landscape.draw();
 			render_ui();
@@ -324,15 +383,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			//Composite framebuffers and render to window
 			use_framebuffer(DEFAULT_FRAMEBUFFER);
 			begin_render();
+			
 			use_shader(framebuffer_composite_shader);
 			use_framebuffer_texture(scene_framebuffer, 1);
 			use_framebuffer_texture(smoke_framebuffer, 0);
-
+			
 			draw(scene_quad);
 			use_texture(0, 0);
 			use_texture(0, 1);
 			
-
+			
 			swap_window_buffers();
 
 			stop_timer(&t);
