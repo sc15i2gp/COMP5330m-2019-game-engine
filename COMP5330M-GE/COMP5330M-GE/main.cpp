@@ -8,6 +8,8 @@
 #include "UI.h"
 
 //DOING:
+//	- Smoke movement due to velocity field
+//	- Smoke movement due to temperature
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -24,7 +26,7 @@
 //	- Find tree L-systems
 
 //TODO: Volume rendering
-//	- Smoke movement due to velocity field
+//	- Smoke colour due to temperature
 //	- Integrate with scene geometry
 
 //TODO: Camera/UI
@@ -186,6 +188,19 @@ struct Scalar_Field
 	}
 };
 
+struct Vector3_Field
+{
+	Vector3* values;
+	int width;
+	int height;
+	int depth;
+
+	Vector3& access(int x, int y, int z)
+	{
+		return values[z*this->height*this->width + y*this->width + x];
+	}
+};
+
 void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, float diff, float dt)
 {
 	int width = smoke_density_field.width;
@@ -343,7 +358,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_window_resized()) resize_framebuffers(get_window_width(), get_window_height());
 
 			//UPDATE
-			progress_smoke_simulation(smoke_density_field, smoke_source_field, 0.05f, mspf/1000.0f);
+			progress_smoke_simulation(smoke_density_field, smoke_source_field, 0.01f, mspf/1000.0f);
 			
 			buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
 			
