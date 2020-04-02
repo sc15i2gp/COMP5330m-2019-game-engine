@@ -261,13 +261,14 @@ void updateParticlePosition(Particle& p, float timeStep)
 
 void updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int numOfForces, float timeStep)
 {
-	p.particle->displacement = p.particle->displacement + (timeStep * p.particle->velocity) + ((0.5 * timeStep * timeStep) * p.acceleration);
-	p.particle->velocity = p.particle->velocity + (0.5 * timeStep * p.acceleration);
+	float half = 0.5;
+	p.particle->displacement = p.particle->displacement + (timeStep * p.particle->velocity) + ((half * timeStep * timeStep) * p.acceleration);
+	p.particle->velocity = p.particle->velocity + (half * timeStep * p.acceleration);
 	Vector3 totalForce = { 0.0,0.0,0.0 };
 	for (int i = 0; i < numOfForces; ++i) {
 		totalForce += forces[i];
 	}
 	p.acceleration = totalForce / p.mass;
-	p.particle->velocity = p.particle->velocity + (0.5 * timeStep * p.acceleration);
+	p.particle->velocity = p.particle->velocity + (half * timeStep * p.acceleration);
 	p.particle->life -= 1;
 }
