@@ -8,8 +8,7 @@
 #include "UI.h"
 
 //DOING:
-//	- Smoke movement due to velocity field
-//	- Smoke movement due to temperature
+//	- Buffer part of density field to texture (for debugging purposes)
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -28,6 +27,7 @@
 //TODO: Volume rendering
 //	- Smoke colour due to temperature
 //	- Integrate with scene geometry
+//	- Smoke movement due to temperature
 
 //TODO: Camera/UI
 //	- Draw xyz axes
@@ -201,20 +201,23 @@ struct Vector3_Field
 	}
 };
 
-void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, float diff, float dt)
+void add_smoke_density_sources(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, float dt)
 {
 	int width = smoke_density_field.width;
 	int height = smoke_density_field.height;
 	int depth = smoke_density_field.depth;
 
-	Scalar_Field final_smoke_density_field = smoke_density_field;
-	final_smoke_density_field.values = (float*)alloc_mem(width * height * depth * sizeof(float));
-
 	for (int i = 0; i < width * height * depth; ++i)
 	{
 		smoke_density_field.values[i] += dt * smoke_source_field.values[i];
-		final_smoke_density_field.values[i] = smoke_density_field.values[i];
 	}
+}
+
+void diffuse_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, float diff, float dt)
+{
+	int width = smoke_density_field.width;
+	int height = smoke_density_field.height;
+	int depth = smoke_density_field.depth;
 
 	//Diffusion
 	float diffusion_rate = diff * dt;
@@ -235,18 +238,88 @@ void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field sm
 			}
 		}
 	}
-	float max_density = 5.0f;
-	for (int z = 0; z < depth; ++z)
+}
+
+void move_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, Vector3_Field velocity_field, float diff, float dt)
+{
+	int width = smoke_density_field.width;
+	int height = smoke_density_field.height;
+	int depth = smoke_density_field.depth;
+
+	for (int z = 1; z < depth - 1; ++z)
 	{
-		for (int y = 0; y < height; ++y)
+		for (int y = 1; y < height - 1; ++y)
 		{
-			for (int x = 0; x < width; ++x)
+			for (int x = 1; x < width - 1; ++x)
 			{
-				float value = final_smoke_density_field.access(x, y, z);
-				smoke_density_field.access(x, y, z) = (value < max_density) ? value : max_density;
+				Vector3 velocity = velocity_field.access(x, y, z);
+				float dx = (float)x - dt * velocity.x;
+				float dy = (float)y - dt * velocity.y;
+				float dz = (float)z - dt * velocity.z;
+				int x_0 = (int)dx;
+				int x_1 = x_0 + 1;
+				int y_0 = (int)dy;
+				int y_1 = y_0 + 1;
+				int z_0 = (int)dz;
+				int z_1 = z_0 + 1;
+
+				float s_1 = dx - (float)x_0;
+				float s_0 = 1.0f - s_1;
+				float t_1 = dy - (float)y_0;
+				float t_0 = 1.0f - t_1;
+				float u_1 = dz - (float)z_0;
+				float u_0 = 1.0f - u_1;
+
+				final_smoke_density_field.access(x, y, z) =
+					u_0 *
+					(
+						s_0 * (t_0*smoke_density_field.access(x_0, y_0, z_0) + t_1 * smoke_density_field.access(x_0, y_1, z_0)) +
+						s_1 * (t_0*smoke_density_field.access(x_1, y_0, z_0) + t_1 * smoke_density_field.access(x_1, y_1, z_0))
+						) +
+					u_1 *
+					(
+						s_0 * (t_0*smoke_density_field.access(x_0, y_0, z_1) + t_1 * smoke_density_field.access(x_0, y_1, z_1)) +
+						s_1 * (t_0*smoke_density_field.access(x_1, y_0, z_1) + t_1 * smoke_density_field.access(x_1, y_1, z_1))
+						);
 			}
 		}
 	}
+}
+
+void copy_scalar_field_values(Scalar_Field src, Scalar_Field dst)
+{
+	int width = src.width;
+	int height = src.height;
+	int depth = src.depth;
+
+	for (int i = 0; i < width * height * depth; ++i) dst.values[i] = src.values[i];
+}
+
+void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, Vector3_Field velocity_field, float diff, float dt)
+{
+	int width = smoke_density_field.width;
+	int height = smoke_density_field.height;
+	int depth = smoke_density_field.depth;
+
+	float* src_smoke_density_field_values = smoke_density_field.values;
+	float* dst_smoke_density_field_values = (float*)alloc_mem(width * height * depth * sizeof(float));
+
+	Scalar_Field final_smoke_density_field = smoke_density_field;
+	final_smoke_density_field.values = dst_smoke_density_field_values;
+
+	add_smoke_density_sources(smoke_density_field, smoke_source_field, dt);
+	diffuse_smoke_density(smoke_density_field, final_smoke_density_field, diff, dt);
+
+	float* temp = smoke_density_field.values;
+	smoke_density_field.values = final_smoke_density_field.values;
+	final_smoke_density_field.values = temp;
+
+	move_smoke_density(smoke_density_field, final_smoke_density_field, velocity_field, diff, dt);
+
+	smoke_density_field.values = src_smoke_density_field_values;
+	final_smoke_density_field.values = dst_smoke_density_field_values;
+	copy_scalar_field_values(final_smoke_density_field, smoke_density_field);
+
 	dealloc_mem(final_smoke_density_field.values);
 }
 
@@ -318,6 +391,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		smoke_source_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
 		smoke_source_field.access(2, 2, 2) = 1.0f;
 
+		Vector3_Field wind_field;
+		wind_field.width = field_width;
+		wind_field.height = field_height;
+		wind_field.depth = field_depth;
+		wind_field.values = (Vector3*)alloc_mem(field_width * field_height * field_depth * sizeof(Vector3));
+
+		Vector3 wind_vector = normalise(Vector3(1.0f, 0.0f, 1.0f));
+		for (int i = 0; i < field_width * field_height * field_depth; ++i) wind_field.values[i] = wind_vector;
+
 		int density_field_texture = create_volume_texture(field_width, field_height, field_depth);
 		buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
 		
@@ -358,7 +440,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_window_resized()) resize_framebuffers(get_window_width(), get_window_height());
 
 			//UPDATE
-			progress_smoke_simulation(smoke_density_field, smoke_source_field, 0.01f, mspf/1000.0f);
+			progress_smoke_simulation(smoke_density_field, smoke_source_field, wind_field, 0.01f, mspf/1000.0f);
 			
 			buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
 			
