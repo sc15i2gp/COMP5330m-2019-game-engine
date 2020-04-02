@@ -253,22 +253,15 @@ ParticleBody makeParticleRigidBody(Particle* p, Vector3 acceleration, float mass
 	return ParticleBody(p, acceleration, mass);
 }
 
-Vector3 updateParticlePosition(Particle& p, float timeStep)
+void updateParticlePosition(Particle& p, float timeStep)
 {
-	Vector3 initialDis = p.displacement;
 	p.displacement += timeStep * p.velocity;
-	Vector3 finalDis = p.displacement;
-	Vector3 diffDis = finalDis - initialDis;
 	p.life -= 1;
-	return diffDis;
 }
 
-Vector3 updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int numOfForces, float timeStep)
+void updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int numOfForces, float timeStep)
 {
-	Vector3 initialDis = p.particle->displacement;
 	p.particle->displacement = p.particle->displacement + (timeStep * p.particle->velocity) + ((0.5 * timeStep * timeStep) * p.acceleration);
-	Vector3 finalDis = p.particle->displacement;
-	Vector3 disDiff = finalDis - initialDis;
 	p.particle->velocity = p.particle->velocity + (0.5 * timeStep * p.acceleration);
 	Vector3 totalForce = { 0.0,0.0,0.0 };
 	for (int i = 0; i < numOfForces; ++i) {
@@ -277,5 +270,4 @@ Vector3 updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int 
 	p.acceleration = totalForce / p.mass;
 	p.particle->velocity = p.particle->velocity + (0.5 * timeStep * p.acceleration);
 	p.particle->life -= 1;
-	return disDiff;
 }

@@ -265,7 +265,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			int inactive = 0;
 			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
 				if (pool.nodes[i].nodeActive) {
-					Vector3 pos = updateParticlePosition(pool.nodes[i].particle, mspf / 1000.0);
+					updateParticlePosition(pool.nodes[i].particle, mspf / 1000.0);
 				}
 				else {
 					inactive = i;
