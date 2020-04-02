@@ -201,7 +201,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		bool render_wireframes = false;
 		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
 
-		RigidBody* practiceBall = new RigidBody({ 5.0,5.0,5.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 5.0, 10.0);
+		RigidBody* practiceBall = new RigidBody({ 5.0,5.0,5.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 10.0);
 
 		timer t;
 		//Main loop
@@ -251,10 +251,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			Vector3 gravity = { 0.0,downward,0.0 };
 			Vector3 wind = { 5.0,0.0,5.0 };
 			Vector3 forces[2] = { gravity, wind };
-			Vector3 position = updateDisplacement(*practiceBall, forces, 2, mspf / 1000.0);
+			updateDisplacement(*practiceBall, forces, 2, mspf / 1000.0);
 			if (practiceBall->displacement.y <= 0.0) {
 				practiceBall->velocity.y *= -0.5;
 				practiceBall->displacement.y = 0.01;
+			}
+			for (int i = 0; i <= landscape.forest.tree_distribution.number_of_trees; i++) {
+				Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
+				if (checkSphereCylinderCollision(*practiceBall, treePos.x, treePos.y, 0.0, 50.0, 0.0001)) {
+					practiceBall->velocity.x = 0.0;
+					practiceBall->velocity.z = 0.0;
+					break;
+				}
 			}
 			glLoadIdentity();
 			glPointSize(practiceBall->radius);

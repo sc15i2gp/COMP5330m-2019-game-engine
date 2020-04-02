@@ -20,7 +20,7 @@ struct RigidBody
 
 // Calculate the amount of displacement to translate in a frame
 // Velocity verlet is being used here
-Vector3 updateDisplacement(RigidBody&, Vector3* forces, int numOfForces, float timeStep);
+void updateDisplacement(RigidBody&, Vector3* forces, int numOfForces, float timeStep);
 
 // Collision detection - Cylinder
 // Position (x,z) defines the position of the cylinder
