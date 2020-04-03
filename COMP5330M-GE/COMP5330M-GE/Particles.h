@@ -75,6 +75,7 @@ ParticleBody simpleReleaseOneRigidParticle(Emitter&, Vector3 acceleration, float
 
 // Particle pool initialisation
 void initialisePool(ParticlePool&, int numOfParticles);
+void initialiseRigidPool(RigidParticlePool&, int numOfParticles);
 
 // Particle release functions
 // Rate is particles per second

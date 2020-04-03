@@ -117,6 +117,15 @@ void initialisePool(ParticlePool& pool, int numOfParticles)
 	}
 }
 
+void initialiseRigidPool(RigidParticlePool& pool, int numOfParticles)
+{
+	pool.numOfParticles = numOfParticles;
+	pool.nodes = new RigidParticlePoolNode[numOfParticles];
+	for (int i = 0; i < numOfParticles; i++) {
+		pool.nodes[i].nodeActive = false;
+	}
+}
+
 void releaseManyParticlesAtOnce(Emitter& e, ParticlePool pool, int numOfParticles)
 {
 	int index = 0;
