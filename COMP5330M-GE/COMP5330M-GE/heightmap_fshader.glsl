@@ -8,5 +8,5 @@ uniform sampler2D quad_texture;
 void main()
 {
 	vec4 sampled_colour = texture(quad_texture, texture_coords);
-	colour = vec4(sampled_colour.x, sampled_colour.x, sampled_colour.x, 1.0);
+	colour = vec4(sampled_colour.x, 0.0, 0.0, 1.0);
 }

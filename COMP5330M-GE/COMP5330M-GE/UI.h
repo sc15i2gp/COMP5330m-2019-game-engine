@@ -13,6 +13,7 @@ struct UI_Parameters
 	bool* render_rowans;
 	bool* render_wireframes;
 	bool* render_depth_buffer;
+	bool* render_density_field_slice;
 	float* camera_position;
 	float* camera_forward;
 	float* camera_sensitivity;
@@ -22,4 +23,5 @@ struct UI_Parameters
 bool initialise_ui();
 void handle_ui(UI_Parameters parameters);
 void render_ui();
-UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera* camera, int* fps, bool* render_wireframes, bool* render_depth_buffer, float* fov);
+UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera* camera, int* fps, bool* render_wireframes, bool* render_depth_buffer,
+	bool* render_density_field_slice, float* fov);

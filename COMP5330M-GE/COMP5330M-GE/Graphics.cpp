@@ -264,9 +264,16 @@ void Graphics_Table::__buffer_volume_data(int volume_texture, int width, int hei
 	glBindTexture(GL_TEXTURE_3D, 0);
 }
 
-GLuint Graphics_Table::__buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format)
+GLuint Graphics_Table::__create_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format)
 {
 	return gen_texture(texture_width, texture_height, format, GL_FLOAT, texture_data);
+}
+
+void Graphics_Table::__buffer_texture_data(GLuint texture, GLuint width, GLuint height, float* data, GLenum format)
+{
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_FLOAT, data);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Graphics_Table::__use_texture(GLuint texture, GLuint texture_unit, GLenum texture_target)

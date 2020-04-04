@@ -62,10 +62,15 @@ void handle_ui(UI_Parameters parameters)
 	ImGui::Text("Render depth buffer?");
 	ImGui::SameLine();
 	ImGui::Checkbox("##Depth_buffer", parameters.render_depth_buffer);
+	ImGui::NewLine();
+	ImGui::Text("Render density field slice?");
+	ImGui::SameLine();
+	ImGui::Checkbox("##Field_slice", parameters.render_density_field_slice);
 	ImGui::End();
 }
 
-UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera* camera, int* fps, bool* render_wireframes, bool* render_depth_buffer, float* fov)
+UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera* camera, int* fps, bool* render_wireframes, bool* render_depth_buffer, 
+	bool* render_density_field_slice, float* fov)
 {
 	UI_Parameters ui_parameters = {};
 	ui_parameters.fps = fps;
@@ -76,6 +81,7 @@ UI_Parameters initialise_ui_parameter_pointers(Landscape_Data* landscape, Camera
 	ui_parameters.camera_position = &camera->position[0];
 	ui_parameters.camera_sensitivity = &camera->movement_sensitivity;
 	ui_parameters.render_depth_buffer = render_depth_buffer;
+	ui_parameters.render_density_field_slice = render_density_field_slice;
 	ui_parameters.fov = fov;
 
 	return ui_parameters;

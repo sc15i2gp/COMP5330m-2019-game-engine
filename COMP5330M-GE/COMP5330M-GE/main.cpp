@@ -8,7 +8,10 @@
 #include "UI.h"
 
 //DOING:
-//	- Buffer part of density field to texture (for debugging purposes)
+//	- Render smoke properly
+//		- Properly composite volume data in raycasting
+//		- Smoke colour due to temperature
+//		- Smoke rise due to temperature
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -25,9 +28,8 @@
 //	- Find tree L-systems
 
 //TODO: Volume rendering
-//	- Smoke colour due to temperature
-//	- Integrate with scene geometry
-//	- Smoke movement due to temperature
+//	- Integrate with scene geometry(?)
+
 
 //TODO: Camera/UI
 //	- Draw xyz axes
@@ -136,7 +138,7 @@ GLuint buffer_heightmap()
 			heightmap_data[y * heightmap_data_width + x] = noise_val;
 		}
 	}
-	GLuint heightmap_texture = buffer_texture(heightmap_data_width, heightmap_data_height, heightmap_data, GL_RED);
+	GLuint heightmap_texture = create_texture(heightmap_data_width, heightmap_data_height, heightmap_data, GL_RED);
 	dealloc_mem(heightmap_data);
 	return heightmap_texture;
 }
@@ -303,6 +305,7 @@ void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field sm
 
 	float* src_smoke_density_field_values = smoke_density_field.values;
 	float* dst_smoke_density_field_values = (float*)alloc_mem(width * height * depth * sizeof(float));
+	for (int i = 0; i < width * height * depth; ++i) dst_smoke_density_field_values[i] = 0.0f;
 
 	Scalar_Field final_smoke_density_field = smoke_density_field;
 	final_smoke_density_field.values = dst_smoke_density_field_values;
@@ -318,9 +321,31 @@ void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field sm
 
 	smoke_density_field.values = src_smoke_density_field_values;
 	final_smoke_density_field.values = dst_smoke_density_field_values;
-	copy_scalar_field_values(final_smoke_density_field, smoke_density_field);
+	//copy_scalar_field_values(final_smoke_density_field, smoke_density_field);
 
 	dealloc_mem(final_smoke_density_field.values);
+}
+
+void buffer_scalar_field_slice_to_texture(Scalar_Field field, int y, GLuint texture)
+{
+	float* values = (float*)alloc_mem(field.width * field.depth * sizeof(float));
+	for (int z = 0; z < field.depth; ++z)
+	{
+		for (int x = 0; x < field.width; ++x)
+		{
+			values[z*field.width + x] = field.access(x, y, z);
+		}
+	}
+	dealloc_mem(values);
+	buffer_texture_data(texture, field.width, field.depth, values, GL_RED);
+}
+
+//Buffers a horizontal slice of the given scalar field to a texture
+GLuint buffer_scalar_field_slice_to_texture(Scalar_Field field, int y)
+{
+	GLuint texture = create_texture(field.width, field.depth, NULL, GL_RED);
+	buffer_scalar_field_slice_to_texture(field, y, texture);
+	return texture;
 }
 
 //Windows entry point
@@ -336,6 +361,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int depth_shader = load_shader_program("vshader.glsl", "depth_fshader.glsl");
 		int framebuffer_composite_shader = load_shader_program("framebuffer_vshader.glsl", "framebuffer_fshader.glsl");
 		int smoke_shader = load_shader_program("smoke_vshader.glsl", "smoke_fshader.glsl");
+		int quad_texture_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
 		
 		int scene_framebuffer = alloc_framebuffer(get_window_width(), get_window_height());
 		int smoke_framebuffer = alloc_framebuffer(get_window_width(), get_window_height());
@@ -365,8 +391,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int fps = 60;
 		bool render_wireframes = false;
 		bool render_depth_buffer = false;
+		bool render_density_field_slice = true;
 		float fov = 90.0f;
-		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes, &render_depth_buffer, &fov);
+		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes, &render_depth_buffer, 
+			&render_density_field_slice, &fov);
 
 		set_shader_sampler_uniform(framebuffer_composite_shader, "scene_texture", 1);
 		set_shader_sampler_uniform(framebuffer_composite_shader, "smoke_texture", 0);
@@ -377,19 +405,23 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		smoke_density_field.width = field_width;
 		smoke_density_field.height = field_height;
 		smoke_density_field.depth = field_depth;
-		for (int z = 1; z < field_depth - 1; ++z)
+
+		Scalar_Field smoke_source_field = smoke_density_field;
+		smoke_source_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
+		
+		for (int z = 0; z < field_depth; ++z)
 		{
-			for (int y = 1; y < field_height - 1; ++y)
+			for (int y = 0; y < field_height; ++y)
 			{
-				for (int x = 1; x < field_width - 1; ++x)
+				for (int x = 0; x < field_width; ++x)
 				{
-					smoke_density_field.access(x, y, z) = (x == 1) ? 0.5f : 0.0f;
+					smoke_density_field.access(x, y, z) = 0.0f;
+					smoke_source_field.access(x, y, z) = 0.0f;
 				}
 			} 
 		}
-		Scalar_Field smoke_source_field = smoke_density_field;
-		smoke_source_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
-		smoke_source_field.access(2, 2, 2) = 1.0f;
+
+		smoke_source_field.access(5, 2, 5) = 1.0f;
 
 		Vector3_Field wind_field;
 		wind_field.width = field_width;
@@ -397,12 +429,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		wind_field.depth = field_depth;
 		wind_field.values = (Vector3*)alloc_mem(field_width * field_height * field_depth * sizeof(Vector3));
 
-		Vector3 wind_vector = normalise(Vector3(1.0f, 0.0f, 1.0f));
+		Vector3 wind_vector = Vector3(0.0f, 0.0f, 0.0f);
 		for (int i = 0; i < field_width * field_height * field_depth; ++i) wind_field.values[i] = wind_vector;
 
 		int density_field_texture = create_volume_texture(field_width, field_height, field_depth);
 		buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
 		
+		GLuint field_slice_texture = buffer_scalar_field_slice_to_texture(smoke_density_field, 2);
+
 		timer t;
 		//Main loop
 		while (!should_window_close()) 
@@ -440,55 +474,71 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_window_resized()) resize_framebuffers(get_window_width(), get_window_height());
 
 			//UPDATE
-			progress_smoke_simulation(smoke_density_field, smoke_source_field, wind_field, 0.01f, mspf/1000.0f);
+			progress_smoke_simulation(smoke_density_field, smoke_source_field, wind_field, 0.1f, mspf/1000.0f);
 			
 			buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
+
+			buffer_scalar_field_slice_to_texture(smoke_density_field, 2, field_slice_texture);
 			
 			//RENDERING
 			//Set global rendering parameters
 			if (render_wireframes) draw_as_wireframes();
 			else draw_as_polygons();
 
-			//Render scene into scene buffer
-			use_framebuffer(scene_framebuffer);
-			set_window_clear_colour(sky_colour);
-			begin_render();
-			
-			
-			Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 10.0f);
-			set_projection_matrix(projection);
+			if (!render_density_field_slice)
+			{
+				//Render scene into scene buffer
+				use_framebuffer(scene_framebuffer);
+				set_window_clear_colour(sky_colour);
+				begin_render();
 
-			set_model_matrix(identity());
-			if (!render_depth_buffer) use_shader(terrain_lighting_shader);
-			else use_shader(depth_shader);
 
-			buffer_camera_data_to_gpu(main_view_camera);
-			
-			//Draw landscape
-			landscape.draw();
-			render_ui();
-			
-			//Render smoke
-			use_framebuffer(smoke_framebuffer);
-			set_window_clear_colour(black);
-			begin_render();
-			use_shader(smoke_shader);
-			use_volume_texture(density_field_texture, 0);
-			set_model_matrix(identity());
-			draw(scene_quad);
-			
-			//Composite framebuffers and render to window
-			use_framebuffer(DEFAULT_FRAMEBUFFER);
-			begin_render();
-			
-			use_shader(framebuffer_composite_shader);
-			use_framebuffer_texture(scene_framebuffer, 1);
-			use_framebuffer_texture(smoke_framebuffer, 0);
-			
-			draw(scene_quad);
-			use_texture(0, 0);
-			use_texture(0, 1);
-			
+				Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 10.0f);
+				set_projection_matrix(projection);
+
+				set_model_matrix(identity());
+				if (!render_depth_buffer) use_shader(terrain_lighting_shader);
+				else use_shader(depth_shader);
+
+				buffer_camera_data_to_gpu(main_view_camera);
+
+				//Draw landscape
+				landscape.draw();
+				render_ui();
+
+				//Render smoke
+				use_framebuffer(smoke_framebuffer);
+				set_window_clear_colour(black);
+				begin_render();
+				use_shader(smoke_shader);
+				use_volume_texture(density_field_texture, 0);
+				set_model_matrix(identity());
+				draw(scene_quad);
+
+				//Composite framebuffers and render to window
+				use_framebuffer(DEFAULT_FRAMEBUFFER);
+				begin_render();
+
+				use_shader(framebuffer_composite_shader);
+				use_framebuffer_texture(scene_framebuffer, 1);
+				use_framebuffer_texture(smoke_framebuffer, 0);
+
+				draw(scene_quad);
+				use_texture(0, 0);
+				use_texture(0, 1);
+			}
+			else
+			{
+				begin_render();
+
+				use_shader(quad_texture_shader);
+				use_texture(field_slice_texture);
+
+				draw(scene_quad);
+				use_texture(0);
+
+				render_ui();
+			}
 			
 			swap_window_buffers();
 

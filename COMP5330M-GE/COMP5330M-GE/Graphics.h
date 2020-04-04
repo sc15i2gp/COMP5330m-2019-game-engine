@@ -120,7 +120,8 @@ public:
 	void __set_shader_sampler_uniform(int shader, char* sampler_name, int sampler_unit);
 	void __use_shader(int shader);
 	int __load_shader_program(const char* v_shader_path, const char* f_shader_path);
-	GLuint __buffer_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format = GL_RGB);
+	GLuint __create_texture(GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format = GL_RGB);
+	void __buffer_texture_data(GLuint texture, GLuint texture_width, GLuint texture_height, float* texture_data, GLenum format = GL_RGB);
 	void __use_texture(GLuint texture, GLuint texture_unit = 0, GLenum texture_target = GL_TEXTURE_2D);
 	int __alloc_framebuffer(int width, int height, int framebuffer = -1);
 	void __use_framebuffer(int framebuffer = -1);
@@ -198,8 +199,9 @@ void begin_render();
 #define use_shader(s)										__graphics.__use_shader(s)
 #define load_shader_program(v, f)							__graphics.__load_shader_program(v, f)
 #define initialise_graphics()								__graphics.__initialise_graphics()
-#define buffer_texture(w, h, d, f)							__graphics.__buffer_texture(w, h, d, f)
+#define create_texture(w, h, d, f)							__graphics.__create_texture(w, h, d, f)
 #define use_texture(...)									__graphics.__use_texture(__VA_ARGS__)
+#define buffer_texture_data(t, w, h, d, f)					__graphics.__buffer_texture_data(t, w, h, d, f)
 #define use_volume_texture(v, u)							__graphics.__use_volume_texture(v, u)
 #define create_volume_texture(...)							__graphics.__create_volume_texture(__VA_ARGS__)
 #define buffer_volume_data(...)								__graphics.__buffer_volume_data(__VA_ARGS__)
