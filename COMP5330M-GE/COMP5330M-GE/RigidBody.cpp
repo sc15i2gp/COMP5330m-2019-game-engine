@@ -65,16 +65,16 @@ bool checkSphereCylinderCollision(RigidBody& r, float x, float z, float miny, fl
 	}
 }
 
-float checkSphereCylinderCollisionInPath(RigidBody& r, Vector3 pathTaken, float x, float z, float miny, float maxy, float radius)
+bool checkSphereCylinderCollisionInPath(RigidBody& r, Vector3 pathTaken, float x, float z, float miny, float maxy, float radius)
 {
 	int numOfTimeSteps = length(pathTaken);
 	for (float i = 0.0; i <= 1.0; i += 1.0f / numOfTimeSteps) {
 		Vector3 position = r.displacement + (i * pathTaken);
 		if (checkSphereCylinderCollision(r, x, z, miny, maxy, radius)) {
-			return i;
+			return true;
 		}
 	}
-	return NULL;
+	return false;
 }
 
 bool checkSphereTriangleCollision(RigidBody& r, Vector3 v1, Vector3 v2, Vector3 v3)
@@ -97,4 +97,16 @@ bool checkSphereTriangleCollision(RigidBody& r, Vector3 v1, Vector3 v2, Vector3 
 	if (num < 0) num *= -1.0;
 	float den = length(normal);
 	return (num / den) <= r.radius;
+}
+
+float checkSphereTriangleCollisionInPath(RigidBody& r, Vector3 pathTaken, Vector3 v1, Vector3 v2, Vector3 v3)
+{
+	int numOfTimeSteps = length(pathTaken);
+	for (float i = 0.0; i <= 1.0; i += 1.0f / numOfTimeSteps) {
+		Vector3 position = r.displacement + (i * pathTaken);
+		if (checkSphereTriangleCollision(r, v1, v2, v3)) {
+			return true;
+		}
+	}
+	return false;
 }

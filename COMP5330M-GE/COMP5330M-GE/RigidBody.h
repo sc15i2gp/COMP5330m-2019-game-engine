@@ -29,8 +29,10 @@ bool checkSphereCylinderCollision(RigidBody&, float x, float z, float miny, floa
 
 // Continuous version - ensures sphere does not pass through cylinder
 // Might not be needed
-float checkSphereCylinderCollisionInPath(RigidBody&, Vector3 pathTaken, float x, float z, float miny, float maxy, float radius);
+bool checkSphereCylinderCollisionInPath(RigidBody&, Vector3 pathTaken, float x, float z, float miny, float maxy, float radius);
 
 // Collision detection - Ground mesh
 // A triangle defined by three points
 bool checkSphereTriangleCollision(RigidBody&, Vector3 v1, Vector3 v2, Vector3 v3);
+
+float checkSphereTriangleCollisionInPath(RigidBody&, Vector3 pathTaken, Vector3 v1, Vector3 v2, Vector3 v3);
