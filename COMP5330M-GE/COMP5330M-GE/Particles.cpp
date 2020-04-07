@@ -281,3 +281,47 @@ void updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int num
 	p.particle->velocity = p.particle->velocity + (half * timeStep * p.acceleration);
 	p.particle->life -= 1;
 }
+
+int updatePool(ParticlePool& p, long int mspf)
+{
+	int inactive = 0;
+	for (int i = 0; i <= p.numOfParticles - 1; i++) {
+		if (p.nodes[i].nodeActive) {
+			updateParticlePosition(p.nodes[i].particle, mspf / 1000.0);
+		}
+		else {
+			inactive = i;
+			break;
+		}
+	}
+	return inactive;
+}
+
+int updateRigidPool(RigidParticlePool& p, Vector3* forces, int numOfForces, long int mspf)
+{
+	int inactive = 0;
+	for (int i = 0; i <= p.numOfParticles - 1; i++) {
+		if (p.nodes[i].nodeActive) {
+			updateParticlePositionUnderForces(p.nodes[i].particleBody, forces, numOfForces, mspf / 1000.0);
+		}
+		else {
+			inactive = i;
+			break;
+		}
+	}
+	return inactive;
+}
+
+void deleteParticleInPool(ParticlePool& p, int current, int inactive)
+{
+	p.nodes[current] = p.nodes[inactive - 1];
+	p.nodes[inactive - 1].nodeActive = false;
+	inactive--;
+}
+
+void deleteRigidParticleInPool(RigidParticlePool& p, int current, int inactive)
+{
+	p.nodes[current] = p.nodes[inactive - 1];
+	p.nodes[inactive - 1].nodeActive = false;
+	inactive--;
+}

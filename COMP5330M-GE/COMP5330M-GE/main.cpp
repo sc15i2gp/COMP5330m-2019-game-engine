@@ -204,8 +204,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		ParticlePool pool;
 		int totalNumOfParticles = 10000;
 		initialisePool(pool, totalNumOfParticles);
-		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 1000.0);
-		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 1000.0);
+		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 100.0);
+		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 100.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -262,16 +262,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			use_shader(fire_shader);
 
 			// Check the particle pool
-			int inactive = 0;
-			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
-				if (pool.nodes[i].nodeActive) {
-					updateParticlePosition(pool.nodes[i].particle, mspf / 1000.0);
-				}
-				else {
-					inactive = i;
-					break;
-				}
-			}
+			int inactive = updatePool(pool, mspf);
 			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
 				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
 					float size = 0.0;
@@ -311,9 +302,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					glEnd();
 				}
 				else if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life <= 0) {
-					pool.nodes[i] = pool.nodes[inactive - 1];
-					pool.nodes[inactive - 1].nodeActive = false;
-					inactive--;
+					deleteParticleInPool(pool, i, inactive);
 				}
 			}
 

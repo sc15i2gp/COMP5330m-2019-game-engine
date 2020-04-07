@@ -96,3 +96,9 @@ void releaseBurstsOfRigidParticlesInASequenceForever(Emitter&, RigidParticlePool
 ParticleBody makeParticleRigidBody(Particle* p, Vector3 acceleration, float mass);
 void updateParticlePosition(Particle&, float timeStep);
 void updateParticlePositionUnderForces(ParticleBody&, Vector3* forces, int numOfForces, float timeStep);
+
+// Particle Pool Functions
+int updatePool(ParticlePool&, long int mspf);
+int updateRigidPool(RigidParticlePool&);
+void deleteParticleInPool(ParticlePool&, int current, int inactive);
+void deleteRigidParticleInPool(RigidParticlePool&, int current, int inactive);
