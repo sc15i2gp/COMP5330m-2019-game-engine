@@ -6,7 +6,7 @@
 struct Particle {
 	Vector3 displacement;
 	Vector3 velocity;
-	int life;		// In terms of frames
+	int life;		// In milliseconds
 	float size;		// The quads are drawn (x-s,y-s,z) (x-s,y+s,z) (x+s,y+s,z) (x+s,y-s,z)
 
 	Particle();
@@ -53,7 +53,7 @@ struct Emitter {
 	float maxAngleAroundZ;
 	// Has to be between 0.0 and 1.0
 	float minSpeedRatio;
-	// Life in terms of frames
+	// Life in milliseconds
 	int minLife;
 	int maxLife;
 	// Particle size

@@ -199,8 +199,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
 		// Emit particles
-		Emitter* fireEmitter = new Emitter({ -1.0,0.0,-1.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.015);
-		Emitter* fireEmitter2 = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 30, 40, 0.01, 0.015);
+		Emitter* fireEmitter = new Emitter({ -1.0,0.0,-1.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 1000, 1500, 0.01, 0.015);
+		Emitter* fireEmitter2 = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 1000, 1500, 0.01, 0.015);
 		ParticlePool pool;
 		int totalNumOfParticles = 10000;
 		initialisePool(pool, totalNumOfParticles);
@@ -265,13 +265,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			int inactive = updatePool(pool, mspf);
 			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
 				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
+					OutputDebugStringf("%f %f %f\n", pool.nodes[i].particle.velocity.x, pool.nodes[i].particle.velocity.y, pool.nodes[i].particle.velocity.z);
 					float size = 0.0;
 					// Have the particle decrease in size when it's coming to the end of its life
-					if (pool.nodes[i].particle.life >= 10) {
+					if (pool.nodes[i].particle.life >= 100) {
 						size = pool.nodes[i].particle.size;
 					}
 					else {
-						size = pool.nodes[i].particle.size * (pool.nodes[i].particle.life / 10.0);
+						size = pool.nodes[i].particle.size * (pool.nodes[i].particle.life / 100.0);
 					}
 					glBegin(GL_QUADS);
 					Vector3 point1 = pool.nodes[i].particle.displacement + ((-size) * main_view_camera.rightward) + ((-size) * main_view_camera.upward);

@@ -265,7 +265,7 @@ ParticleBody makeParticleRigidBody(Particle* p, Vector3 acceleration, float mass
 void updateParticlePosition(Particle& p, float timeStep)
 {
 	p.displacement += timeStep * p.velocity;
-	p.life -= 1;
+	p.life -= (timeStep * 1000);
 }
 
 void updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int numOfForces, float timeStep)
@@ -279,7 +279,7 @@ void updateParticlePositionUnderForces(ParticleBody& p, Vector3* forces, int num
 	}
 	p.acceleration = totalForce / p.mass;
 	p.particle->velocity = p.particle->velocity + (half * timeStep * p.acceleration);
-	p.particle->life -= 1;
+	p.particle->life -= (timeStep * 1000);
 }
 
 int updatePool(ParticlePool& p, long int mspf)
@@ -316,6 +316,7 @@ void deleteParticleInPool(ParticlePool& p, int current, int inactive)
 {
 	p.nodes[current] = p.nodes[inactive - 1];
 	p.nodes[inactive - 1].nodeActive = false;
+	p.nodes[inactive - 1].particle.life = 0.0;
 	inactive--;
 }
 
@@ -323,5 +324,6 @@ void deleteRigidParticleInPool(RigidParticlePool& p, int current, int inactive)
 {
 	p.nodes[current] = p.nodes[inactive - 1];
 	p.nodes[inactive - 1].nodeActive = false;
+	p.nodes[inactive - 1].particleBody.particle->life = 0.0;
 	inactive--;
 }
