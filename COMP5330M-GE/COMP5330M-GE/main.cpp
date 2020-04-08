@@ -201,7 +201,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		bool render_wireframes = false;
 		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
 
-		RigidBody* practiceBall = new RigidBody({ 5.0,5.0,5.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 10.0);
+		RigidBody* practiceBall = new RigidBody({ 4.0,5.0,4.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
 
 		timer t;
 		//Main loop
@@ -235,7 +235,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_D)) main_view_camera.move_right();
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
-			if (was_key_pressed(KEY_F)) practiceBall = new RigidBody({ 5.0,5.0,5.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 5.0, 10.0);
+			if (was_key_pressed(KEY_F)) practiceBall = new RigidBody({ 4.0,5.0,4.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 10.0);
 
 			begin_render();
 			if (render_wireframes) draw_as_wireframes();
@@ -256,16 +256,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				practiceBall->velocity.y *= -0.5;
 				practiceBall->displacement.y = 0.01;
 			}
-			for (int i = 0; i <= landscape.forest.tree_distribution.number_of_trees; i++) {
+			for (int i = 0; i <= 20; i++) {
 				Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
+				OutputDebugStringf("%f %f %f\n", treePos.x, treePos.y);
 				if (checkSphereCylinderCollision(*practiceBall, treePos.x, treePos.y, 0.0, 50.0, 0.0001)) {
 					practiceBall->velocity.x = 0.0;
 					practiceBall->velocity.z = 0.0;
 					break;
 				}
 			}
+			OutputDebugStringf("\n");
 			glLoadIdentity();
-			glPointSize(practiceBall->radius);
+			glPointSize(10.0f);
 			glBegin(GL_POINTS);
 				glVertex3f(practiceBall->displacement.x, practiceBall->displacement.y, practiceBall->displacement.z);
 			glEnd();
