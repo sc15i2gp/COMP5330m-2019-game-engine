@@ -199,13 +199,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
 		// Emit particles
-		Emitter* fireEmitter = new Emitter({ -1.0,0.0,-1.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 1000, 1500, 0.01, 0.015);
-		Emitter* fireEmitter2 = new Emitter({ 2.0,0.0,2.0 }, 0.2, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 1000, 1500, 0.01, 0.015);
+		Emitter* fireEmitter = new Emitter({ -0.5,0.0,-0.5 }, 0.5, { 0.0,2.0,0.0 }, 10.0, 10.0, 10.0, 0.7, 1000, 1500, 0.01, 0.015);
+		Emitter* fireEmitter2 = new Emitter({ 2.0,0.0,2.0 }, 0.5, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 1000, 1500, 0.01, 0.015);
 		ParticlePool pool;
-		int totalNumOfParticles = 10000;
+		int totalNumOfParticles = 100000;
 		initialisePool(pool, totalNumOfParticles);
-		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 100.0);
-		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 100.0);
+		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 1000.0);
+		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 1000.0);
 
 		bool dragging = false;
 		int fps = 60;
@@ -263,9 +263,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			// Check the particle pool
 			int inactive = updatePool(pool, mspf);
-			for (int i = 0; i <= totalNumOfParticles - 1; i++) {
+			int loop = inactive;
+			for (int i = 0; i <= loop; i++) {
 				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
-					OutputDebugStringf("%f %f %f\n", pool.nodes[i].particle.velocity.x, pool.nodes[i].particle.velocity.y, pool.nodes[i].particle.velocity.z);
 					float size = 0.0;
 					// Have the particle decrease in size when it's coming to the end of its life
 					if (pool.nodes[i].particle.life >= 100) {

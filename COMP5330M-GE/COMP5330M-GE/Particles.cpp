@@ -314,16 +314,36 @@ int updateRigidPool(RigidParticlePool& p, Vector3* forces, int numOfForces, long
 
 void deleteParticleInPool(ParticlePool& p, int current, int inactive)
 {
-	p.nodes[current] = p.nodes[inactive - 1];
-	p.nodes[inactive - 1].nodeActive = false;
-	p.nodes[inactive - 1].particle.life = 0.0;
-	inactive--;
+	while (p.nodes[inactive - 1].particle.life <= 0.0) {
+		p.nodes[inactive - 1].nodeActive = false;
+		inactive--;
+	}
+	if (inactive - 1 > current) {
+		p.nodes[current] = p.nodes[inactive - 1];
+		p.nodes[inactive - 1].nodeActive = false;
+		p.nodes[inactive - 1].particle.life = 0.0;
+		inactive--;
+	}
+	else {
+		p.nodes[current].nodeActive = false;
+		inactive--;
+	}
 }
 
 void deleteRigidParticleInPool(RigidParticlePool& p, int current, int inactive)
 {
-	p.nodes[current] = p.nodes[inactive - 1];
-	p.nodes[inactive - 1].nodeActive = false;
-	p.nodes[inactive - 1].particleBody.particle->life = 0.0;
-	inactive--;
+	while (p.nodes[inactive - 1].particleBody.particle->life <= 0.0) {
+		p.nodes[inactive - 1].nodeActive = false;
+		inactive--;
+	}
+	if (inactive - 1 > current) {
+		p.nodes[current] = p.nodes[inactive - 1];
+		p.nodes[inactive - 1].nodeActive = false;
+		p.nodes[inactive - 1].particleBody.particle->life = 0.0;
+		inactive--;
+	}
+	else {
+		p.nodes[current].nodeActive = false;
+		inactive--;
+	}
 }
