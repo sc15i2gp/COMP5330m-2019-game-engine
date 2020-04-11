@@ -172,6 +172,11 @@ void Graphics_Table::__set_max_height(GLfloat max_height)
 	copy_to_gpu_mem(&max_height, this->max_height_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
 }
 
+void Graphics_Table::__set_max_density(GLfloat max_density)
+{
+	copy_to_gpu_mem(&max_density, this->max_density_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
+}
+
 void Graphics_Table::__set_shader_sampler_uniform(int shader, char* sampler_name, int sampler_unit)
 {
 	GL_ERROR_CHECK(use_shader(shader));
@@ -207,6 +212,7 @@ bool Graphics_Table::__initialise_graphics()
 	this->spot_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Spot_Light>), 4, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 	this->point_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Point_Light>), 5, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 	this->max_height_buffer = alloc_and_bind_ubo(sizeof(GLfloat), 6, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	this->max_density_buffer = alloc_and_bind_ubo(sizeof(GLfloat), 7, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 
 	return true;
 }

@@ -19,6 +19,7 @@ layout(std140, binding = 1) uniform view_projection_block
 void main()
 {
 	vec4 vertex_position = vec4(in_pos.xy, 1.0, 1.0);
-	fragment_position = vec3(inverse(view) * vertex_position);
-	gl_Position = vec4(vertex_position.xy, 0.0, 1.0);
+	mat4 v = inverse(view);
+	fragment_position = vec3(v * vec4(in_pos.xy, -1.0, 1.0));
+	gl_Position = vec4(in_pos.xy, 0.0, 1.0);
 }

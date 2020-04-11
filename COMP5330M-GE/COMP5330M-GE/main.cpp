@@ -11,13 +11,11 @@
 //	- Render smoke properly
 //		- Properly composite volume data in raycasting
 //		- Smoke colour due to temperature
-//		- Smoke rise due to temperature
 
 //TODO: Platform/Graphics
 //	- Internal error handling
 //	- Better memory management(?)
 //	- glDelete functions
-//	- Create separate 2d texture sub buffer function
 //	- Free resources
 
 //TODO: Landscape
@@ -28,8 +26,9 @@
 //	- Find tree L-systems
 
 //TODO: Volume rendering
+//	- Smoke rise due to temperature
+//	- Change resolution while keeping field to terrain size
 //	- Integrate with scene geometry(?)
-
 
 //TODO: Camera/UI
 //	- Draw xyz axes
@@ -79,7 +78,7 @@ void buffer_camera_data_to_gpu(Camera c)
 	set_view_origin(c.position);
 }
 
-Drawable buffer_quad()
+Drawable buffer_scene_quad()
 {
 	//Create quad mesh
 	Mesh_vertex quad_vertices[4] = {};
@@ -108,6 +107,43 @@ Drawable buffer_quad()
 	quad_vertices[3] =
 	{
 		{1.0f, -1.0f, 0.0f}, //Position
+		{}, //Normal
+		{1.0f, 0.0f}  //Texture coords
+	};
+	GLuint quad_indices[] = { 0, 1, 2, 2, 3, 0 };
+	Drawable quad = buffer_mesh(quad_vertices, 4, quad_indices, 6);
+	return quad;
+}
+
+Drawable buffer_raycast_quad()
+{
+	//Create quad mesh
+	Mesh_vertex quad_vertices[4] = {};
+	//Top left
+	quad_vertices[0] =
+	{
+		{-1.0f, 1.0f, 0.0f}, //Position
+		{}, //Normal
+		{0.0f, 0.0f}  //Texture coords
+	};
+	//Bottom left
+	quad_vertices[1] =
+	{
+		{-1.0f, -1.0f, 0.0f}, //Position
+		{}, //Normal
+		{0.0f, 1.0f}  //Texture coords
+	};
+	//Bottom right
+	quad_vertices[2] =
+	{
+		{1.0f, -1.0f, 0.0f}, //Position
+		{}, //Normal
+		{1.0f, 1.0f}  //Texture coords
+	};
+	//Top right
+	quad_vertices[3] =
+	{
+		{1.0f, 1.0f, 0.0f}, //Position
 		{}, //Normal
 		{1.0f, 0.0f}  //Texture coords
 	};
@@ -368,7 +404,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		
 		OutputDebugStringf("Scene Framebuffer: %d\n", scene_framebuffer);
 		OutputDebugStringf("Smoke framebuffer: %d\n", smoke_framebuffer);
-		Drawable scene_quad = buffer_quad();
+		Drawable scene_quad = buffer_scene_quad();
+		Drawable smoke_quad = buffer_raycast_quad();
 		
 		Camera main_view_camera = {};
 		main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{0.0f, 0.0f, 1.0f});
@@ -391,7 +428,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int fps = 60;
 		bool render_wireframes = false;
 		bool render_depth_buffer = false;
-		bool render_density_field_slice = true;
+		bool render_density_field_slice = false;
 		float fov = 90.0f;
 		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes, &render_depth_buffer, 
 			&render_density_field_slice, &fov);
@@ -399,6 +436,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_shader_sampler_uniform(framebuffer_composite_shader, "scene_texture", 1);
 		set_shader_sampler_uniform(framebuffer_composite_shader, "smoke_texture", 0);
 		set_shader_sampler_uniform(smoke_shader, "density_field", 0);
+
+		set_max_density(5.0f);
 
 		Scalar_Field smoke_density_field;
 		smoke_density_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
@@ -513,7 +552,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				use_shader(smoke_shader);
 				use_volume_texture(density_field_texture, 0);
 				set_model_matrix(identity());
-				draw(scene_quad);
+				draw(smoke_quad);
 
 				//Composite framebuffers and render to window
 				use_framebuffer(DEFAULT_FRAMEBUFFER);
