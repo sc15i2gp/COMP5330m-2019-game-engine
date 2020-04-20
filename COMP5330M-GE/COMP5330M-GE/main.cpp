@@ -8,9 +8,11 @@
 #include "UI.h"
 
 //DOING:
-//	- Render smoke properly
-//		- Properly composite volume data in raycasting
-//		- Smoke colour due to temperature
+//	- Scale smoke grid
+//		- Make raycast work independently of grid dimensions
+//		- Make grid small
+//	- Temperature field
+//		- Compute smoke colour from temperature
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -23,11 +25,9 @@
 //	- Texture
 //	- Retrieve/highlight triangles
 //	- Spatial partitioning
-//	- Find tree L-systems
+//	- Fix tree gen
 
 //TODO: Volume rendering
-//	- Smoke rise due to temperature
-//	- Change resolution while keeping field to terrain size
 //	- Integrate with scene geometry(?)
 
 //TODO: Camera/UI
@@ -47,6 +47,7 @@
 
 //TODO: Profiling
 //	- Time functions
+//	- Time frames
 
 Material gold =
 {
@@ -220,6 +221,19 @@ struct Scalar_Field
 	int height;
 	int depth;
 
+	void allocate(int width, int height, int depth)
+	{
+		this->width = width;
+		this->height = height;
+		this->depth = depth;
+		this->values = (float*)alloc_mem(width * height * depth * sizeof(float));
+	}
+
+	void deallocate()
+	{
+		dealloc_mem(this->values);
+	}
+
 	float& access(int x, int y, int z)
 	{
 		return values[z*this->height*this->width + y * this->width + x];
@@ -233,25 +247,38 @@ struct Vector3_Field
 	int height;
 	int depth;
 
+	void allocate(int width, int height, int depth)
+	{
+		this->width = width;
+		this->height = height;
+		this->depth = depth;
+		this->values = (Vector3*)alloc_mem(width * height * depth * sizeof(Vector3));
+	}
+
+	void deallocate()
+	{
+		dealloc_mem(this->values);
+	}
+
 	Vector3& access(int x, int y, int z)
 	{
 		return values[z*this->height*this->width + y*this->width + x];
 	}
 };
 
-void add_smoke_density_sources(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, float dt)
+void add_scalar_sources(Scalar_Field dst_field, Scalar_Field src_field, float dt)
 {
-	int width = smoke_density_field.width;
-	int height = smoke_density_field.height;
-	int depth = smoke_density_field.depth;
+	int width = dst_field.width;
+	int height = dst_field.height;
+	int depth = dst_field.depth;
 
 	for (int i = 0; i < width * height * depth; ++i)
 	{
-		smoke_density_field.values[i] += dt * smoke_source_field.values[i];
+		dst_field.values[i] += dt * src_field.values[i];
 	}
 }
 
-void diffuse_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, float diff, float dt)
+void diffuse_scalar_field(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, float diff, float dt)
 {
 	int width = smoke_density_field.width;
 	int height = smoke_density_field.height;
@@ -278,7 +305,39 @@ void diffuse_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_
 	}
 }
 
-void move_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, Vector3_Field velocity_field, float diff, float dt)
+void move_smoke_density_by_vector(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, int f_x, int f_y, int f_z, Vector3 velocity, float dt)
+{
+	float dx = (float)f_x - dt * velocity.x;
+	float dy = (float)f_y - dt * velocity.y;
+	float dz = (float)f_z - dt * velocity.z;
+	int x_0 = (int)dx;
+	int x_1 = x_0 + 1;
+	int y_0 = (int)dy;
+	int y_1 = y_0 + 1;
+	int z_0 = (int)dz;
+	int z_1 = z_0 + 1;
+
+	float s_1 = dx - (float)x_0;
+	float s_0 = 1.0f - s_1;
+	float t_1 = dy - (float)y_0;
+	float t_0 = 1.0f - t_1;
+	float u_1 = dz - (float)z_0;
+	float u_0 = 1.0f - u_1;
+
+	final_smoke_density_field.access(f_x, f_y, f_z) =
+		u_0 *
+		(
+			s_0 * (t_0*smoke_density_field.access(x_0, y_0, z_0) + t_1 * smoke_density_field.access(x_0, y_1, z_0)) +
+			s_1 * (t_0*smoke_density_field.access(x_1, y_0, z_0) + t_1 * smoke_density_field.access(x_1, y_1, z_0))
+			) +
+		u_1 *
+		(
+			s_0 * (t_0*smoke_density_field.access(x_0, y_0, z_1) + t_1 * smoke_density_field.access(x_0, y_1, z_1)) +
+			s_1 * (t_0*smoke_density_field.access(x_1, y_0, z_1) + t_1 * smoke_density_field.access(x_1, y_1, z_1))
+			);
+}
+
+void move_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, Vector3_Field velocity_field, float dt)
 {
 	int width = smoke_density_field.width;
 	int height = smoke_density_field.height;
@@ -291,34 +350,26 @@ void move_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smo
 			for (int x = 1; x < width - 1; ++x)
 			{
 				Vector3 velocity = velocity_field.access(x, y, z);
-				float dx = (float)x - dt * velocity.x;
-				float dy = (float)y - dt * velocity.y;
-				float dz = (float)z - dt * velocity.z;
-				int x_0 = (int)dx;
-				int x_1 = x_0 + 1;
-				int y_0 = (int)dy;
-				int y_1 = y_0 + 1;
-				int z_0 = (int)dz;
-				int z_1 = z_0 + 1;
+				move_smoke_density_by_vector(smoke_density_field, final_smoke_density_field, x, y, z, velocity, dt);
+			}
+		}
+	}
+}
 
-				float s_1 = dx - (float)x_0;
-				float s_0 = 1.0f - s_1;
-				float t_1 = dy - (float)y_0;
-				float t_0 = 1.0f - t_1;
-				float u_1 = dz - (float)z_0;
-				float u_0 = 1.0f - u_1;
+void convect_temperature(Scalar_Field temperature_field, Scalar_Field final_temperature_field, float dt)
+{
+	int width = temperature_field.width;
+	int height = temperature_field.height;
+	int depth = temperature_field.depth;
 
-				final_smoke_density_field.access(x, y, z) =
-					u_0 *
-					(
-						s_0 * (t_0*smoke_density_field.access(x_0, y_0, z_0) + t_1 * smoke_density_field.access(x_0, y_1, z_0)) +
-						s_1 * (t_0*smoke_density_field.access(x_1, y_0, z_0) + t_1 * smoke_density_field.access(x_1, y_1, z_0))
-						) +
-					u_1 *
-					(
-						s_0 * (t_0*smoke_density_field.access(x_0, y_0, z_1) + t_1 * smoke_density_field.access(x_0, y_1, z_1)) +
-						s_1 * (t_0*smoke_density_field.access(x_1, y_0, z_1) + t_1 * smoke_density_field.access(x_1, y_1, z_1))
-						);
+	for (int z = 1; z < depth - 1; ++z)
+	{
+		for (int y = 1; y < depth - 1; ++y)
+		{
+			for (int x = 1; x < depth - 1; ++x)
+			{
+				final_temperature_field.access(x, y, z) = temperature_field.access(x, y, z) 
+					+ dt * (temperature_field.access(x, y - 1, z) - temperature_field.access(x, y, z));
 			}
 		}
 	}
@@ -333,36 +384,93 @@ void copy_scalar_field_values(Scalar_Field src, Scalar_Field dst)
 	for (int i = 0; i < width * height * depth; ++i) dst.values[i] = src.values[i];
 }
 
-void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, Vector3_Field velocity_field, float diff, float dt)
+Vector3 compute_updraft_from_temperature(float temperature)
+{
+	//Linear between temp of 0 and some max temp
+	float max_temperature = 1500.0f;
+	Vector3 max_up(0.0f, 100.0f, 0.0f);
+	float f = temperature/max_temperature;
+	return f * max_up;
+}
+
+void convect_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, Scalar_Field temperature_field, float dt)
+{
+	//For each smoke_density_field value
+	//	Compute upwards velocity from corresponding temperature_field value
+	//	Compute corresponding final_smoke_density_field value using backwards velocity algorithm
+	for (int z = 1; z < smoke_density_field.depth - 1; ++z)
+	{
+		for (int y = 1; y < smoke_density_field.height - 1; ++y)
+		{
+			for (int x = 1; x < smoke_density_field.width - 1; ++x)
+			{
+				Vector3 velocity = compute_updraft_from_temperature(temperature_field.access(x, y, z));
+				move_smoke_density_by_vector(smoke_density_field, final_smoke_density_field, x, y, z, velocity, dt);
+			}
+		}
+	}
+}
+
+void swap_field_ptrs(Scalar_Field& f_0, Scalar_Field& f_1)
+{
+	float* temp = f_0.values;
+	f_0.values = f_1.values;
+	f_1.values = temp;
+}
+
+//TODO: Either rewrite or document this function better, it sucks
+void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, Scalar_Field temperature_field, 
+	Vector3_Field wind_velocity_field, float diff, float dt)
 {
 	int width = smoke_density_field.width;
 	int height = smoke_density_field.height;
 	int depth = smoke_density_field.depth;
 
-	float* src_smoke_density_field_values = smoke_density_field.values;
-	float* dst_smoke_density_field_values = (float*)alloc_mem(width * height * depth * sizeof(float));
-	for (int i = 0; i < width * height * depth; ++i) dst_smoke_density_field_values[i] = 0.0f;
-
 	Scalar_Field final_smoke_density_field = smoke_density_field;
-	final_smoke_density_field.values = dst_smoke_density_field_values;
+	final_smoke_density_field.values = (float*)alloc_mem(width * height * depth * sizeof(float));
 
-	add_smoke_density_sources(smoke_density_field, smoke_source_field, dt);
-	diffuse_smoke_density(smoke_density_field, final_smoke_density_field, diff, dt);
+	add_scalar_sources(smoke_density_field, smoke_source_field, dt);
+	diffuse_scalar_field(smoke_density_field, final_smoke_density_field, diff, dt);
 
-	float* temp = smoke_density_field.values;
-	smoke_density_field.values = final_smoke_density_field.values;
-	final_smoke_density_field.values = temp;
+	swap_field_ptrs(smoke_density_field, final_smoke_density_field);
 
-	move_smoke_density(smoke_density_field, final_smoke_density_field, velocity_field, diff, dt);
+	move_smoke_density(smoke_density_field, final_smoke_density_field, wind_velocity_field, dt);
 
-	smoke_density_field.values = src_smoke_density_field_values;
-	final_smoke_density_field.values = dst_smoke_density_field_values;
-	//copy_scalar_field_values(final_smoke_density_field, smoke_density_field);
+	swap_field_ptrs(smoke_density_field, final_smoke_density_field);
+
+	convect_smoke_density(smoke_density_field, final_smoke_density_field, temperature_field, dt);
+
+	copy_scalar_field_values(final_smoke_density_field, smoke_density_field);
 
 	dealloc_mem(final_smoke_density_field.values);
 }
 
-void buffer_scalar_field_slice_to_texture(Scalar_Field field, int y, GLuint texture)
+
+void progress_temperature_simulation(Scalar_Field temperature_field, Scalar_Field temperature_source_field, float diff, float dt)
+{
+	float* src_temperature_values = temperature_field.values;
+	float* dst_temperature_values = (float*)alloc_mem(temperature_field.width * temperature_field.height * temperature_field.depth * sizeof(float));
+
+	Scalar_Field final_temperature_field = temperature_field;
+	final_temperature_field.values = dst_temperature_values;
+
+	add_scalar_sources(temperature_field, temperature_source_field, dt);
+
+	diffuse_scalar_field(temperature_field, final_temperature_field, diff, dt);
+
+	float* temp = temperature_field.values;
+	temperature_field.values = final_temperature_field.values;
+	final_temperature_field.values = temp;
+
+	convect_temperature(temperature_field, final_temperature_field, dt); //Just moves temperature values upwards
+
+	temperature_field.values = src_temperature_values;
+
+	final_temperature_field.values = dst_temperature_values;
+	dealloc_mem(final_temperature_field.values);
+}
+
+void buffer_scalar_field_xz_slice_to_texture(Scalar_Field field, int y, GLuint texture)
 {
 	float* values = (float*)alloc_mem(field.width * field.depth * sizeof(float));
 	for (int z = 0; z < field.depth; ++z)
@@ -376,12 +484,101 @@ void buffer_scalar_field_slice_to_texture(Scalar_Field field, int y, GLuint text
 	buffer_texture_data(texture, field.width, field.depth, values, GL_RED);
 }
 
+void buffer_scalar_field_xy_slice_to_texture(Scalar_Field field, int z, GLuint texture)
+{
+	float* values = (float*)alloc_mem(field.width * field.depth * sizeof(float));
+	for (int y = 0; y < field.height; ++y)
+	{
+		for (int x = 0; x < field.width; ++x)
+		{
+			values[y*field.width + x] = field.access(x, y, z);
+		}
+	}
+	dealloc_mem(values);
+	buffer_texture_data(texture, field.width, field.height, values, GL_RED);
+}
+
 //Buffers a horizontal slice of the given scalar field to a texture
-GLuint buffer_scalar_field_slice_to_texture(Scalar_Field field, int y)
+GLuint buffer_scalar_field_xz_slice_to_texture(Scalar_Field field, int y)
 {
 	GLuint texture = create_texture(field.width, field.depth, NULL, GL_RED);
-	buffer_scalar_field_slice_to_texture(field, y, texture);
+	buffer_scalar_field_xz_slice_to_texture(field, y, texture);
 	return texture;
+}
+
+GLuint buffer_scalar_field_xy_slice_to_texture(Scalar_Field field, int z)
+{
+	GLuint texture = create_texture(field.width, field.depth, NULL, GL_RED);
+	buffer_scalar_field_xy_slice_to_texture(field, z, texture);
+	return texture;
+}
+
+class Smoke_Simulation
+{
+public:
+	void allocate_fields(int field_width, int field_height, int field_depth);
+	void deallocate_fields();
+	void set_wind_vector(Vector3 wind_vector);
+	void add_smoke_source(int x, int y, int z, float s);
+	void add_temperature_source(int x, int y, int z, float t);
+
+	void progress_simulation(float smoke_diff, float temp_diff, float dt);
+
+	float* get_smoke_density_values();
+	float* get_temperature_values();
+
+private:
+	Scalar_Field smoke_density_field;
+	Scalar_Field smoke_density_source_field;
+	Scalar_Field temperature_field;
+	Scalar_Field temperature_source_field;
+	Vector3_Field wind_field;
+};
+
+void Smoke_Simulation::allocate_fields(int width, int height, int depth)
+{
+	this->smoke_density_field.allocate(width, height, depth);
+	this->smoke_density_source_field.allocate(width, height, depth);
+	this->temperature_field.allocate(width, height, depth);
+	this->temperature_source_field.allocate(width, height, depth);
+	this->wind_field.allocate(width, height, depth);
+}
+
+void Smoke_Simulation::deallocate_fields()
+{
+	this->smoke_density_field.deallocate();
+	this->smoke_density_source_field.deallocate();
+}
+
+void Smoke_Simulation::set_wind_vector(Vector3 wind_vector)
+{
+	for (int i = 0; i < this->wind_field.width * this->wind_field.height * this->wind_field.depth; ++i) this->wind_field.values[i] = wind_vector;
+}
+
+void Smoke_Simulation::add_smoke_source(int x, int y, int z, float s)
+{
+	this->smoke_density_source_field.access(x, y, z) = s;
+}
+
+void Smoke_Simulation::add_temperature_source(int x, int y, int z, float t)
+{
+	this->temperature_source_field.access(x, y, z) = t;
+}
+
+void Smoke_Simulation::progress_simulation(float smoke_diff, float temp_diff, float dt)
+{
+	progress_temperature_simulation(this->temperature_field, this->temperature_source_field, smoke_diff, dt);
+	progress_smoke_simulation(this->smoke_density_field, this->smoke_density_source_field, this->temperature_field, this->wind_field, temp_diff, dt);
+}
+
+float* Smoke_Simulation::get_smoke_density_values()
+{
+	return this->smoke_density_field.values;
+}
+
+float* Smoke_Simulation::get_temperature_values()
+{
+	return this->temperature_field.values;
 }
 
 //Windows entry point
@@ -439,42 +636,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		set_max_density(5.0f);
 
-		Scalar_Field smoke_density_field;
-		smoke_density_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
-		smoke_density_field.width = field_width;
-		smoke_density_field.height = field_height;
-		smoke_density_field.depth = field_depth;
+		Vector3 wind_vector = Vector3(1.0f, 1.0f, 1.0f);
 
-		Scalar_Field smoke_source_field = smoke_density_field;
-		smoke_source_field.values = (float*)alloc_mem(field_width * field_height * field_depth * sizeof(float));
-		
-		for (int z = 0; z < field_depth; ++z)
-		{
-			for (int y = 0; y < field_height; ++y)
-			{
-				for (int x = 0; x < field_width; ++x)
-				{
-					smoke_density_field.access(x, y, z) = 0.0f;
-					smoke_source_field.access(x, y, z) = 0.0f;
-				}
-			} 
-		}
-
-		smoke_source_field.access(5, 2, 5) = 1.0f;
-
-		Vector3_Field wind_field;
-		wind_field.width = field_width;
-		wind_field.height = field_height;
-		wind_field.depth = field_depth;
-		wind_field.values = (Vector3*)alloc_mem(field_width * field_height * field_depth * sizeof(Vector3));
-
-		Vector3 wind_vector = Vector3(0.0f, 0.0f, 0.0f);
-		for (int i = 0; i < field_width * field_height * field_depth; ++i) wind_field.values[i] = wind_vector;
+		Smoke_Simulation smoke_simulation;
+		smoke_simulation.allocate_fields(field_width, field_height, field_depth);
+		smoke_simulation.add_smoke_source(2, 2, 2, 30.0f);
+		smoke_simulation.add_temperature_source(2, 1, 2, 1000.0f);
+		smoke_simulation.set_wind_vector(wind_vector);
 
 		int density_field_texture = create_volume_texture(field_width, field_height, field_depth);
-		buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
-		
-		GLuint field_slice_texture = buffer_scalar_field_slice_to_texture(smoke_density_field, 2);
+		buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_simulation.get_smoke_density_values());
 
 		timer t;
 		//Main loop
@@ -513,11 +684,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_window_resized()) resize_framebuffers(get_window_width(), get_window_height());
 
 			//UPDATE
-			progress_smoke_simulation(smoke_density_field, smoke_source_field, wind_field, 0.1f, mspf/1000.0f);
+			smoke_simulation.progress_simulation(1.0f, 0.5f, mspf / 1000.0f);
 			
-			buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_density_field.values);
-
-			buffer_scalar_field_slice_to_texture(smoke_density_field, 2, field_slice_texture);
+			buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_simulation.get_smoke_density_values());
 			
 			//RENDERING
 			//Set global rendering parameters
@@ -530,7 +699,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				use_framebuffer(scene_framebuffer);
 				set_window_clear_colour(sky_colour);
 				begin_render();
-
 
 				Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 10.0f);
 				set_projection_matrix(projection);
@@ -571,7 +739,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				begin_render();
 
 				use_shader(quad_texture_shader);
-				use_texture(field_slice_texture);
+				//use_texture(temp_field_slice_texture);
 
 				draw(scene_quad);
 				use_texture(0);

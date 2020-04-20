@@ -26,10 +26,10 @@ void main()
 	
 	ivec3 density_field_dimensions = textureSize(density_field, 0);
 
-	for(int i = 0; i < 10; ++i)
+	for(int i = 0; i < 20; ++i)
 	{//March along ray n times
 		//Compute spatial position along ray
-		vec3 position_along_ray = (ray_origin + (i+1)*(ray_direction))/(density_field_dimensions);
+		vec3 position_along_ray = (ray_origin + i*(ray_direction))/(density_field_dimensions);
 		//Sample density field
 		float density = texture(density_field, position_along_ray).x;
 		total_density += density;
