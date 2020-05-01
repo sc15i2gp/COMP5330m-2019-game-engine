@@ -38,7 +38,7 @@ void updateDisplacement(RigidBody& r, Vector3* forces, int numOfForces, float ti
 bool checkSphereCylinderCollision(RigidBody& r, float x, float z, float miny, float maxy, float radius) 
 {
 	// Check for collision with the side of the cylinder
-	if (miny <= r.displacement.y || r.displacement.y <= maxy) {
+	if (miny <= r.displacement.y && r.displacement.y <= maxy) {
 		Vector3 m = { x, r.displacement.y, z };
 		Vector3 distanceBetweenCenters = m - r.displacement;
 		/* If the distance between the centres of the shapes is <=
