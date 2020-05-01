@@ -216,6 +216,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		RigidBody* plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
 		Vector3* planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
 		float boostMultiplication = 0.0;
+		float turnRatio = 1.0;
+
+		bool pause = false;
 
 		timer t;
 		//Main loop
@@ -227,53 +230,59 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			handle_input();
 			handle_ui(ui_parameters);
 
-			//if (was_key_pressed(KEY_UP)) main_view_camera.move_forward();
-			//if (was_key_pressed(KEY_LEFT)) main_view_camera.move_left();
-			//if (was_key_pressed(KEY_DOWN)) main_view_camera.move_backward();
-			//if (was_key_pressed(KEY_RIGHT)) main_view_camera.move_right();
-			if (was_key_pressed(KEY_W)) {
-				Quaternion axis(*planeRightVector, 1.0);
-				Matrix4x4 mat = quaternion_to_matrix(axis);
-				Matrix3x3 mat3 = {};
-				for (int i = 0; i <= 2; i++) {
-					for (int j = 0; j <= 2; j++) {
-						mat3[i][j] = mat[i][j];
+			if (!pause) {
+				if (was_key_pressed(KEY_W)) {
+					Quaternion axis(*planeRightVector, turnRatio * 0.5);
+					Matrix4x4 mat = quaternion_to_matrix(axis);
+					Matrix3x3 mat3 = {};
+					for (int i = 0; i <= 2; i++) {
+						for (int j = 0; j <= 2; j++) {
+							mat3[i][j] = mat[i][j];
+						}
+					}
+					plane->velocity = mat3 * plane->velocity;
+				}
+				if (was_key_pressed(KEY_S)) {
+					Quaternion axis(*planeRightVector, turnRatio * -0.5);
+					Matrix4x4 mat = quaternion_to_matrix(axis);
+					Matrix3x3 mat3 = {};
+					for (int i = 0; i <= 2; i++) {
+						for (int j = 0; j <= 2; j++) {
+							mat3[i][j] = mat[i][j];
+						}
+					}
+					plane->velocity = mat3 * plane->velocity;
+				}
+				if (was_key_pressed(KEY_A)) {
+					Vector3 originalVelocity = plane->velocity;
+					plane->velocity.x = (cos_deg(turnRatio * 1.0) * originalVelocity.x) + (sin_deg(turnRatio * 1.0) * originalVelocity.z);
+					plane->velocity.z = (-sin_deg(turnRatio * 1.0) * originalVelocity.x) + (cos_deg(turnRatio * 1.0) * originalVelocity.z);
+				}
+				if (was_key_pressed(KEY_D)) {
+					Vector3 originalVelocity = plane->velocity;
+					plane->velocity.x = (cos_deg(turnRatio * -1.0) * originalVelocity.x) + (sin_deg(turnRatio * -1.0) * originalVelocity.z);
+					plane->velocity.z = (-sin_deg(turnRatio * -1.0) * originalVelocity.x) + (cos_deg(turnRatio * -1.0) * originalVelocity.z);
+				}
+				if (was_key_pressed(KEY_Q) || was_key_pressed(KEY_E)) {
+					plane->velocity.y = 0.0;
+				}
+				if (was_key_pressed(KEY_SHIFT)) {
+					if (boostMultiplication < 1.0) {
+						boostMultiplication += 0.01 * turnRatio;
 					}
 				}
-				plane->velocity = mat3 * plane->velocity;
-			}
-			if (was_key_pressed(KEY_S)) {
-				Quaternion axis(*planeRightVector, -1.0);
-				Matrix4x4 mat = quaternion_to_matrix(axis);
-				Matrix3x3 mat3 = {};
-				for (int i = 0; i <= 2; i++) {
-					for (int j = 0; j <= 2; j++) {
-						mat3[i][j] = mat[i][j];
+				else {
+					if (boostMultiplication > 0.0) {
+						boostMultiplication -= 0.01 * turnRatio;
 					}
 				}
-				plane->velocity = mat3 * plane->velocity;
-			}
-			if (was_key_pressed(KEY_A)) {
-				Vector3 originalVelocity = plane->velocity;
-				plane->velocity.x = (cos_deg(1) * originalVelocity.x) + (sin_deg(1) * originalVelocity.z);
-				plane->velocity.z = (-sin_deg(1) * originalVelocity.x) + (cos_deg(1) * originalVelocity.z);
-			}
-			if (was_key_pressed(KEY_D)) {
-				Vector3 originalVelocity = plane->velocity;
-				plane->velocity.x = (cos_deg(-1) * originalVelocity.x) + (sin_deg(-1) * originalVelocity.z);
-				plane->velocity.z = (-sin_deg(-1) * originalVelocity.x) + (cos_deg(-1) * originalVelocity.z);
-			}
-			if (was_key_pressed(KEY_RETURN)) {
-				plane->velocity.y = 0.0;
-			}
-			if (was_key_pressed(KEY_SHIFT)) {
-				if (boostMultiplication < 1.0) {
-					boostMultiplication += 0.01;
+				if (was_key_pressed(KEY_ESC)) {
+					pause = true;
 				}
 			}
 			else {
-				if (boostMultiplication > 0.0) {
-					boostMultiplication -= 0.01;
+				if (was_key_pressed(KEY_RETURN)) {
+					pause = false;
 				}
 			}
 
@@ -287,27 +296,27 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			buffer_camera_data_to_gpu(main_view_camera);
 
-			float gravityRatio = (dot(plane->velocity, { 0.0,-1.0,0.0 })) / (length(plane->velocity));
+			if (!pause) {
+				float gravityRatio = (dot(plane->velocity, { 0.0,-1.0,0.0 })) / (length(plane->velocity));
 
-			float downward = -1.0 * plane->mass * fabs(gravityRatio);
-			Vector3 gravity = { 0.0,downward,0.0 };
-			Vector3 thrust = 50.0 * boostMultiplication * normalise(plane->velocity);
-			Vector3 forces[2] = { gravity, thrust };
-			updateDisplacement(*plane, forces, 2, mspf / 1000.0);
-			if (plane->displacement.y <= 0.0) {
-				plane->velocity.y *= -0.5;
-				plane->displacement.y = 0.01;
-			}
-			for (int i = 0; i <= 20; i++) {
-				Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
-				if (checkSphereCylinderCollision(*plane, treePos.x, treePos.y, 0.0, 25.0, 0.0001)) {
-					plane->velocity.x = 0.0;
-					plane->velocity.z = 0.0;
-					break;
+				float downward = -1.0 * plane->mass * fabs(gravityRatio);
+				Vector3 gravity = { 0.0,downward,0.0 };
+				Vector3 thrust = 50.0 * boostMultiplication * normalise(plane->velocity);
+				Vector3 forces[2] = { gravity, thrust };
+				updateDisplacement(*plane, forces, 2, mspf / 1000.0);
+				if (plane->displacement.y <= 0.0) {
+					plane->velocity.y *= -0.5;
+					plane->displacement.y = 0.01;
+				}
+				for (int i = 0; i <= 20; i++) {
+					Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
+					if (checkSphereCylinderCollision(*plane, treePos.x, treePos.y, 0.0, 4.0, 0.0001)) {
+						plane->velocity.x = 0.0;
+						plane->velocity.z = 0.0;
+						break;
+					}
 				}
 			}
-
-			OutputDebugStringf("%f\n", boostMultiplication);
 
 			planeRightVector->x = plane->velocity.z;
 			planeRightVector->z = -plane->velocity.x;
@@ -373,6 +382,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			{
 				DWORD sleep_time = mspf - frame_time;
 				Sleep(sleep_time);
+				turnRatio = 1.0;
+			}
+			else {
+				turnRatio = float(frame_time) / float(mspf);
 			}
 		}
 		//release_drawable();
