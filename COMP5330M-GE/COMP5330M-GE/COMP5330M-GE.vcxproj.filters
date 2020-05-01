@@ -81,6 +81,12 @@
     <ClCompile Include="UI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RigidBody.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Particles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glext.h">
@@ -176,6 +182,12 @@
     <ClInclude Include="UI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RigidBody.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Particles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="fshader.glsl">
@@ -191,6 +203,12 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="heightmap_fshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="fire_vshader.glsl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="fire_fshader.glsl">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

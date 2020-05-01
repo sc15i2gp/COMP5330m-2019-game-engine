@@ -22,32 +22,32 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{E0119C51-8D04-4FE5-B04B-07FE83DE9A4A}</ProjectGuid>
     <RootNamespace>COMP5330MGE</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -148,8 +148,10 @@
     <ClCompile Include="Maths.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="OpenGL.cpp" />
+    <ClCompile Include="Particles.cpp" />
     <ClCompile Include="Perlin_Noise.cpp" />
     <ClCompile Include="Platform.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="string_functions.cpp" />
     <ClCompile Include="turtle.cpp" />
     <ClCompile Include="UI.cpp" />
@@ -178,9 +180,11 @@
     <ClInclude Include="Maths.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="OpenGL.h" />
+    <ClInclude Include="Particles.h" />
     <ClInclude Include="Perlin_Noise.h" />
     <ClInclude Include="Platform.h" />
     <ClInclude Include="polygon_stack.h" />
+    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="string_functions.h" />
     <ClInclude Include="turtle.h" />
     <ClInclude Include="turtle_stack.h" />
@@ -188,6 +192,8 @@
     <ClInclude Include="wglext.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fire_fshader.glsl" />
+    <None Include="fire_vshader.glsl" />
     <None Include="fshader.glsl" />
     <None Include="heightmap_fshader.glsl" />
     <None Include="heightmap_vshader.glsl" />
