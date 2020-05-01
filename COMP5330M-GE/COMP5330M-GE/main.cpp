@@ -201,7 +201,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		bool render_wireframes = false;
 		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
 
-		RigidBody* practiceBall = new RigidBody({ 4.0,5.0,4.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
+		RigidBody* plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
+		Vector3* planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
 
 		timer t;
 		//Main loop
@@ -235,7 +236,42 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (was_key_pressed(KEY_D)) main_view_camera.move_right();
 			if (was_key_pressed(KEY_Q)) main_view_camera.move_up();
 			if (was_key_pressed(KEY_E)) main_view_camera.move_down();
-			if (was_key_pressed(KEY_F)) practiceBall = new RigidBody({ 4.0,5.0,4.0 }, { 0.0,5.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 10.0);
+			if (was_key_pressed(KEY_F)) plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
+			if (was_key_pressed(KEY_UP)) {
+				Quaternion axis(*planeRightVector, 1.0);
+				Matrix4x4 mat = quaternion_to_matrix(axis);
+				Matrix3x3 mat3 = {};
+				for (int i = 0; i <= 2; i++) {
+					for (int j = 0; j <= 2; j++) {
+						mat3[i][j] = mat[i][j];
+					}
+				}
+				plane->velocity = mat3 * plane->velocity;
+			}
+			if (was_key_pressed(KEY_DOWN)) {
+				Quaternion axis(*planeRightVector, -1.0);
+				Matrix4x4 mat = quaternion_to_matrix(axis);
+				Matrix3x3 mat3 = {};
+				for (int i = 0; i <= 2; i++) {
+					for (int j = 0; j <= 2; j++) {
+						mat3[i][j] = mat[i][j];
+					}
+				}
+				plane->velocity = mat3 * plane->velocity;
+			}
+			if (was_key_pressed(KEY_LEFT)) {
+				Vector3 originalVelocity = plane->velocity;
+				plane->velocity.x = (cos_deg(1) * originalVelocity.x) + (sin_deg(1) * originalVelocity.z);
+				plane->velocity.z = (-sin_deg(1) * originalVelocity.x) + (cos_deg(1) * originalVelocity.z);
+			}
+			if (was_key_pressed(KEY_RIGHT)) {
+				Vector3 originalVelocity = plane->velocity;
+				plane->velocity.x = (cos_deg(-1) * originalVelocity.x) + (sin_deg(-1) * originalVelocity.z);
+				plane->velocity.z = (-sin_deg(-1) * originalVelocity.x) + (cos_deg(-1) * originalVelocity.z);
+			}
+			if (was_key_pressed(KEY_RETURN)) {
+				plane->velocity.y = 0.0;
+			}
 
 			begin_render();
 			if (render_wireframes) draw_as_wireframes();
@@ -247,29 +283,46 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			buffer_camera_data_to_gpu(main_view_camera);
 
-			float downward = -9.8 * practiceBall->mass;
+			float gravityRatio = (dot(plane->velocity, { 0.0,-1.0,0.0 })) / (length(plane->velocity));
+
+			float downward = -1.0 * plane->mass * fabs(gravityRatio);
 			Vector3 gravity = { 0.0,downward,0.0 };
-			Vector3 wind = { 5.0,0.0,5.0 };
-			Vector3 forces[2] = { gravity, wind };
-			updateDisplacement(*practiceBall, forces, 2, mspf / 1000.0);
-			if (practiceBall->displacement.y <= 0.0) {
-				practiceBall->velocity.y *= -0.5;
-				practiceBall->displacement.y = 0.01;
+			Vector3 forces[1] = { gravity };
+			updateDisplacement(*plane, forces, 1, mspf / 1000.0);
+			if (plane->displacement.y <= 0.0) {
+				plane->velocity.y *= -0.5;
+				plane->displacement.y = 0.01;
 			}
 			for (int i = 0; i <= 20; i++) {
 				Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
-				OutputDebugStringf("%f %f %f\n", treePos.x, treePos.y);
-				if (checkSphereCylinderCollision(*practiceBall, treePos.x, treePos.y, 0.0, 50.0, 0.0001)) {
-					practiceBall->velocity.x = 0.0;
-					practiceBall->velocity.z = 0.0;
+				if (checkSphereCylinderCollision(*plane, treePos.x, treePos.y, 0.0, 25.0, 0.0001)) {
+					plane->velocity.x = 0.0;
+					plane->velocity.z = 0.0;
 					break;
 				}
 			}
-			OutputDebugStringf("\n");
+			Vector3 norm = normalise(plane->velocity);
+			OutputDebugStringf("%f %f %f\n", norm.x, norm.y, norm.z);
+
+			planeRightVector->x = plane->velocity.z;
+			planeRightVector->z = -plane->velocity.x;
+
+			main_view_camera.position = plane->displacement - (5.0 * normalise(plane->velocity));
+			main_view_camera.forward = normalise(plane->velocity);
+			main_view_camera.update_rightward_and_upward_vectors();
+
+			if (main_view_camera.position.y <= 0.5) main_view_camera.position.y = 0.5;
+
 			glLoadIdentity();
-			glPointSize(10.0f);
-			glBegin(GL_POINTS);
-				glVertex3f(practiceBall->displacement.x, practiceBall->displacement.y, practiceBall->displacement.z);
+			glBegin(GL_QUADS);
+			Vector3 point1 = plane->displacement + ((-0.1) * main_view_camera.rightward) + ((-0.1) * main_view_camera.upward);
+			Vector3 point2 = plane->displacement + ((-0.1) * main_view_camera.rightward) + ((0.1) * main_view_camera.upward);
+			Vector3 point3 = plane->displacement + ((0.1) * main_view_camera.rightward) + ((0.1) * main_view_camera.upward);
+			Vector3 point4 = plane->displacement + ((0.1) * main_view_camera.rightward) + ((-0.1) * main_view_camera.upward);
+			glVertex3f(point1.x, point1.y, point1.z);
+			glVertex3f(point2.x, point2.y, point2.z);
+			glVertex3f(point3.x, point3.y, point3.z);
+			glVertex3f(point4.x, point4.y, point4.z);
 			glEnd();
 
 			//Draw landscape
