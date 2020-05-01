@@ -174,7 +174,12 @@ void Graphics_Table::__set_max_height(GLfloat max_height)
 
 void Graphics_Table::__set_max_density(GLfloat max_density)
 {
-	copy_to_gpu_mem(&max_density, this->max_density_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
+	copy_to_gpu_mem(&max_density, this->world_smoke_volume_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
+}
+
+void Graphics_Table::__set_world_smoke_volume_coefficient(GLfloat coefficient)
+{
+	copy_to_gpu_mem(&coefficient, this->world_smoke_volume_buffer, offsetof(Smoke_Sim_Block, world_smoke_volume_coefficient), sizeof(GLfloat), GL_UNIFORM_BUFFER);
 }
 
 void Graphics_Table::__set_shader_sampler_uniform(int shader, char* sampler_name, int sampler_unit)
@@ -212,7 +217,7 @@ bool Graphics_Table::__initialise_graphics()
 	this->spot_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Spot_Light>), 4, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 	this->point_lights_buffer = alloc_and_bind_ubo(sizeof(Lights_Block<Shader_Point_Light>), 5, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 	this->max_height_buffer = alloc_and_bind_ubo(sizeof(GLfloat), 6, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
-	this->max_density_buffer = alloc_and_bind_ubo(sizeof(GLfloat), 7, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
+	this->world_smoke_volume_buffer = alloc_and_bind_ubo(sizeof(Smoke_Sim_Block), 7, GL_UNIFORM_BUFFER, GL_STATIC_DRAW);
 
 	return true;
 }
@@ -260,6 +265,7 @@ int Graphics_Table::__create_volume_texture(int width, int height, int depth)
 
 	
 	this->volume_textures[volume_texture] = gen_texture(width, height, depth);
+	OutputDebugStringf("VOLUME TEXTURE: %u\n", this->volume_textures[volume_texture]);
 	return volume_texture;
 }
 

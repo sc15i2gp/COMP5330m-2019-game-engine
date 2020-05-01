@@ -16,6 +16,7 @@ uniform sampler3D density_field;
 layout(std140, binding = 7) uniform density_block
 {
 	float max_density;
+	float world_volume_coefficient;
 };
 
 void main()
@@ -29,7 +30,7 @@ void main()
 	for(int i = 0; i < 20; ++i)
 	{//March along ray n times
 		//Compute spatial position along ray
-		vec3 position_along_ray = (ray_origin + i*(ray_direction))/(density_field_dimensions);
+		vec3 position_along_ray = world_volume_coefficient * (ray_origin + i*(ray_direction))/(density_field_dimensions);
 		//Sample density field
 		float density = texture(density_field, position_along_ray).x;
 		total_density += density;

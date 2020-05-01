@@ -6,13 +6,12 @@
 #include "turtle.h"
 #include "Camera.h"
 #include "UI.h"
+#include "Timing.h"
 
 //DOING:
-//	- Scale smoke grid
-//		- Make raycast work independently of grid dimensions
-//		- Make grid small
 //	- Temperature field
 //		- Compute smoke colour from temperature
+//	- Time functions
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -44,10 +43,6 @@
 //		- More descriptive (eg. change parameter names in function macros)
 //	- Make using OS input easier
 //	- Directory structure to group files/project contributions
-
-//TODO: Profiling
-//	- Time functions
-//	- Time frames
 
 Material gold =
 {
@@ -185,33 +180,6 @@ long int fps_to_mspf(int fps)
 	float spf = 1.0f / (float)fps;
 	float mspf = 1000.0f*spf;
 	return (long int)mspf;
-}
-
-struct timer
-{
-	LARGE_INTEGER clock_frequency;
-	LARGE_INTEGER start_time;
-	LARGE_INTEGER stop_time;
-};
-void start_timer(timer* t)
-{
-	QueryPerformanceFrequency(&t->clock_frequency);
-	QueryPerformanceCounter(&t->start_time);
-}
-
-void stop_timer(timer* t)
-{
-	QueryPerformanceCounter(&t->stop_time);
-}
-
-long int elapsed_time(timer* t)
-{
-	LARGE_INTEGER elapsed;
-	elapsed.QuadPart = t->stop_time.QuadPart - t->start_time.QuadPart;
-	elapsed.QuadPart *= 1000;
-	elapsed.QuadPart /= t->clock_frequency.QuadPart;
-
-	return elapsed.QuadPart;
 }
 
 struct Scalar_Field
@@ -395,9 +363,6 @@ Vector3 compute_updraft_from_temperature(float temperature)
 
 void convect_smoke_density(Scalar_Field smoke_density_field, Scalar_Field final_smoke_density_field, Scalar_Field temperature_field, float dt)
 {
-	//For each smoke_density_field value
-	//	Compute upwards velocity from corresponding temperature_field value
-	//	Compute corresponding final_smoke_density_field value using backwards velocity algorithm
 	for (int z = 1; z < smoke_density_field.depth - 1; ++z)
 	{
 		for (int y = 1; y < smoke_density_field.height - 1; ++y)
@@ -422,6 +387,7 @@ void swap_field_ptrs(Scalar_Field& f_0, Scalar_Field& f_1)
 void progress_smoke_simulation(Scalar_Field smoke_density_field, Scalar_Field smoke_source_field, Scalar_Field temperature_field, 
 	Vector3_Field wind_velocity_field, float diff, float dt)
 {
+	TIME_FUNCTION;
 	int width = smoke_density_field.width;
 	int height = smoke_density_field.height;
 	int depth = smoke_density_field.depth;
@@ -458,9 +424,7 @@ void progress_temperature_simulation(Scalar_Field temperature_field, Scalar_Fiel
 
 	diffuse_scalar_field(temperature_field, final_temperature_field, diff, dt);
 
-	float* temp = temperature_field.values;
-	temperature_field.values = final_temperature_field.values;
-	final_temperature_field.values = temp;
+	swap_field_ptrs(temperature_field, final_temperature_field);
 
 	convect_temperature(temperature_field, final_temperature_field, dt); //Just moves temperature values upwards
 
@@ -635,17 +599,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_shader_sampler_uniform(smoke_shader, "density_field", 0);
 
 		set_max_density(5.0f);
-
+		
 		Vector3 wind_vector = Vector3(1.0f, 1.0f, 1.0f);
 
+		int smoke_field_width = 32;
+		int smoke_field_height = 32;
+		int smoke_field_depth = 32;
 		Smoke_Simulation smoke_simulation;
-		smoke_simulation.allocate_fields(field_width, field_height, field_depth);
-		smoke_simulation.add_smoke_source(2, 2, 2, 30.0f);
+		smoke_simulation.allocate_fields(smoke_field_width, smoke_field_height, smoke_field_depth);
+		smoke_simulation.add_smoke_source(2, 2, 2, 100.0f);
 		smoke_simulation.add_temperature_source(2, 1, 2, 1000.0f);
 		smoke_simulation.set_wind_vector(wind_vector);
 
-		int density_field_texture = create_volume_texture(field_width, field_height, field_depth);
-		buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_simulation.get_smoke_density_values());
+		int density_field_texture = create_volume_texture(smoke_field_width, smoke_field_height, smoke_field_depth);
+		set_world_smoke_volume_coefficient(3.2f);
+		buffer_volume_data(density_field_texture, smoke_field_width, smoke_field_height, smoke_field_depth, smoke_simulation.get_smoke_density_values());
 
 		timer t;
 		//Main loop
@@ -686,7 +654,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			//UPDATE
 			smoke_simulation.progress_simulation(1.0f, 0.5f, mspf / 1000.0f);
 			
-			buffer_volume_data(density_field_texture, field_width, field_height, field_depth, smoke_simulation.get_smoke_density_values());
+			buffer_volume_data(density_field_texture, smoke_field_width, smoke_field_height, smoke_field_depth, smoke_simulation.get_smoke_density_values());
 			
 			//RENDERING
 			//Set global rendering parameters
@@ -751,6 +719,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			stop_timer(&t);
 			long int frame_time = elapsed_time(&t);
+			OutputDebugStringf("Elapsed time: %li\n", frame_time);
 			if (frame_time < mspf)
 			{
 				DWORD sleep_time = mspf - frame_time;

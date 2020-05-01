@@ -86,6 +86,12 @@ struct Lights_Block
 	T lights[32];
 };
 
+struct Smoke_Sim_Block
+{
+	float max_density;
+	float world_smoke_volume_coefficient;
+};
+
 //This class contains mostly shader data which needs to persist throughout the game's running
 #define MAX_SHADER_COUNT 8
 #define MAX_FRAMEBUFFER_COUNT 4
@@ -118,6 +124,7 @@ public:
 	void __set_spot_light_attenuation_properties(GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
 	void __set_max_height(GLfloat max_height);
 	void __set_max_density(GLfloat max_density);
+	void __set_world_smoke_volume_coefficient(GLfloat coefficient);
 	void __set_shader_sampler_uniform(int shader, char* sampler_name, int sampler_unit);
 	void __use_shader(int shader);
 	int __load_shader_program(const char* v_shader_path, const char* f_shader_path);
@@ -142,7 +149,7 @@ private:
 	GLuint spot_lights_buffer;
 	GLuint point_lights_buffer;
 	GLuint max_height_buffer;
-	GLuint max_density_buffer;
+	GLuint world_smoke_volume_buffer;
 
 	//Shaders
 	GLuint shaders[MAX_SHADER_COUNT];
@@ -198,6 +205,7 @@ void begin_render();
 #define set_spot_light_attenuation_properties(n, c, l, q)	__graphics.__set_spot_light_attenuation_properties(n, c, l, q)
 #define set_max_height(h)									__graphics.__set_max_height(h)
 #define set_max_density(d)									__graphics.__set_max_density(d)
+#define set_world_smoke_volume_coefficient(d)				__graphics.__set_world_smoke_volume_coefficient(d)
 #define set_shader_sampler_uniform(s, n, u)					__graphics.__set_shader_sampler_uniform(s, n, u)
 #define use_shader(s)										__graphics.__use_shader(s)
 #define load_shader_program(v, f)							__graphics.__load_shader_program(v, f)
