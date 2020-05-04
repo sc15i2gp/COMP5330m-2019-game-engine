@@ -177,6 +177,11 @@ void Graphics_Table::__set_max_density(GLfloat max_density)
 	copy_to_gpu_mem(&max_density, this->world_smoke_volume_buffer, 0, sizeof(GLfloat), GL_UNIFORM_BUFFER);
 }
 
+void Graphics_Table::__set_max_temperature(GLfloat max_temperature)
+{
+	copy_to_gpu_mem(&max_temperature, this->world_smoke_volume_buffer, offsetof(Smoke_Sim_Block, max_temperature), sizeof(GLfloat), GL_UNIFORM_BUFFER);
+}
+
 void Graphics_Table::__set_world_smoke_volume_coefficient(GLfloat coefficient)
 {
 	copy_to_gpu_mem(&coefficient, this->world_smoke_volume_buffer, offsetof(Smoke_Sim_Block, world_smoke_volume_coefficient), sizeof(GLfloat), GL_UNIFORM_BUFFER);

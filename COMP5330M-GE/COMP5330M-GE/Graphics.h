@@ -89,6 +89,7 @@ struct Lights_Block
 struct Smoke_Sim_Block
 {
 	float max_density;
+	float max_temperature;
 	float world_smoke_volume_coefficient;
 };
 
@@ -124,6 +125,7 @@ public:
 	void __set_spot_light_attenuation_properties(GLuint light_number, GLfloat constant, GLfloat linear, GLfloat quadratic);
 	void __set_max_height(GLfloat max_height);
 	void __set_max_density(GLfloat max_density);
+	void __set_max_temperature(GLfloat max_temperature);
 	void __set_world_smoke_volume_coefficient(GLfloat coefficient);
 	void __set_shader_sampler_uniform(int shader, char* sampler_name, int sampler_unit);
 	void __use_shader(int shader);
@@ -205,6 +207,7 @@ void begin_render();
 #define set_spot_light_attenuation_properties(n, c, l, q)	__graphics.__set_spot_light_attenuation_properties(n, c, l, q)
 #define set_max_height(h)									__graphics.__set_max_height(h)
 #define set_max_density(d)									__graphics.__set_max_density(d)
+#define set_max_temperature(t)								__graphics.__set_max_temperature(t)
 #define set_world_smoke_volume_coefficient(d)				__graphics.__set_world_smoke_volume_coefficient(d)
 #define set_shader_sampler_uniform(s, n, u)					__graphics.__set_shader_sampler_uniform(s, n, u)
 #define use_shader(s)										__graphics.__use_shader(s)

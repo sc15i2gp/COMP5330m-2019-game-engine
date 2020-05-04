@@ -9,9 +9,6 @@
 #include "Timing.h"
 
 //DOING:
-//	- Temperature field
-//		- Compute smoke colour from temperature
-//	- Time functions
 
 //TODO: Platform/Graphics
 //	- Internal error handling
@@ -597,8 +594,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_shader_sampler_uniform(framebuffer_composite_shader, "scene_texture", 1);
 		set_shader_sampler_uniform(framebuffer_composite_shader, "smoke_texture", 0);
 		set_shader_sampler_uniform(smoke_shader, "density_field", 0);
+		set_shader_sampler_uniform(smoke_shader, "temperature_field", 1);
 
-		set_max_density(5.0f);
+		set_max_density(10.0f);
 		
 		Vector3 wind_vector = Vector3(1.0f, 1.0f, 1.0f);
 
@@ -607,13 +605,16 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int smoke_field_depth = 32;
 		Smoke_Simulation smoke_simulation;
 		smoke_simulation.allocate_fields(smoke_field_width, smoke_field_height, smoke_field_depth);
-		smoke_simulation.add_smoke_source(2, 2, 2, 100.0f);
-		smoke_simulation.add_temperature_source(2, 1, 2, 1000.0f);
+		smoke_simulation.add_smoke_source(2, 2, 2, 1000.0f);
+		smoke_simulation.add_temperature_source(2, 2, 2, 3000.0f);
 		smoke_simulation.set_wind_vector(wind_vector);
 
 		int density_field_texture = create_volume_texture(smoke_field_width, smoke_field_height, smoke_field_depth);
+		int temperature_field_texture = create_volume_texture(smoke_field_width, smoke_field_height, smoke_field_depth);
 		set_world_smoke_volume_coefficient(3.2f);
+		set_max_temperature(1000.0f);
 		buffer_volume_data(density_field_texture, smoke_field_width, smoke_field_height, smoke_field_depth, smoke_simulation.get_smoke_density_values());
+		buffer_volume_data(temperature_field_texture, smoke_field_width, smoke_field_height, smoke_field_depth, smoke_simulation.get_temperature_values());
 
 		timer t;
 		//Main loop
@@ -655,6 +656,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			smoke_simulation.progress_simulation(1.0f, 0.5f, mspf / 1000.0f);
 			
 			buffer_volume_data(density_field_texture, smoke_field_width, smoke_field_height, smoke_field_depth, smoke_simulation.get_smoke_density_values());
+			buffer_volume_data(temperature_field_texture, smoke_field_width, smoke_field_height, smoke_field_depth, smoke_simulation.get_temperature_values());
 			
 			//RENDERING
 			//Set global rendering parameters
@@ -687,6 +689,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				begin_render();
 				use_shader(smoke_shader);
 				use_volume_texture(density_field_texture, 0);
+				use_volume_texture(temperature_field_texture, 1);
 				set_model_matrix(identity());
 				draw(smoke_quad);
 
