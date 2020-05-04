@@ -52,6 +52,7 @@ Vector2 operator-(Vector2, Vector2);
 Vector2 operator/(Vector2, float);
 Vector2 operator/(Vector2, Vector2); //Pairwise division
 Vector2 operator*(float, Vector2);
+Vector2 operator*(Vector2, Vector2); //Pairwise multiplication
 float dot(Vector2, Vector2);
 float length(Vector2);
 Vector2 normalise(Vector2);
@@ -104,11 +105,13 @@ struct Vector3
 Vector3 operator+(Vector3, Vector3);
 Vector3 operator-(Vector3, Vector3);
 Vector3 operator*(float, Vector3);
+Vector3 operator*(Vector3, Vector3); //Pairwise multiplication
 Vector3 operator/(Vector3, float);
 
 void operator+=(Vector3&, Vector3);
 void operator-=(Vector3&, Vector3);
 void operator*=(Vector3&, float);
+void operator*=(Vector3&, Vector3);
 void operator/=(Vector3&, float);
 
 Vector3 operator-(Vector3); //Unary

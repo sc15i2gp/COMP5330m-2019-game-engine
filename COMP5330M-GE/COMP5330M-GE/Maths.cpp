@@ -204,6 +204,14 @@ Vector3 operator*(float d, Vector3 v)
 	return v;
 }
 
+Vector3 operator*(Vector3 v_0, Vector3 v_1)
+{
+	v_0.x *= v_1.x;
+	v_0.y *= v_1.y;
+	v_0.z *= v_1.z;
+	return v_0;
+}
+
 Vector3 operator/(Vector3 v, float d)
 {
 	v.x /= d;
@@ -225,6 +233,11 @@ void operator-=(Vector3& v, Vector3 w)
 void operator*=(Vector3& v, float d)
 {
 	v = d * v;
+}
+
+void operator*=(Vector3& v_0, Vector3 v_1)
+{
+	v_0 = v_0 * v_1;
 }
 
 void operator/=(Vector3& v, float d)
@@ -329,6 +342,13 @@ Vector2 operator*(float f, Vector2 v)
 	v.x *= f;
 	v.y *= f;
 	return v;
+}
+
+Vector2 operator*(Vector2 v_0, Vector2 v_1)
+{
+	v_0.x *= v_1.x;
+	v_0.y *= v_1.y;
+	return v_0;
 }
 
 float dot(Vector2 v, Vector2 w)

@@ -19,9 +19,11 @@ struct Terrain_Data
 	Perlin_Noise_Function perlin_noise;
 	Drawable terrain_drawable;
 	Mesh mesh;
-	float max_height;
 	float width;
 	float length;
+	float width_scale_factor;
+	float length_scale_factor;
+	float height_scale_factor;
 
 	float height_at_point(Vector2);
 };
@@ -61,6 +63,8 @@ struct Landscape_Data
 	void draw();
 };
 
-Terrain_Data create_terrain(float width, float length, float terrain_cell_length);
-Forest_Data create_forest(float width, float length, int number_of_trees);
-Landscape_Data create_landscape(float width, float length, float terrain_cell_length, int number_of_trees = MAX_TREES);
+Terrain_Data create_terrain(float width, float length, 
+	float width_scale_factor, float length_scale_factor, float height_scale_factor, float terrain_cell_length);
+Forest_Data create_forest(float width, float length, float width_scale_factor, float length_scale_factor, int number_of_trees);
+Landscape_Data create_landscape(float width, float length, float terrain_cell_length, 
+	float width_scale_factor, float length_scale_factor, float height_scale_factor, int number_of_trees = MAX_TREES);

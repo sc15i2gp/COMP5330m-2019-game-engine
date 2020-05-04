@@ -35,15 +35,19 @@ float Terrain_Data::height_at_point(Vector2 point)
 	float y_2 = 0.25f * this->perlin_noise(4.0f * point.x, 4.0f * point.y);
 	float y = normalise_range(y_0 + y_1 + y_2);
 	y = (y >= 0.0f) ? pow(y, 3.0f) : 0.0f;
-	return y;
+	return y*this->height_scale_factor;
 }
 
 //Buffer a regularly spaced grid of vertices, centered around (0, 0, z)
-Terrain_Data create_terrain(float terrain_width, float terrain_length, float terrain_cell_length)
+Terrain_Data create_terrain(float terrain_width, float terrain_length, 
+	float width_scale_factor, float length_scale_factor, float height_scale_factor, float terrain_cell_length)
 {
 	Terrain_Data terrain = {};
 	terrain.width = terrain_width;
 	terrain.length = terrain_length;
+	terrain.width_scale_factor = width_scale_factor;
+	terrain.length_scale_factor = length_scale_factor;
+	terrain.height_scale_factor = height_scale_factor;
 	OutputDebugStringf("Terrain Width: %f\nTerrain Length: %f\n", terrain_width, terrain_length);
 
 	terrain.perlin_noise = generate_noise_function();
@@ -77,7 +81,6 @@ Terrain_Data create_terrain(float terrain_width, float terrain_length, float ter
 
 			float v_y = terrain.height_at_point(Vector2(v_x, v_z));
 
-			if (v_y > terrain.max_height) terrain.max_height = v_y;
 			terrain.mesh.vertices[i*vertex_width + j].position.y = v_y;
 		}
 	}
@@ -97,6 +100,19 @@ Terrain_Data create_terrain(float terrain_width, float terrain_length, float ter
 		}
 	}
 
+	//Scale terrain
+	terrain.width *= width_scale_factor;
+	terrain.length *= length_scale_factor;
+	for (int i = 0; i < terrain.mesh.number_of_vertices; ++i)
+	{
+		Vector3 scale = {};
+		scale.x = width_scale_factor;
+		scale.y = 1.0f;
+		scale.z = length_scale_factor;
+
+		terrain.mesh.vertices[i].position *= scale;
+	}
+
 	terrain.mesh.compute_first_edge_list();
 	terrain.mesh.compute_other_edge_list();
 	terrain.mesh.compute_normal_vectors();
@@ -108,7 +124,7 @@ Terrain_Data create_terrain(float terrain_width, float terrain_length, float ter
 
 const char* rowan_axiom = "A(0.5, 0.01)";
 const char* pine_axiom = "A(2.0, 0.05)";
-Forest_Data create_forest(float width, float length, int number_of_trees)
+Forest_Data create_forest(float width, float length, float width_scale_factor, float length_scale_factor, int number_of_trees)
 {
 	//Generate tree distribution
 	Forest_Data forest = {};
@@ -171,11 +187,12 @@ Forest_Data create_forest(float width, float length, int number_of_trees)
 	return forest;
 }
 
-Landscape_Data create_landscape(float width, float length, float terrain_cell_length, int number_of_trees)
+Landscape_Data create_landscape(float width, float length, float terrain_cell_length, 
+	float width_scale_factor, float length_scale_factor, float height_scale_factor, int number_of_trees)
 {
 	Landscape_Data landscape = {};
-	landscape.forest = create_forest(width, length, number_of_trees);
-	landscape.terrain = create_terrain(width, length, terrain_cell_length);
+	landscape.forest = create_forest(width, length, width_scale_factor, length_scale_factor, number_of_trees);
+	landscape.terrain = create_terrain(width, length, width_scale_factor, length_scale_factor, height_scale_factor, terrain_cell_length);
 	landscape.render_pines = true;
 	landscape.render_rowans = true;
 	return landscape;
@@ -189,10 +206,12 @@ void Landscape_Data::draw()
 	::draw(this->terrain.terrain_drawable);
 	for (int i = 0; i < this->forest.tree_distribution.number_of_trees; ++i)
 	{
+		float tree_x = this->forest.tree_distribution.landscape_positions[i][0];
+		float tree_z = this->forest.tree_distribution.landscape_positions[i][1];
 		Vector3 tree_position = {};
-		tree_position.x = this->forest.tree_distribution.landscape_positions[i][0];
-		tree_position.z = this->forest.tree_distribution.landscape_positions[i][1];
-		tree_position.y = this->terrain.height_at_point(Vector2(tree_position.x, tree_position.z));
+		tree_position.x = tree_x * this->terrain.width_scale_factor;
+		tree_position.z = tree_z * this->terrain.length_scale_factor;
+		tree_position.y = this->terrain.height_at_point(Vector2(tree_x, tree_z));
 
 		Matrix4x4 tree_model_matrix = model;
 		translate(tree_model_matrix, tree_position);

@@ -9,36 +9,25 @@
 #include "Timing.h"
 
 //DOING:
+//	- Scale smoke + temperature fields with terrain
+//	- Fix tree gen
+//	- Draw UI into separate render buffer
 
 //TODO: Platform/Graphics
-//	- Internal error handling
-//	- Better memory management(?)
 //	- glDelete functions
 //	- Free resources
 
 //TODO: Landscape
-//	- Parameterise (with UI)
-//	- Texture
 //	- Retrieve/highlight triangles
 //	- Spatial partitioning
-//	- Fix tree gen
-
-//TODO: Volume rendering
-//	- Integrate with scene geometry(?)
 
 //TODO: Camera/UI
 //	- Draw xyz axes
-//	- Fix arcball camera rotation
-//	- Make it so that if a mouse click is on a UI element, it doesn't rotate the camera
-//	- Better starting dimensions (not too small or big)
-//	- Better integration of render surface and UI
-//		- Solves problems such as the camera rotating while using a slider without nasty workarounds
 
 //TODO: Maintenance
 //	- Edit interfaces to Platform and Graphics to be:
 //		- More consistent
 //		- More descriptive (eg. change parameter names in function macros)
-//	- Make using OS input easier
 //	- Directory structure to group files/project contributions
 
 Material gold =
@@ -577,7 +566,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 		float landscape_width = 10.0f;
 		float landscape_length = 10.0f;
-		Landscape_Data landscape = create_landscape(landscape_width, landscape_length, 0.01f, 10);
+		int number_of_trees = 10;
+		float landscape_cell_width = 0.1f;
+		//Landscape_Data landscape = create_landscape(landscape_width, landscape_length, 0.01f, 10);
+		Landscape_Data landscape = create_landscape(landscape_width, landscape_length, landscape_cell_width, 4.0f, 4.0f, 4.0f, number_of_trees);
 
 		int field_width = (int)landscape_width;
 		int field_height = 10;
@@ -596,7 +588,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		set_shader_sampler_uniform(smoke_shader, "density_field", 0);
 		set_shader_sampler_uniform(smoke_shader, "temperature_field", 1);
 
-		set_max_density(10.0f);
+		set_max_density(5.0f);
 		
 		Vector3 wind_vector = Vector3(1.0f, 1.0f, 1.0f);
 
@@ -605,8 +597,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		int smoke_field_depth = 32;
 		Smoke_Simulation smoke_simulation;
 		smoke_simulation.allocate_fields(smoke_field_width, smoke_field_height, smoke_field_depth);
-		smoke_simulation.add_smoke_source(2, 2, 2, 1000.0f);
-		smoke_simulation.add_temperature_source(2, 2, 2, 3000.0f);
+		smoke_simulation.add_smoke_source(5, 4, 5, 1000.0f);
+		smoke_simulation.add_temperature_source(5, 4, 5, 3000.0f);
 		smoke_simulation.set_wind_vector(wind_vector);
 
 		int density_field_texture = create_volume_texture(smoke_field_width, smoke_field_height, smoke_field_depth);
@@ -670,7 +662,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				set_window_clear_colour(sky_colour);
 				begin_render();
 
-				Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 10.0f);
+				Matrix4x4 projection = perspective(fov, get_window_aspect_ratio(), 0.1f, 30.0f);
 				set_projection_matrix(projection);
 
 				set_model_matrix(identity());
