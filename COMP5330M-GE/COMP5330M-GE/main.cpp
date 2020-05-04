@@ -217,6 +217,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Vector3* planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
 		float boostMultiplication = 0.0;
 		float turnRatio = 1.0;
+		int deactivationTimer = 0;
+		Vector3 forwardWhenCrash = { 0.0, 0.0, 0.0 };
 
 		bool pause = false;
 
@@ -271,6 +273,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 						boostMultiplication += 0.01 * turnRatio;
 					}
 				}
+				if (was_key_pressed(KEY_RETURN)) {
+					plane->velocity.y = 0.0;
+				}
 				else {
 					if (boostMultiplication > 0.0) {
 						boostMultiplication -= 0.01 * turnRatio;
@@ -283,6 +288,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			else {
 				if (was_key_pressed(KEY_RETURN)) {
 					pause = false;
+				}
+				if (was_key_pressed(KEY_R)) {
+					pause = false;
+					plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
+					planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
+					boostMultiplication = 0.0;
+					turnRatio = 1.0;
 				}
 			}
 
@@ -297,35 +309,58 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			buffer_camera_data_to_gpu(main_view_camera);
 
 			if (!pause) {
-				float gravityRatio = (dot(plane->velocity, { 0.0,-1.0,0.0 })) / (length(plane->velocity));
+				if (deactivationTimer <= 0) {
+					float gravityRatio = (dot(plane->velocity, { 0.0,-1.0,0.0 })) / (length(plane->velocity));
 
-				float downward = -1.0 * plane->mass * fabs(gravityRatio);
-				Vector3 gravity = { 0.0,downward,0.0 };
-				Vector3 thrust = 50.0 * boostMultiplication * normalise(plane->velocity);
-				Vector3 forces[2] = { gravity, thrust };
-				updateDisplacement(*plane, forces, 2, mspf / 1000.0);
-				if (plane->displacement.y <= 0.0) {
-					plane->velocity.y *= -0.5;
-					plane->displacement.y = 0.01;
+					float downward = -1.0 * plane->mass * fabs(gravityRatio);
+					Vector3 gravity = { 0.0,downward,0.0 };
+					Vector3 thrust = 50.0 * boostMultiplication * normalise(plane->velocity);
+					Vector3 forces[2] = { gravity, thrust };
+					updateDisplacement(*plane, forces, 2, mspf / 1000.0);
+					if (plane->displacement.y <= 0.0) {
+						plane->velocity.y *= -0.5;
+						plane->displacement.y = 0.01;
+					}
+					for (int i = 0; i <= 20; i++) {
+						Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
+						if (checkSphereCylinderCollision(*plane, treePos.x, treePos.y, 0.0, 4.0, 0.0001)) {
+							forwardWhenCrash = { plane->velocity.x, 0.0, plane->velocity.z };
+							plane->velocity.x = 0.0;
+							plane->velocity.z = 0.0;
+							deactivationTimer = 2000;
+							break;
+						}
+					}
 				}
-				for (int i = 0; i <= 20; i++) {
-					Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
-					if (checkSphereCylinderCollision(*plane, treePos.x, treePos.y, 0.0, 4.0, 0.0001)) {
-						plane->velocity.x = 0.0;
-						plane->velocity.z = 0.0;
-						break;
+				else {
+					Vector3 gravity = { 0.0,-1.0f*plane->mass,0.0 };
+					Vector3 forces[1] = { gravity };
+					updateDisplacement(*plane, forces, 1, mspf / 1000.0);
+					if (plane->displacement.y <= 0.0) {
+						plane->velocity.y *= -0.5;
+						plane->displacement.y = 0.01;
 					}
 				}
 			}
 
-			planeRightVector->x = plane->velocity.z;
-			planeRightVector->z = -plane->velocity.x;
+			if (deactivationTimer <= 0) {
+				planeRightVector->x = plane->velocity.z;
+				planeRightVector->z = -plane->velocity.x;
 
-			main_view_camera.position = plane->displacement - (5.0 * normalise(plane->velocity));
-			main_view_camera.forward = normalise(plane->velocity);
-			main_view_camera.update_rightward_and_upward_vectors();
+				main_view_camera.position = plane->displacement - (5.0 * normalise(plane->velocity));
+				main_view_camera.forward = normalise(plane->velocity);
+				main_view_camera.update_rightward_and_upward_vectors();
 
-			if (main_view_camera.position.y <= 0.5) main_view_camera.position.y = 0.5;
+				if (main_view_camera.position.y <= 0.5) main_view_camera.position.y = 0.5;
+			}
+			else {
+				planeRightVector->x = forwardWhenCrash.z;
+				planeRightVector->z = -forwardWhenCrash.x;
+
+				main_view_camera.position = plane->displacement - (5.0 * normalise(forwardWhenCrash));
+				main_view_camera.forward = normalise(forwardWhenCrash);
+				main_view_camera.update_rightward_and_upward_vectors();
+			}
 
 			glLoadIdentity();
 			glBegin(GL_QUADS);
@@ -378,6 +413,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			stop_timer(&t);
 			long int frame_time = elapsed_time(&t);
+			if (deactivationTimer > 0) {
+				deactivationTimer -= frame_time;
+				if (deactivationTimer <= 0) {
+					plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
+					planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
+					boostMultiplication = 0.0;
+					turnRatio = 1.0;
+				}
+			}
 			if (frame_time < mspf)
 			{
 				DWORD sleep_time = mspf - frame_time;
