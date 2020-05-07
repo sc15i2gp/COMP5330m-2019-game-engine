@@ -200,25 +200,31 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
 
 		// Emit particles
-		Emitter* fireEmitter = new Emitter({ -0.5,0.0,-0.5 }, 0.5, { 0.0,2.0,0.0 }, 10.0, 10.0, 10.0, 0.7, 1000, 1500, 0.01, 0.015);
-		Emitter* fireEmitter2 = new Emitter({ 2.0,0.0,2.0 }, 0.5, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 1000, 1500, 0.01, 0.015);
+		Emitter* fireEmitter = new Emitter({ 2.0,0.0,2.0 }, 0.5, { 0.0,2.0,0.0 }, 10.0, 10.0, 10.0, 0.7, 1000, 1500, 0.01, 0.015);
+		Emitter* fireEmitter2 = new Emitter({ 6.0,0.0,8.0 }, 0.5, { 0.0,2.0,0.0 }, 0.0, 0.0, 0.0, 0.7, 1000, 1500, 0.01, 0.015);
 		ParticlePool pool;
 		int totalNumOfParticles = 100000;
 		initialisePool(pool, totalNumOfParticles);
 		std::thread emit(releaseManyParticlesInASequenceForever, *fireEmitter, pool, 1000.0);
+		bool emitActive = true;
 		std::thread emit2(releaseManyParticlesInASequenceForever, *fireEmitter2, pool, 1000.0);
+		bool emit2Active = true;
 
 		bool dragging = false;
 		int fps = 60;
 		bool render_wireframes = false;
 		UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);
 
+		// Plane properties
 		RigidBody* plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
 		Vector3* planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
 		float boostMultiplication = 0.0;
 		float turnRatio = 1.0;
 		int deactivationTimer = 0;
 		Vector3 forwardWhenCrash = { 0.0, 0.0, 0.0 };
+
+		int lives = 3;
+		bool hasWater = false;
 
 		bool pause = false;
 
@@ -232,6 +238,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			handle_input();
 			handle_ui(ui_parameters);
 
+			// Button commands during gamplay
+			// W - Dive down
+			// S - Go up
+			// A- Turn left
+			// D - Turn Right
+			// Q/E - Snap to horizontal position
+			// Shift - Boost
+			// Esc - Pause
 			if (!pause) {
 				if (was_key_pressed(KEY_W)) {
 					Quaternion axis(*planeRightVector, turnRatio * 0.5);
@@ -273,18 +287,30 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 						boostMultiplication += 0.01 * turnRatio;
 					}
 				}
-				if (was_key_pressed(KEY_RETURN)) {
-					plane->velocity.y = 0.0;
-				}
 				else {
 					if (boostMultiplication > 0.0) {
 						boostMultiplication -= 0.01 * turnRatio;
 					}
 				}
+				if (was_key_pressed(KEY_RETURN)) {
+					if (hasWater) {
+						Vector3 planeCheck = { plane->displacement.x, 0.0, plane->displacement.z };
+						if (length(planeCheck - fireEmitter->position) <= fireEmitter->radius) {
+							emitActive = false;
+						}
+						else if (length(planeCheck - fireEmitter2->position) <= fireEmitter2->radius) {
+							emit2Active = false;
+						}
+					}
+					hasWater = false;
+				}
 				if (was_key_pressed(KEY_ESC)) {
 					pause = true;
 				}
 			}
+			// Pause menu controls
+			// Return - Resume game
+			// R - Restart the game
 			else {
 				if (was_key_pressed(KEY_RETURN)) {
 					pause = false;
@@ -295,6 +321,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
 					boostMultiplication = 0.0;
 					turnRatio = 1.0;
+					hasWater = false;
+					lives = 3;
 				}
 			}
 
@@ -310,6 +338,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			if (!pause) {
 				if (deactivationTimer <= 0) {
+					// Calculate the influence on gravity and the boost thrust on the plane
 					float gravityRatio = (dot(plane->velocity, { 0.0,-1.0,0.0 })) / (length(plane->velocity));
 
 					float downward = -1.0 * plane->mass * fabs(gravityRatio);
@@ -318,8 +347,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					Vector3 forces[2] = { gravity, thrust };
 					updateDisplacement(*plane, forces, 2, mspf / 1000.0);
 					if (plane->displacement.y <= 0.0) {
-						plane->velocity.y *= -0.5;
-						plane->displacement.y = 0.01;
+						if (plane->displacement.x >= 0.0 && plane->displacement.x <= 10.0 && plane->displacement.z >= 0.0 && plane->displacement.z <= 10.0) {
+							plane->velocity.y *= -0.5;
+							plane->displacement.y = 0.01;
+						}
+						else {
+							hasWater = true;
+						}
 					}
 					for (int i = 0; i <= 20; i++) {
 						Vector2 treePos = landscape.forest.tree_distribution.landscape_positions[i];
@@ -333,6 +367,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					}
 				}
 				else {
+					// If crashed, only gravity
 					Vector3 gravity = { 0.0,-1.0f*plane->mass,0.0 };
 					Vector3 forces[1] = { gravity };
 					updateDisplacement(*plane, forces, 1, mspf / 1000.0);
@@ -343,6 +378,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				}
 			}
 
+			// Set up camera to follow plane
 			if (deactivationTimer <= 0) {
 				planeRightVector->x = plane->velocity.z;
 				planeRightVector->z = -plane->velocity.x;
@@ -374,10 +410,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			glVertex3f(point4.x, point4.y, point4.z);
 			glEnd();
 
-			//Draw landscape
-			landscape.draw();
-			render_ui();
-
 			use_shader(fire_shader);
 
 			// Check the particle pool
@@ -385,6 +417,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			int loop = inactive;
 			for (int i = 0; i <= loop; i++) {
 				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
+					Vector3 particleCheck = { pool.nodes[i].particle.displacement.x, 0.0, pool.nodes[i].particle.displacement.z };
+					if (!emitActive && (length(particleCheck - fireEmitter->position) <= fireEmitter->radius)) {
+						deleteParticleInPool(pool, i, inactive);
+					}
+					if (!emit2Active && (length(particleCheck - fireEmitter2->position) <= fireEmitter2->radius)) {
+						deleteParticleInPool(pool, i, inactive);
+					}
 					float size = 0.0;
 					// Have the particle decrease in size when it's coming to the end of its life
 					if (pool.nodes[i].particle.life >= 100) {
@@ -393,6 +432,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					else {
 						size = pool.nodes[i].particle.size * (pool.nodes[i].particle.life / 100.0);
 					}
+					glLoadIdentity();
 					glBegin(GL_QUADS);
 					Vector3 point1 = pool.nodes[i].particle.displacement + ((-size) * main_view_camera.rightward) + ((-size) * main_view_camera.upward);
 					Vector3 point2 = pool.nodes[i].particle.displacement + ((-size) * main_view_camera.rightward) + ((size)*main_view_camera.upward);
@@ -409,6 +449,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				}
 			}
 
+			use_shader(terrain_lighting_shader);
+
+			//Draw landscape
+			landscape.draw();
+			render_ui();
+
 			swap_window_buffers();
 
 			stop_timer(&t);
@@ -416,10 +462,18 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			if (deactivationTimer > 0) {
 				deactivationTimer -= frame_time;
 				if (deactivationTimer <= 0) {
-					plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
-					planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
-					boostMultiplication = 0.0;
-					turnRatio = 1.0;
+					lives--;
+					if (lives <= 0) {
+						deactivationTimer = 1;
+					}
+					else {
+						plane = new RigidBody({ 4.0,5.0,4.0 }, { -1.0,0.0,0.0 }, { 0.0,0.0,0.0 }, 10.0, 0.1);
+						planeRightVector = new Vector3{ plane->velocity.z, 0.0, -plane->velocity.x };
+						boostMultiplication = 0.0;
+						turnRatio = 1.0;
+						hasWater = false;
+						emit2Active = false;
+					}
 				}
 			}
 			if (frame_time < mspf)
