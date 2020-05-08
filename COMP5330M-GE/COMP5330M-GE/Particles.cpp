@@ -66,6 +66,11 @@ Particle releaseOneParticle(Emitter& e)
 	float p1 = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.radius;
 	float p3 = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.radius;
 	Vector3 pos = { e.position.x + p1, e.position.y, e.position.z + p3 };
+	if (length(pos - e.position) > e.radius) {
+		float p1Mult = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 0.707;
+		float p3Mult = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 0.707;
+		pos = { e.position.x + (p1 * p1Mult), e.position.y, e.position.z + (p3 * p3Mult) };
+	}
 	// Generate the velocity in which it is released
 	float xAngle = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.maxAngleAroundX;
 	float yAngle = (((static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) * 2) - 1) * e.maxAngleAroundY;

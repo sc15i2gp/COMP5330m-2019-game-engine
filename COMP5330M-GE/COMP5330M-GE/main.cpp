@@ -350,6 +350,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 						if (plane->displacement.x >= 0.0 && plane->displacement.x <= 10.0 && plane->displacement.z >= 0.0 && plane->displacement.z <= 10.0) {
 							plane->velocity.y *= -0.5;
 							plane->displacement.y = 0.01;
+							forwardWhenCrash = { plane->velocity.x, 0.0, plane->velocity.z };
+							deactivationTimer = 2000;
 						}
 						else {
 							hasWater = true;
@@ -387,7 +389,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 				main_view_camera.forward = normalise(plane->velocity);
 				main_view_camera.update_rightward_and_upward_vectors();
 
-				if (main_view_camera.position.y <= 0.5) main_view_camera.position.y = 0.5;
+				if (main_view_camera.position.y <= 0.5 && plane->displacement.x >= 0.0 && plane->displacement.x <= 10.0 && plane->displacement.z >= 0.0 && plane->displacement.z <= 10.0) main_view_camera.position.y = 0.5;
 			}
 			else {
 				planeRightVector->x = forwardWhenCrash.z;
@@ -418,10 +420,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			for (int i = 0; i <= loop; i++) {
 				if (pool.nodes[i].nodeActive && pool.nodes[i].particle.life > 0) {
 					Vector3 particleCheck = { pool.nodes[i].particle.displacement.x, 0.0, pool.nodes[i].particle.displacement.z };
-					if (!emitActive && (length(particleCheck - fireEmitter->position) <= fireEmitter->radius)) {
+					if (!emitActive && (length(particleCheck - fireEmitter->position) <= fireEmitter->radius + 0.1)) {
 						deleteParticleInPool(pool, i, inactive);
 					}
-					if (!emit2Active && (length(particleCheck - fireEmitter2->position) <= fireEmitter2->radius)) {
+					if (!emit2Active && (length(particleCheck - fireEmitter2->position) <= fireEmitter2->radius + 0.1)) {
 						deleteParticleInPool(pool, i, inactive);
 					}
 					float size = 0.0;
@@ -472,7 +474,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 						boostMultiplication = 0.0;
 						turnRatio = 1.0;
 						hasWater = false;
-						emit2Active = false;
 					}
 				}
 			}
