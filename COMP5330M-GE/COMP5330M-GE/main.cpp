@@ -255,10 +255,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			buffer_camera_data_to_gpu(main_view_camera);
 
-			//Draw landscape
-			landscape.draw();
-			render_ui();
-
 			use_shader(fire_shader);
 
 			// Check the particle pool
@@ -306,6 +302,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 					deleteParticleInPool(pool, i, inactive);
 				}
 			}
+
+			use_shader(terrain_lighting_shader);
+
+			//Draw landscape
+			landscape.draw();
+			render_ui();
 
 			swap_window_buffers();
 
