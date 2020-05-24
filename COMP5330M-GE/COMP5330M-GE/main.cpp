@@ -128,6 +128,10 @@ long int elapsed_time(timer* t)
 	return elapsed.QuadPart;
 }
 
+#include <chrono>
+
+
+
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
@@ -207,7 +211,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			buffer_camera_data_to_gpu(main_view_camera);
 
 			//Draw landscape
-			landscape.draw();
+			/*landscape.draw();*/
 			/*render_ui();*/
 
 			/*Get a vlue for sine and cosine*/
@@ -234,4 +238,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		return 0;
 	}
 	else return 1;
+
+	
 }

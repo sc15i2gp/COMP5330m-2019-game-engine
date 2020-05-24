@@ -36,5 +36,4 @@ public:
 
 	GLuint getProgramID() const;
 	GLuint getVAO() const;
-
 };
