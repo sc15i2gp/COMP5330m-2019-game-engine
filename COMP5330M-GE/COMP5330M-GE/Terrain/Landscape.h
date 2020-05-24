@@ -1,9 +1,9 @@
 #pragma once
-#include "Perlin_Noise.h"
-#include "Graphics.h"
-#include "Maths.h"
-#include "l_system.h"
-#include "turtle.h"
+#include "Tools/Perlin_Noise.h"
+#include "Framework/Graphics.h"
+#include "Tools/Maths.h"
+#include "Lsystems/l_system.h"
+#include "DataStructures/turtle.h"
 
 //Goal: Render a procedurally generated landscape
 //Landscape:

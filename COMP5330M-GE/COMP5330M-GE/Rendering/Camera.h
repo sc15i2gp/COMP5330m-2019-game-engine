@@ -1,6 +1,6 @@
 #pragma once
-#include "Maths.h"
-#include "Platform.h"
+#include "Tools/Maths.h"
+#include "Framework/Platform.h"
 
 /*The Up vector, facing positive Y*/
 extern Vector3 world_up;

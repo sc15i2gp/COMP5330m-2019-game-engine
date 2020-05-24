@@ -1,5 +1,5 @@
 #include "WaterRendering.h"
-#include "../Graphics.h"
+#include "Framework/Graphics.h"
 
 float vertices[] = {
 	2.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,

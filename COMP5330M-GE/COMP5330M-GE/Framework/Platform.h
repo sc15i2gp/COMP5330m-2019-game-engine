@@ -1,7 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <stdio.h>
-#include "Maths.h"
+#include "../Tools/Maths.h"
 
 #include <gl/GL.h>
 #include "glext.h"

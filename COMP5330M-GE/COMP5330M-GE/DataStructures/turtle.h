@@ -1,7 +1,7 @@
 #pragma once
 #pragma once
-#include "Maths.h"
-#include "Mesh.h"
+#include "Tools/Maths.h"
+#include "Tools/Mesh.h"
 #include "string_functions.h"
 
 struct tree_mesh_group

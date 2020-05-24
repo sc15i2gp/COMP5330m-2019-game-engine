@@ -1,13 +1,16 @@
-#include "Platform.h"
-#include "Graphics.h"
-#include "Maths.h"
-#include "Landscape.h"
-#include "l_system.h"
-#include "turtle.h"
-#include "Camera.h"
-#include "UI.h"
+#pragma once
+
+#include "Framework/Platform.h"
+#include "FrameWork/Graphics.h"
+#include "Tools/Maths.h"
+#include "Terrain/Landscape.h"
+#include "Lsystems/l_system.h"
+#include "DataStructures/turtle.h"
+#include "Rendering/Camera.h"
+#include "Framework/UI.h"
 #include "./Rendering/WaterRendering.h"
 #include <string>
+#include <chrono>
 
 /*To understand by the end of today*/
 Material light_properties =
@@ -128,9 +131,6 @@ long int elapsed_time(timer* t)
 	return elapsed.QuadPart;
 }
 
-#include <chrono>
-
-
 
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
@@ -141,10 +141,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 	if (platform_ready && graphics_ready)
 	{
-		int bp_shader = load_shader_program("vshader.glsl", "fshader.glsl");
-		int terrain_shader = load_shader_program("vshader.glsl", "terrain_fshader.glsl");
-		int terrain_lighting_shader = load_shader_program("vshader.glsl", "fshader.glsl");
-		int heightmap_shader = load_shader_program("heightmap_vshader.glsl", "heightmap_fshader.glsl");
+		int bp_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/fshader.glsl");
+		int terrain_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/terrain_fshader.glsl");
+		int terrain_lighting_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/fshader.glsl");
+		int heightmap_shader = load_shader_program("Shaders/heightmap_vshader.glsl", "Shaders/heightmap_fshader.glsl");
 
 		Camera main_view_camera(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f) );
 
@@ -239,5 +239,4 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 	}
 	else return 1;
 
-	
 }

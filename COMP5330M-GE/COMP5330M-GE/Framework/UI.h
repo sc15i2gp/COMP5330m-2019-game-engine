@@ -1,10 +1,10 @@
 #pragma once
 #include "Platform.h"
-#include "imgui.h"
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_win32.h"
-#include "Landscape.h"
-#include "Camera.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_opengl3.h"
+#include "imgui/imgui_impl_win32.h"
+#include "Terrain/Landscape.h"
+#include "Rendering/Camera.h"
 
 struct UI_Parameters
 {

@@ -1,8 +1,8 @@
 #pragma once
-#include "string_functions.h"
-#include "expression_evaluator.h"
-#include "char_queue.h"
-#include "char_queue_stack.h"
+#include "DataStructures/string_functions.h"
+#include "DataStructures/expression_evaluator.h"
+#include "DataStructures/char_queue.h"
+#include "DataStructures/char_queue_stack.h"
 
 #define CONTEXT_MAX 32
 #define STRICT_MAX 16

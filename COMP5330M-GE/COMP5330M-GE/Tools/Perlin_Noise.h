@@ -1,6 +1,6 @@
 #pragma once
-#include "Maths.h"
-#include "Platform.h"
+#include "Tools/Maths.h"
+#include "Framework/Platform.h"
 
 #define NUMBER_OF_NODES 256
 #define GRID_LENGTH 16

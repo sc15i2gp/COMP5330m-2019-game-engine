@@ -1,5 +1,5 @@
 #pragma once
-#include "Platform.h"
+#include "../FrameWork/Platform.h"
 
 #define CHAR_QUEUE_MAX 512
 struct char_queue

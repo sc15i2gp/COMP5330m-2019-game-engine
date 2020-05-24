@@ -1,6 +1,6 @@
 #pragma once
-#include "OpenGL.h"
-#include "Platform.h"
+#include "Framework/OpenGL.h"
+#include "Framework/Platform.h"
 #include "Maths.h"
 
 struct Mesh_vertex

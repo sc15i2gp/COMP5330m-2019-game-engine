@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include "OpenGL.h"
 #include "Platform.h"
-#include "Maths.h"
-#include "Mesh.h"
+#include "Tools/Maths.h"
+#include "Tools/Mesh.h"
 
 struct Drawable
 {

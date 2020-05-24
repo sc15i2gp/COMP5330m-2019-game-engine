@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenGL.h"
+#include "Framework/OpenGL.h"
 #include<string>
 
 /*A texture class which enables us to read image files, and use them in our Game Engine*/

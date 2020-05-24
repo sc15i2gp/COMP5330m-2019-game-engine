@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../OpenGL.h"; // OpenGL functions
+#include "../Framework/OpenGL.h"; // OpenGL functions
 #include <string>
 #include <vector>
 
-#include "../Vertex.h"
+#include "../Tools/Vertex.h"
 
 class WaterRendering
 {
