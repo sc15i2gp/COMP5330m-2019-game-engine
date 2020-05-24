@@ -12,7 +12,7 @@
 #include <string>
 #include <chrono>
 
-/*To understand by the end of today*/
+
 Material light_properties =
 {
 	Vector3(0.2, 0.2, 0.2),
@@ -21,8 +21,6 @@ Material light_properties =
 	0.0f
 };
 
-/*
-*/
 void buffer_camera_data_to_gpu(Camera c)
 {
 	/*Computes a view matrix for the camera. It takes in four paramaters.*/
@@ -135,46 +133,49 @@ long int elapsed_time(timer* t)
 //Windows entry point
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_line, int nCmdShow)
 {
-	bool platform_ready = initialise_platform(instance);
-	bool graphics_ready = initialise_graphics();
-	/*bool ui_ready = initialise_ui();*/
 
-	if (platform_ready && graphics_ready)
-	{
-		int bp_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/fshader.glsl");
-		int terrain_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/terrain_fshader.glsl");
-		int terrain_lighting_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/fshader.glsl");
-		int heightmap_shader = load_shader_program("Shaders/heightmap_vshader.glsl", "Shaders/heightmap_fshader.glsl");
+	std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::steady_clock::now();
 
-		Camera main_view_camera(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f) );
+	//bool platform_ready = initialise_platform(instance);
+	//bool graphics_ready = initialise_graphics();
+	///*bool ui_ready = initialise_ui();*/
 
-		//main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, 0.0f, 1.0f });
-		main_view_camera.movement_sensitivity = 0.1f;
-		set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
+	//if (platform_ready && graphics_ready)
+	//{
+	//	int bp_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/fshader.glsl");
+	//	int terrain_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/terrain_fshader.glsl");
+	//	int terrain_lighting_shader = load_shader_program("Shaders/vshader.glsl", "Shaders/fshader.glsl");
+	//	int heightmap_shader = load_shader_program("Shaders/heightmap_vshader.glsl", "Shaders/heightmap_fshader.glsl");
 
-		activate_direction_light(0);
-		set_direction_light_direction(0, Vector3(0.0f, -1.0f, -1.0f));
-		set_direction_light_blinn_phong_properties(0, light_properties);
+	//	Camera main_view_camera(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, 0.0f) );
 
-		Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
+	//	//main_view_camera.set_position_and_target(Vector3{ 0.0f, 0.0f, 0.0f }, Vector3{ 0.0f, 0.0f, 1.0f });
+	//	main_view_camera.movement_sensitivity = 0.1f;
+	//	set_window_clear_colour(Vector3(0.52, 0.8, 0.92));
 
-		bool dragging = false;
-		int fps = 60;
-		bool render_wireframes = false;
+	//	activate_direction_light(0);
+	//	set_direction_light_direction(0, Vector3(0.0f, -1.0f, -1.0f));
+	//	set_direction_light_blinn_phong_properties(0, light_properties);
+
+	//	Landscape_Data landscape = create_landscape(10.0f, 10.0f, 0.01f, 10);
+
+	//	bool dragging = false;
+	//	int fps = 60;
+	//	bool render_wireframes = false;
 		/*UI_Parameters ui_parameters = initialise_ui_parameter_pointers(&landscape, &main_view_camera, &fps, &render_wireframes);*/
 
 
-		WaterRendering water;
-		water.renderWaterSurface();
+		//WaterRendering water;
+		//water.renderWaterSurface();
 
-		timer t;
-		//Main loop
-		while (!should_window_close())
-		{
-			start_timer(&t);
-			long int mspf = fps_to_mspf(fps);
+		//timer t;
+		////Main loop
+		//while (!should_window_close())
+		//{
+		//	start_timer(&t);
+		//	long int mspf = fps_to_mspf(fps);
 
-			handle_input();
+		//	handle_input();
 			/*handle_ui(ui_parameters);*/
 
 			//if (was_mouse_button_pressed(BUTTON_LEFT) && was_mouse_moved() && !dragging)
@@ -193,22 +194,22 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			//	dragging = false;
 			//}
 
-			if (was_key_pressed(KEY_W)) main_view_camera.moveForward();
-			if (was_key_pressed(KEY_A)) main_view_camera.moveLeft();
-			if (was_key_pressed(KEY_S)) main_view_camera.moveBackward();
-			if (was_key_pressed(KEY_D)) main_view_camera.moveRight();
-			if (was_key_pressed(KEY_Q)) main_view_camera.moveUp();
-			if (was_key_pressed(KEY_E)) main_view_camera.moveDown();
+			//if (was_key_pressed(KEY_W)) main_view_camera.moveForward();
+			//if (was_key_pressed(KEY_A)) main_view_camera.moveLeft();
+			//if (was_key_pressed(KEY_S)) main_view_camera.moveBackward();
+			//if (was_key_pressed(KEY_D)) main_view_camera.moveRight();
+			//if (was_key_pressed(KEY_Q)) main_view_camera.moveUp();
+			//if (was_key_pressed(KEY_E)) main_view_camera.moveDown();
 
-			begin_render();
-			if (render_wireframes) draw_as_wireframes();
-			else draw_as_polygons();
+			//begin_render();
+			//if (render_wireframes) draw_as_wireframes();
+			//else draw_as_polygons();
 
-			set_projection_matrix(perspective(50.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
-			set_model_matrix(identity());
-			use_shader(terrain_lighting_shader);
+			//set_projection_matrix(perspective(50.0f, get_window_aspect_ratio(), 0.1f, 1000.0f));
+			//set_model_matrix(identity());
+			//use_shader(terrain_lighting_shader);
 
-			buffer_camera_data_to_gpu(main_view_camera);
+			//buffer_camera_data_to_gpu(main_view_camera);
 
 			//Draw landscape
 			/*landscape.draw();*/
@@ -216,27 +217,37 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 
 			/*Get a vlue for sine and cosine*/
 
+			std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
 
-			water.drawWater();
+			std::chrono::duration<float> difference = end - start;
+			std::chrono::duration<float, std::nano> ms = end - start;
+
+			OutputDebugStringA(std::to_string(difference.count()).c_str());
+			OutputDebugStringA("\n");
+			OutputDebugStringA(std::to_string(ms.count()).c_str());
+			OutputDebugStringA("\n");
+
+			/*std::chrono::duration<std::m = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);*/
+		/*	water.drawWater();*/
 
 
-			swap_window_buffers();
+	//		swap_window_buffers();
 
-			stop_timer(&t);
-			long int frame_time = elapsed_time(&t);
-			if (frame_time < mspf)
-			{
-				DWORD sleep_time = mspf - frame_time;
-				Sleep(sleep_time);
-			}
-		}
-		//release_drawable();
-		//ReleaseDC(window, window_device_context);
-	/*	ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplWin32_Shutdown();*/
-		shutdown_platform();
-		return 0;
-	}
-	else return 1;
+	//		stop_timer(&t);
+	//		long int frame_time = elapsed_time(&t);
+	//		if (frame_time < mspf)
+	//		{
+	//			DWORD sleep_time = mspf - frame_time;
+	//			Sleep(sleep_time);
+	//		}
+	//	}
+	//	//release_drawable();
+	//	//ReleaseDC(window, window_device_context);
+	///*	ImGui_ImplOpenGL3_Shutdown();
+	//	ImGui_ImplWin32_Shutdown();*/
+	//	shutdown_platform();
+	//	return 0;
+	//}
+	//else return 1;
 
 }
