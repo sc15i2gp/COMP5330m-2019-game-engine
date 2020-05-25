@@ -2,7 +2,10 @@
 
 void Texture::loadImageFile(const std::string & path)
 {
-	m_data = stbi_load(path.c_str(), &m_textureWidth, &m_textureHeight, &m_numberOfChannels, 0);
+	m_data = stbi_load("Textures/water.png", &m_textureWidth, &m_textureHeight, &m_numberOfChannels, 0);
+	OutputDebugStringA(std::to_string(m_textureHeight).c_str());
+	OutputDebugStringA(std::to_string(m_textureWidth).c_str());
+	OutputDebugStringA(std::to_string(m_numberOfChannels).c_str());
 }
 
 void Texture::generateTexture(const std::string& path)
@@ -20,7 +23,7 @@ void Texture::generateTexture(const std::string& path)
 
 	if (m_data)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_textureWidth, m_textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, m_data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_textureWidth, m_textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	else

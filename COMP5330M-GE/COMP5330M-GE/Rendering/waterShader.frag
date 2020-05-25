@@ -7,7 +7,9 @@ layout(location = 2) in vec2 textureCoordinate;
 
 out vec4 outColour;
 
+uniform sampler2D waterTexture;
+
 void main()
 {
-	outColour = vertexColour;
+	outColour = texture(waterTexture, textureCoordinate);
 }
