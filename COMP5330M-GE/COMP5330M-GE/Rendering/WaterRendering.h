@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../Tools/Vertex.h"
+#include "Tools/Texture.h"
 
 class WaterRendering
 {
@@ -22,6 +23,8 @@ private:
 	GLuint waterIBO; // Index buffer
 
 	uint32_t gridVertices;
+
+	Texture m_waterTexture;
 
 public:
 

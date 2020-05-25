@@ -2,6 +2,7 @@
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec4 inColour;
+layout(location = 2) in vec2 inTexture;
 
 layout(std140, binding = 0) uniform model_block
 {
@@ -20,10 +21,13 @@ layout(std140, binding = 1) uniform view_projection_block
 
 layout(location = 0) out vec4 vertexColour;
 layout(location = 1) out float f;
+layout(location = 2) out vec2 textureCoordinate;
 
 void main()
 {
 	gl_Position = projection * view * model * vec4(inPosition, 1.0);
 	vertexColour = inColour;
 	f = time;
+
+	textureCoordinate = inTexture;
 }

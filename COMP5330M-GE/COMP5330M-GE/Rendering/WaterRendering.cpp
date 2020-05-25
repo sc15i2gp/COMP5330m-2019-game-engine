@@ -11,7 +11,7 @@ float vertices[] = {
 	2.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f
 };
 
-WaterRendering::WaterRendering() : vertShader("./Rendering/waterShader.vert"), fragShader("./Rendering/waterShader.frag")
+WaterRendering::WaterRendering() : vertShader("./Rendering/waterShader.vert"), fragShader("./Rendering/waterShader.frag"), m_waterTexture("Textures/water.png")
 {
 	/*Compiles, links and creates a GLuint ID for the shader program for water rendering*/
 	program = load_shader_program(vertShader, fragShader);
@@ -19,9 +19,6 @@ WaterRendering::WaterRendering() : vertShader("./Rendering/waterShader.vert"), f
 
 void WaterRendering::renderWaterSurface()
 {
-
-	//generateData(Vector2(0.0f, 0.0f), 10, 10, 3);
-
 	std::vector<Vertex> grid = generateCells(Vector3(+6.0f, 0.0f, +6.0f), 2.0f, 2.0f, 32, 32);
 	const uint32_t gridSize = grid.size() * sizeof(Vector3) + grid.size() * sizeof(RGBAColour);
 	gridVertices = grid.size();
@@ -52,6 +49,9 @@ void WaterRendering::renderWaterSurface()
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(7 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
 	/*Safely unbind the data used*/
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -68,26 +68,12 @@ void WaterRendering::drawWater()
 std::vector<Vertex> WaterRendering::generateCells(const Vector3 & startPoint, const float quadWidth, const float quadHeight, const unsigned int cellsAlongX, const unsigned int cellsAlongY)
 {
 	std::vector<Vertex> data;
-
-	//RGBAColour red(1.0f, 0.0f, 0.0f, 1.0f);
-	//RGBAColour green(0.0f, 1.0f, 0.0f, 1.0f);
-	//RGBAColour blue(0.0f, 0.0f, 1.0f, 1.0f);
-	//RGBAColour yellow(0.0f, 1.0f, 1.0f, 1.0f);
-
-
-	/****************************************************************************/
-	/*
-
-				pos1  ------------- pos0
-					  | \         |
-					  |	   \      |
-					  |       \   |
-				pos2  ------------- pos3
-
-
-
-	*/
-	/***************************************************************************/
+	
+	/*The grid is made out of square cells, meaning we have 4 corners*/
+	const Vector2 t0(0.0f, 0.0f);
+	const Vector2 t1(1.0f, 0.0f);
+	const Vector2 t2(1.0f, 1.0f);
+	const Vector2 t3(0.0f, 1.0f);
 
 	for (uint32_t cellX = 0; cellX < cellsAlongX; cellX++)
 	{
@@ -102,41 +88,16 @@ std::vector<Vertex> WaterRendering::generateCells(const Vector3 & startPoint, co
 			Vector3 pos2(startPoint.x + cellOffsetAlongX + quadWidth, startPoint.y, startPoint.z + cellsOffsetAlongY + quadHeight);
 			Vector3 pos3(startPoint.x + cellOffsetAlongX, startPoint.y, startPoint.z  + cellsOffsetAlongY + quadHeight);
 
-			RGBAColour colour(1.0f, 1.0f, 1.0f, 1.0f);
-
-			if (cellX == 0 && cellY == 0)
-			{
-				colour.red = 1.0f;
-				colour.green = 0.0f;
-				colour.blue = 0.0f;
-			}
-			if (cellX == 0 && cellY == 1)
-			{
-				colour.red = 0.0f;
-				colour.green = 1.0f;
-				colour.blue = 0.0f;
-			}
-			if (cellX == 1 && cellY == 0)
-			{
-				colour.red = 1.0f;
-				colour.green = 0.0f;
-				colour.blue = 1.0f;
-			}
-			if (cellX == 1 && cellY == 1)
-			{
-				colour.red = 1.0f;
-				colour.green = 1.0f;
-				colour.blue = 0.0f;
-			}
+			const RGBAColour colourBlue(0.0f, 0.0f, 1.0f, 1.0f);
 
 			/*Each quad gets made up from 2 individual triangles*/
-			Vertex v(pos0, colour);
-			Vertex v1(pos1, colour);
-			Vertex v2(pos3, colour);
+			Vertex v(pos0, colourBlue, t2);
+			Vertex v1(pos1, colourBlue, t3);
+			Vertex v2(pos3, colourBlue, t0);
 
-			Vertex v3(pos1, colour);
-			Vertex v4(pos2, colour);
-			Vertex v5(pos3, colour);
+			Vertex v3(pos1, colourBlue, t3);
+			Vertex v4(pos2, colourBlue, t1);
+			Vertex v5(pos3, colourBlue, t0);
 
 			/*Add the data to the array*/
 			data.push_back(v);

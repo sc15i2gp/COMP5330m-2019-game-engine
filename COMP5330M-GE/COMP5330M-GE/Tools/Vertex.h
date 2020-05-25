@@ -5,10 +5,10 @@
 
 struct Vertex
 {
+	Vector3 m_position;
+	RGBAColour m_colour;
+	Vector2 m_textureCoordinate;
 
-	Vector3 position;
-	RGBAColour colour;
-
-	Vertex(const Vector3& pos, const RGBAColour& colour);
+	Vertex(const Vector3& pos, const RGBAColour& col, const Vector2& tex);
 };
 
