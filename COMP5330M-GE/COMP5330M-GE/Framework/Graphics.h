@@ -36,6 +36,7 @@ struct View_Projection_Block
 	Vector4 view_position;
 	Matrix4x4 view_matrix;
 	Matrix4x4 projection_matrix;
+	float time;
 };
 
 struct Shader_Direction_Light
@@ -92,6 +93,7 @@ class Graphics_Table
 {
 public:
 	bool __initialise_graphics();
+	void __set_time_float(float);
 	void __set_model_matrix(Matrix4x4);
 	void __set_view_matrix(Matrix4x4);
 	void __set_projection_matrix(Matrix4x4);
@@ -149,6 +151,7 @@ Drawable buffer_cylinder_mesh(float radius, float height, int slice_count = 16);
 void set_window_clear_colour(Vector3 colour);
 void begin_render();
 
+#define set_time_float(f)									__graphics.__set_time_float(f)
 #define set_model_matrix(m)									__graphics.__set_model_matrix(m)
 #define set_view_matrix(m)									__graphics.__set_view_matrix(m)
 #define set_projection_matrix(m)							__graphics.__set_projection_matrix(m)

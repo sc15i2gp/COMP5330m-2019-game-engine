@@ -22,6 +22,13 @@ void copy_to_gpu_mem(void* src_data, GLuint dst_gpu_buffer, GLuint offset, GLsiz
 	glBindBuffer(target, 0);
 }
 
+void Graphics_Table::__set_time_float(float time)
+{
+	copy_to_gpu_mem(&time, this->view_projection_matrix_buffer,
+		offsetof(View_Projection_Block, time), sizeof(float),
+		GL_UNIFORM_BUFFER);
+}
+
 void Graphics_Table::__set_model_matrix(Matrix4x4 model_mat)
 {
 	//set_uniform_mat4(shader, "model", &model_mat[0][0]);

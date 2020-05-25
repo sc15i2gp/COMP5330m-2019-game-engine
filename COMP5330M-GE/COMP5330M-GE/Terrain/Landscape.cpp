@@ -44,7 +44,7 @@ Terrain_Data create_terrain(float terrain_width, float terrain_length, float ter
 	Terrain_Data terrain = {};
 	terrain.width = terrain_width;
 	terrain.length = terrain_length;
-	OutputDebugStringf("Terrain Width: %f\nTerrain Length: %f\n", terrain_width, terrain_length);
+	// OutputDebugStringf("Terrain Width: %f\nTerrain Length: %f\n", terrain_width, terrain_length);
 
 	terrain.perlin_noise = generate_noise_function();
 
@@ -58,8 +58,8 @@ Terrain_Data create_terrain(float terrain_width, float terrain_length, float ter
 	int number_of_triangles = 2 * number_of_rectangles;
 	terrain.mesh.number_of_indices = 3 * number_of_triangles;
 
-	OutputDebugStringf("Number of vertices in terrain = %d\n", terrain.mesh.number_of_vertices);
-	OutputDebugStringf("Vertex Dimensions: %d %d\n", vertex_width, vertex_length);
+	// OutputDebugStringf("Number of vertices in terrain = %d\n", terrain.mesh.number_of_vertices);
+	// OutputDebugStringf("Vertex Dimensions: %d %d\n", vertex_width, vertex_length);
 	float actual_terrain_width = (float)(vertex_width - 1) * terrain_cell_length;
 	float actual_terrain_length = (float)(vertex_length - 1) * terrain_cell_length;
 	Vector3 O = {};
@@ -160,7 +160,7 @@ Forest_Data create_forest(float width, float length, int number_of_trees)
 	{
 		strcpy(tree_str, rowan_axiom);
 		for (int j = 0; j < number_of_derivations; ++j) derive_str(&rowan_l_system, tree_str);
-		OutputDebugStringf("Final rowan str: %s\n", tree_str);
+		// OutputDebugStringf("Final rowan str: %s\n", tree_str);
 		run_turtle(tree_str, &tree);
 		forest.rowan_branch_drawables[i] = buffer_mesh(tree.branch_mesh);
 		forest.rowan_leaf_drawables[i] = buffer_mesh(tree.leaf_mesh);
