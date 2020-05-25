@@ -25,5 +25,5 @@ void main()
 {
 	gl_Position = projection * view * model * vec4(inPosition, 1.0);
 	vertexColour = inColour;
-	f = view_projection_block.time;
+	f = time;
 }
