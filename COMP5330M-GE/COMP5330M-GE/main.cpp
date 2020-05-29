@@ -174,6 +174,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 		//Main loop
 		while (!should_window_close())
 		{
+
 			start_timer(&t);
 			long int mspf = fps_to_mspf(fps);
 
@@ -222,7 +223,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, LPSTR cmd_li
 			std::chrono::time_point<std::chrono::steady_clock> end = std::chrono::steady_clock::now();
 			std::chrono::duration<float, std::milli> ms = end - start;
 
-			set_time_float(ms.count());
+			float delta = ms.count();
+
+			set_time_float(delta);
 			water.drawWater();
 
 

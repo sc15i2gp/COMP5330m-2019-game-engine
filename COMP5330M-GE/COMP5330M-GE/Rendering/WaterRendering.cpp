@@ -58,6 +58,7 @@ void WaterRendering::renderWaterSurface()
 	glBindVertexArray(0);
 }
 
+
 void WaterRendering::drawWater()
 {
 	use_shader(program);

@@ -11,5 +11,5 @@ uniform sampler2D waterTexture;
 
 void main()
 {
-	outColour = texture(waterTexture, textureCoordinate);
+	outColour = vertexColour;
 }
