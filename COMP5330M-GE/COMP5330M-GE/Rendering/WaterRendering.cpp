@@ -11,7 +11,7 @@ float vertices[] = {
 	2.0f, 2.0f, 0.0f, 0.0f, 1.0f, 0.0f
 };
 
-WaterRendering::WaterRendering() : vertShader("./Rendering/waterShader.vert"), fragShader("./Rendering/waterShader.frag"), m_waterTexture("./COMP5330M-GE/Rendering/Textures/water.png")
+WaterRendering::WaterRendering() : vertShader("./Rendering/waterShader.vert"), fragShader("./Rendering/waterShader.frag")
 {
 	/*Compiles, links and creates a GLuint ID for the shader program for water rendering*/
 	program = load_shader_program(vertShader, fragShader);
